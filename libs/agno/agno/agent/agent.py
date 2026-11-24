@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 from collections import ChainMap, defaultdict, deque
+from collections.abc import AsyncIterator, Iterator, Sequence
 from dataclasses import asdict, dataclass
 from os import getenv
 from textwrap import dedent
 from typing import (
     Any,
-    AsyncIterator,
     Callable,
     Dict,
-    Iterator,
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Type,
     Union,
@@ -1176,7 +1174,7 @@ class Agent:
                                     self.run_response.content_type = self.response_model.__name__
                             else:
                                 log_warning("Failed to convert response to response_model")
-                        except Exception as e:
+                        except (ValueError, TypeError, Exception) as e:
                             log_warning(f"Failed to convert response to output model: {e}")
                     else:
                         log_warning("Something went wrong. Run response content is not a string")
@@ -1215,7 +1213,7 @@ class Agent:
                         )
                         return next(resp)
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -1846,7 +1844,7 @@ class Agent:
                         )
                         return await resp.__anext__()
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -2006,10 +2004,10 @@ class Agent:
         self,
         session_id: str,
         async_mode: bool = False,
-        user_id: Optional[str] = None,
-        knowledge_filters: Optional[Dict[str, Any]] = None,
-    ) -> Optional[List[Union[Toolkit, Callable, Function, Dict]]]:
-        agent_tools: List[Union[Toolkit, Callable, Function, Dict]] = []
+        user_id: str | None = None,
+        knowledge_filters: dict[str, Any] | None = None,
+    ) -> list[Toolkit | Callable | Function | dict] | None:
+        agent_tools: list[Toolkit | Callable | Function | dict] = []
 
         # Add provided tools
         if self.tools is not None:
@@ -2064,8 +2062,8 @@ class Agent:
         model: Model,
         session_id: str,
         async_mode: bool = False,
-        user_id: Optional[str] = None,
-        knowledge_filters: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        knowledge_filters: dict[str, Any] | None = None,
     ) -> None:
         agent_tools = self.get_tools(
             session_id=session_id, async_mode=async_mode, user_id=user_id, knowledge_filters=knowledge_filters
@@ -2160,7 +2158,7 @@ class Agent:
                                 _functions_for_model[func.name] = func
                                 _tools_for_model.append({"type": "function", "function": func.to_dict()})
                                 log_debug(f"Added tool {func.name}")
-                        except Exception as e:
+                        except (ValueError, TypeError, Exception) as e:
                             log_warning(f"Could not add tool {tool}: {e}")
 
                 # Set tools on the model
@@ -2172,8 +2170,8 @@ class Agent:
         self,
         session_id: str,
         async_mode: bool = False,
-        user_id: Optional[str] = None,
-        knowledge_filters: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        knowledge_filters: dict[str, Any] | None = None,
     ) -> None:
         self.set_default_model()
 
@@ -2252,7 +2250,7 @@ class Agent:
                     result = value(agent=self) if "agent" in sig.parameters else value()
                     if result is not None:
                         self.context[key] = result
-                except Exception as e:
+                except (ValueError, TypeError, Exception) as e:
                     log_warning(f"Failed to resolve context for '{key}': {e}")
             else:
                 self.context[key] = value
@@ -2278,11 +2276,11 @@ class Agent:
                     result = await result
 
                 self.context[key] = result
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_warning(f"Failed to resolve context for '{key}': {e}")
 
-    def get_agent_data(self) -> Dict[str, Any]:
-        agent_data: Dict[str, Any] = {}
+    def get_agent_data(self) -> dict[str, Any]:
+        agent_data: dict[str, Any] = {}
         if self.name is not None:
             agent_data["name"] = self.name
         if self.agent_id is not None:
@@ -2291,8 +2289,8 @@ class Agent:
             agent_data["model"] = self.model.to_dict()
         return agent_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state is not None and len(self.session_state) > 0:
@@ -2311,7 +2309,7 @@ class Agent:
             session_data["audio"] = [aud.model_dump() for aud in self.audio]  # type: ignore
         return session_data
 
-    def get_agent_session(self, session_id: str, user_id: Optional[str] = None) -> AgentSession:
+    def get_agent_session(self, session_id: str, user_id: str | None = None) -> AgentSession:
         from time import time
 
         """Get an AgentSession object, which can be saved to the database"""
@@ -2462,26 +2460,26 @@ class Agent:
                             self.memory.runs = []
                             for run in session.memory["runs"]:
                                 self.memory.runs.append(AgentRun.model_validate(run))
-                        except Exception as e:
+                        except (ValueError, TypeError, KeyError, Exception) as e:
                             log_warning(f"Failed to load runs from memory: {e}")
                     if "messages" in session.memory:
                         try:
                             self.memory.messages = [Message.model_validate(m) for m in session.memory["messages"]]
-                        except Exception as e:
+                        except (ValueError, TypeError, KeyError, Exception) as e:
                             log_warning(f"Failed to load messages from memory: {e}")
                     if "summary" in session.memory:
                         from agno.memory.summary import SessionSummary
 
                         try:
                             self.memory.summary = SessionSummary.model_validate(session.memory["summary"])
-                        except Exception as e:
+                        except (ValueError, TypeError, KeyError, Exception) as e:
                             log_warning(f"Failed to load session summary from memory: {e}")
                     if "memories" in session.memory:
                         from agno.memory.memory import Memory as UserMemory
 
                         try:
                             self.memory.memories = [UserMemory.model_validate(m) for m in session.memory["memories"]]
-                        except Exception as e:
+                        except (ValueError, TypeError, KeyError, Exception) as e:
                             log_warning(f"Failed to load user memories: {e}")
                     if self.memory.create_user_memories:
                         if self.user_id is not None and self.memory.user_id is None:
@@ -2492,7 +2490,7 @@ class Agent:
                             log_debug(f"Memories loaded for user: {self.user_id}")
                         else:
                             log_debug("Memories loaded")
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, Exception) as e:
                     log_warning(f"Failed to load AgentMemory: {e}")
             elif isinstance(self.memory, Memory):
                 if "runs" in session.memory:
@@ -2506,7 +2504,7 @@ class Agent:
                                 self.memory.runs[run_session_id].append(TeamRunResponse.from_dict(run))
                             else:
                                 self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                    except Exception as e:
+                    except (ValueError, TypeError, KeyError, Exception) as e:
                         log_warning(f"Failed to load runs from memory: {e}")
                 if "memories" in session.memory:
                     from agno.memory.v2.memory import UserMemory as UserMemoryV2
@@ -2524,7 +2522,7 @@ class Agent:
                                 }
                                 for user_id, user_memories in session.memory["memories"].items()
                             }
-                    except Exception as e:
+                    except (ValueError, TypeError, KeyError, Exception) as e:
                         log_warning(f"Failed to load user memories: {e}")
                 if "summaries" in session.memory:
                     from agno.memory.v2.memory import SessionSummary as SessionSummaryV2
@@ -2537,7 +2535,7 @@ class Agent:
                             }
                             for user_id, user_session_summaries in session.memory["summaries"].items()
                         }
-                    except Exception as e:
+                    except (ValueError, TypeError, KeyError, Exception) as e:
                         log_warning(f"Failed to load session summaries: {e}")
         log_debug(f"-*- AgentSession loaded: {session.session_id}")
 
@@ -2643,9 +2641,7 @@ class Agent:
         if self.model is not None:
             self.model.clear()
         if self.memory is not None:
-            if isinstance(self.memory, AgentMemory):
-                self.memory.clear()
-            elif isinstance(self.memory, Memory):
+            if isinstance(self.memory, AgentMemory) or isinstance(self.memory, Memory):
                 self.memory.clear()
         self.session_id = str(uuid4())
         self.load_session(force=True)
@@ -3250,7 +3246,7 @@ class Agent:
         # Do not copy agent_session and session_name to the new agent
         excluded_fields = ["agent_session", "session_name"]
         # Extract the fields to set for the new Agent
-        fields_for_new_agent: Dict[str, Any] = {}
+        fields_for_new_agent: dict[str, Any] = {}
 
         for f in fields(self):
             if f.name in excluded_fields:
@@ -3276,18 +3272,7 @@ class Agent:
             return field_value.deep_copy()
 
         # For storage, model and reasoning_model, use a deep copy
-        elif field_name in ("storage", "model", "reasoning_model"):
-            try:
-                return deepcopy(field_value)
-            except Exception:
-                try:
-                    return copy(field_value)
-                except Exception as e:
-                    log_warning(f"Failed to copy field: {field_name} - {e}")
-                    return field_value
-
-        # For compound types, attempt a deep copy
-        elif isinstance(field_value, (list, dict, set)):
+        elif field_name in ("storage", "model", "reasoning_model") or isinstance(field_value, (list, dict, set)):
             try:
                 return deepcopy(field_value)
             except Exception:
@@ -3301,10 +3286,10 @@ class Agent:
         elif isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception:
+            except (ValueError, TypeError, Exception):
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except (ValueError, TypeError, Exception) as e:
                     log_warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -3313,11 +3298,11 @@ class Agent:
             from copy import copy
 
             return copy(field_value)
-        except Exception:
+        except (ValueError, TypeError, Exception):
             # If copy fails, return as is
             return field_value
 
-    def get_transfer_function(self, member_agent: Agent, index: int, session_id: Optional[str] = None) -> Function:
+    def get_transfer_function(self, member_agent: Agent, index: int, session_id: str | None = None) -> Function:
         def _transfer_task_to_agent(
             task_description: str, expected_output: str, additional_information: Optional[str] = None
         ) -> Iterator[str]:
@@ -3336,7 +3321,7 @@ class Agent:
                     member_agent_task += (
                         f"\n\n<additional_information>\n{additional_information}\n</additional_information>"
                     )
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_warning(f"Failed to add additional information to the member agent: {e}")
 
             member_agent_session_id = member_agent.session_id
@@ -3370,14 +3355,14 @@ class Agent:
                 elif issubclass(type(member_agent_run_response.content), BaseModel):
                     try:
                         yield member_agent_run_response.content.model_dump_json(indent=2)
-                    except Exception as e:
+                    except (ValueError, TypeError, Exception) as e:
                         yield str(e)
                 else:
                     try:
                         import json
 
                         yield json.dumps(member_agent_run_response.content, indent=2)
-                    except Exception as e:
+                    except (ValueError, TypeError, Exception) as e:
                         yield str(e)
             yield self.team_response_separator
 
@@ -3435,8 +3420,8 @@ class Agent:
         return ""
 
     def get_relevant_docs_from_knowledge(
-        self, query: str, num_documents: Optional[int] = None, filters: Optional[Dict[str, Any]] = None, **kwargs
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, query: str, num_documents: int | None = None, filters: dict[str, Any] | None = None, **kwargs
+    ) -> list[dict[str, Any]] | None:
         """Get relevant docs from the knowledge base to answer a query.
 
         Args:
@@ -3469,14 +3454,14 @@ class Agent:
 
             try:
                 sig = signature(self.retriever)
-                retriever_kwargs: Dict[str, Any] = {}
+                retriever_kwargs: dict[str, Any] = {}
                 if "agent" in sig.parameters:
                     retriever_kwargs = {"agent": self}
                 if "filters" in sig.parameters:
                     retriever_kwargs["filters"] = filters
                 retriever_kwargs.update({"query": query, "num_documents": num_documents, **kwargs})
                 return self.retriever(**retriever_kwargs)
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_warning(f"Retriever failed: {e}")
                 return None
 
@@ -3489,7 +3474,7 @@ class Agent:
                 num_documents = self.knowledge.num_documents
 
             log_debug(f"Searching knowledge base with filters: {filters}")
-            relevant_docs: List[Document] = self.knowledge.search(
+            relevant_docs: list[Document] = self.knowledge.search(
                 query=query, num_documents=num_documents, filters=filters, **kwargs
             )
 
@@ -3498,7 +3483,7 @@ class Agent:
                 return None
 
             return [doc.to_dict() for doc in relevant_docs]
-        except Exception as e:
+        except (ValueError, TypeError, Exception) as e:
             log_warning(f"Error searching knowledge base: {e}")
             return None
 
@@ -3538,7 +3523,7 @@ class Agent:
                     result = await result
 
                 return result
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_warning(f"Retriever failed: {e}")
                 return None
 
@@ -3560,7 +3545,7 @@ class Agent:
                 return None
 
             return [doc.to_dict() for doc in relevant_docs]
-        except Exception as e:
+        except (ValueError, TypeError, Exception) as e:
             log_warning(f"Error searching knowledge base: {e}")
             return None
 
@@ -3602,18 +3587,18 @@ class Agent:
                     # Try to serialize each value individually
                     json.dumps({key: value}, default=str)
                     sanitized_context[key] = value
-                except Exception:
+                except (ValueError, TypeError, Exception):
                     # If serialization fails, convert to string representation
                     sanitized_context[key] = str(value)
 
             try:
                 return json.dumps(sanitized_context, indent=2)
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_error(f"Failed to convert sanitized context to JSON: {e}")
                 return str(context)
 
     def save_run_response_to_file(
-        self, message: Optional[Union[str, List, Dict, Message]] = None, session_id: Optional[str] = None
+        self, message: str | list | dict | Message | None = None, session_id: str | None = None
     ) -> None:
         if self.save_response_to_file is not None and self.run_response is not None:
             message_str = None
@@ -3641,11 +3626,11 @@ class Agent:
                     import json
 
                     fn_path.write_text(json.dumps(self.run_response.content, indent=2))
-            except Exception as e:
+            except (ValueError, TypeError, Exception) as e:
                 log_warning(f"Failed to save output to file: {e}")
 
     def update_run_response_with_reasoning(
-        self, reasoning_steps: List[ReasoningStep], reasoning_agent_messages: List[Message]
+        self, reasoning_steps: list[ReasoningStep], reasoning_agent_messages: list[Message]
     ) -> None:
         self.run_response = cast(RunResponse, self.run_response)
         if self.run_response.extra_data is None:
@@ -3896,7 +3881,7 @@ class Agent:
 
         return updated_reasoning_content
 
-    def reason(self, run_messages: RunMessages, session_id: Optional[str] = None) -> Iterator[RunResponse]:
+    def reason(self, run_messages: RunMessages, session_id: str | None = None) -> Iterator[RunResponse]:
         # Yield a reasoning started event
         if self.stream_intermediate_steps:
             yield self.create_run_response(
@@ -3909,7 +3894,7 @@ class Agent:
         use_default_reasoning = False
 
         # Get the reasoning model
-        reasoning_model: Optional[Model] = self.reasoning_model
+        reasoning_model: Model | None = self.reasoning_model
         reasoning_model_provided = reasoning_model is not None
         if reasoning_model is None and self.model is not None:
             from copy import deepcopy
@@ -3938,7 +3923,7 @@ class Agent:
             is_ai_foundry = is_ai_foundry_reasoning_model(reasoning_model)
 
             if is_deepseek or is_groq or is_openai or is_ollama or is_ai_foundry:
-                reasoning_message: Optional[Message] = None
+                reasoning_message: Message | None = None
                 if is_deepseek:
                     from agno.reasoning.deepseek import get_deepseek_reasoning
 
@@ -4004,7 +3989,7 @@ class Agent:
             from agno.reasoning.helpers import get_next_action, update_messages_with_reasoning
 
             # Get default reasoning agent
-            reasoning_agent: Optional[Agent] = self.reasoning_agent  # type: ignore
+            reasoning_agent: Agent | None = self.reasoning_agent  # type: ignore
             if reasoning_agent is None:
                 reasoning_agent = get_default_reasoning_agent(
                     reasoning_model=reasoning_model,
@@ -4034,8 +4019,8 @@ class Agent:
 
             step_count = 1
             next_action = NextAction.CONTINUE
-            reasoning_messages: List[Message] = []
-            all_reasoning_steps: List[ReasoningStep] = []
+            reasoning_messages: list[Message] = []
+            all_reasoning_steps: list[ReasoningStep] = []
             log_debug("Starting Reasoning", center=True, symbol="=")
             while next_action == NextAction.CONTINUE and step_count < self.reasoning_max_steps:
                 log_debug(f"Step {step_count}", center=True, symbol="=")
@@ -4055,7 +4040,7 @@ class Agent:
                         log_warning("Reasoning error. Reasoning steps are empty, continuing regular session...")
                         break
 
-                    reasoning_steps: List[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
+                    reasoning_steps: list[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
                     all_reasoning_steps.extend(reasoning_steps)
                     # Yield reasoning steps
                     if self.stream_intermediate_steps:
@@ -4086,7 +4071,7 @@ class Agent:
                     next_action = get_next_action(reasoning_steps[-1])
                     if next_action == NextAction.FINAL_ANSWER:
                         break
-                except Exception as e:
+                except (ValueError, TypeError, Exception) as e:
                     log_error(f"Reasoning error: {e}")
                     break
 
@@ -4323,7 +4308,7 @@ class Agent:
     # Default Tools
     ###########################################################################
 
-    def get_update_user_memory_function(self, user_id: Optional[str] = None, async_mode: bool = False) -> Callable:
+    def get_update_user_memory_function(self, user_id: str | None = None, async_mode: bool = False) -> Callable:
         def update_user_memory(task: str) -> str:
             """Use this function to submit a task to modify the Agent's memory.
             Describe the task in detail and be specific.
@@ -4361,7 +4346,7 @@ class Agent:
             return update_user_memory
 
     def get_chat_history_function(self, session_id: str) -> Callable:
-        def get_chat_history(num_chats: Optional[int] = None) -> str:
+        def get_chat_history(num_chats: int | None = None) -> str:
             """Use this function to get the chat history between the user and agent.
 
             Args:
@@ -4380,7 +4365,7 @@ class Agent:
             """
             import json
 
-            history: List[Dict[str, Any]] = []
+            history: list[dict[str, Any]] = []
             if isinstance(self.memory, AgentMemory):
                 agent_chats = self.memory.get_message_pairs()
 
@@ -4445,7 +4430,7 @@ class Agent:
         return get_tool_call_history
 
     def search_knowledge_base_function(
-        self, knowledge_filters: Optional[Dict[str, Any]] = None, async_mode: bool = False
+        self, knowledge_filters: dict[str, Any] | None = None, async_mode: bool = False
     ) -> Callable:
         """Factory function to create a search_knowledge_base function with filters."""
         # Determine which filters to use
@@ -4745,10 +4730,10 @@ class Agent:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
+        except (ValueError, TypeError, Exception) as e:
             log_debug(f"Could not create agent event: {e}")
 
-    async def _alog_agent_run(self, session_id: str, user_id: Optional[str] = None) -> None:
+    async def _alog_agent_run(self, session_id: str, user_id: str | None = None) -> None:
         self.set_monitoring()
 
         if not self.telemetry and not self.monitoring:
@@ -4781,25 +4766,25 @@ class Agent:
 
     def print_response(
         self,
-        message: Optional[Union[List, Dict, str, Message]] = None,
+        message: list | dict | str | Message | None = None,
         *,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        messages: Optional[List[Union[Dict, Message]]] = None,
-        audio: Optional[Sequence[Audio]] = None,
-        images: Optional[Sequence[Image]] = None,
-        videos: Optional[Sequence[Video]] = None,
-        files: Optional[Sequence[File]] = None,
-        stream: Optional[bool] = None,
+        session_id: str | None = None,
+        user_id: str | None = None,
+        messages: list[dict | Message] | None = None,
+        audio: Sequence[Audio] | None = None,
+        images: Sequence[Image] | None = None,
+        videos: Sequence[Video] | None = None,
+        files: Sequence[File] | None = None,
+        stream: bool | None = None,
         stream_intermediate_steps: bool = False,
         markdown: bool = False,
         show_message: bool = True,
         show_reasoning: bool = True,
         show_full_reasoning: bool = False,
-        console: Optional[Any] = None,
+        console: Any | None = None,
         # Add tags to include in markdown content
-        tags_to_include_in_markdown: Set[str] = {"think", "thinking"},
-        knowledge_filters: Optional[Dict[str, Any]] = None,
+        tags_to_include_in_markdown: set[str] = {"think", "thinking"},
+        knowledge_filters: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
         import json
@@ -4824,7 +4809,7 @@ class Agent:
         if stream:
             _response_content: str = ""
             _response_thinking: str = ""
-            reasoning_steps: List[ReasoningStep] = []
+            reasoning_steps: list[ReasoningStep] = []
 
             with Live(console=console) as live_log:
                 status = Status("Thinking...", spinner="aesthetic", speed=0.4, refresh_per_second=10)
@@ -4872,7 +4857,7 @@ class Agent:
                         if resp.extra_data is not None and resp.extra_data.reasoning_steps is not None:
                             reasoning_steps = resp.extra_data.reasoning_steps
 
-                    response_content_stream: Union[str, Markdown] = _response_content
+                    response_content_stream: str | Markdown = _response_content
 
                     # Escape special tags before markdown conversion
                     if self.markdown:
@@ -5066,16 +5051,14 @@ class Agent:
                         if step.result is not None:
                             step_content.append(Text.from_markup(step.result, style="dim"))
 
-                        if show_full_reasoning:
-                            # Add detailed reasoning information if available
-                            if step.reasoning is not None:
-                                step_content.append(
-                                    Text.from_markup(f"\n[bold]Reasoning:[/bold] {step.reasoning}", style="dim")
-                                )
-                            if step.confidence is not None:
-                                step_content.append(
-                                    Text.from_markup(f"\n[bold]Confidence:[/bold] {step.confidence}", style="dim")
-                                )
+                        if show_full_reasoning and step.reasoning is not None:
+                            step_content.append(
+                                Text.from_markup(f"\n[bold]Reasoning:[/bold] {step.reasoning}", style="dim")
+                            )
+                        if show_full_reasoning and step.confidence is not None:
+                            step_content.append(
+                                Text.from_markup(f"\n[bold]Confidence:[/bold] {step.confidence}", style="dim")
+                            )
                         reasoning_panel = create_panel(
                             content=step_content, title=f"Reasoning step {i}", border_style="green"
                         )
@@ -5107,7 +5090,7 @@ class Agent:
                     panels.append(tool_calls_panel)
                     live_log.update(Group(*panels))
 
-                response_content_batch: Union[str, JSON, Markdown] = ""
+                response_content_batch: str | JSON | Markdown = ""
                 if isinstance(run_response, RunResponse):
                     if isinstance(run_response.content, str):
                         if self.markdown:
@@ -5120,12 +5103,12 @@ class Agent:
                             response_content_batch = JSON(
                                 run_response.content.model_dump_json(exclude_none=True), indent=2
                             )
-                        except Exception as e:
+                        except (ValueError, TypeError, Exception) as e:
                             log_warning(f"Failed to convert response to JSON: {e}")
                     else:
                         try:
                             response_content_batch = JSON(json.dumps(run_response.content), indent=4)
-                        except Exception as e:
+                        except (ValueError, TypeError, Exception) as e:
                             log_warning(f"Failed to convert response to JSON: {e}")
 
                 # Create panel for response
@@ -5308,16 +5291,14 @@ class Agent:
                             if step.result is not None:
                                 step_content.append(Text.from_markup(step.result, style="dim"))
 
-                            if show_full_reasoning:
-                                # Add detailed reasoning information if available
-                                if step.reasoning is not None:
-                                    step_content.append(
-                                        Text.from_markup(f"\n[bold]Reasoning:[/bold] {step.reasoning}", style="dim")
-                                    )
-                                if step.confidence is not None:
-                                    step_content.append(
-                                        Text.from_markup(f"\n[bold]Confidence:[/bold] {step.confidence}", style="dim")
-                                    )
+                            if show_full_reasoning and step.reasoning is not None:
+                                step_content.append(
+                                    Text.from_markup(f"\n[bold]Reasoning:[/bold] {step.reasoning}", style="dim")
+                                )
+                            if show_full_reasoning and step.confidence is not None:
+                                step_content.append(
+                                    Text.from_markup(f"\n[bold]Confidence:[/bold] {step.confidence}", style="dim")
+                                )
                             reasoning_panel = create_panel(
                                 content=step_content, title=f"Reasoning step {i}", border_style="green"
                             )
@@ -5712,7 +5693,7 @@ class Agent:
             # Log the error but don't crash
             from agno.utils.log import log_error
 
-            log_error(f"Failed to add reasoning metrics to extra_data: {str(e)}")
+            log_error(f"Failed to add reasoning metrics to extra_data: {e!s}")
 
     def _get_effective_filters(self, knowledge_filters: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """

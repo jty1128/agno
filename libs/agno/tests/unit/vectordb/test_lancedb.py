@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import List
 
 import pytest
 
@@ -34,7 +33,7 @@ def lance_db(mock_embedder):
 
 
 @pytest.fixture
-def sample_documents() -> List[Document]:
+def sample_documents() -> list[Document]:
     """Fixture to create sample documents"""
     return [
         Document(
@@ -77,8 +76,8 @@ def test_vector_search(lance_db, sample_documents):
     import json
 
     found = False
-    for _, row in results.iterrows():
-        payload = json.loads(row["payload"])
+    for row in results.itertuples():
+        payload = json.loads(row.payload)
         if "coconut" in payload["content"].lower():
             found = True
             break

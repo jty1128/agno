@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Literal, Optional
+from typing import Literal
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -23,7 +25,7 @@ class OpenAITools(Toolkit):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         enable_transcription: bool = True,
         enable_image_generation: bool = True,
         enable_speech_generation: bool = True,
@@ -31,7 +33,7 @@ class OpenAITools(Toolkit):
         text_to_speech_voice: OpenAIVoice = "alloy",
         text_to_speech_model: OpenAITTSModel = "tts-1",
         text_to_speech_format: OpenAITTSFormat = "mp3",
-        image_model: Optional[str] = "dall-e-3",
+        image_model: str | None = "dall-e-3",
         **kwargs,
     ):
         super().__init__(name="openai_tools", **kwargs)
@@ -61,16 +63,15 @@ class OpenAITools(Toolkit):
         """
         log_debug(f"Transcribing audio from {audio_path}")
         try:
-            audio_file = open(audio_path, "rb")
-
-            transcript = OpenAIClient().audio.transcriptions.create(
-                model=self.transcription_model,
-                file=audio_file,
-                response_format="text",
-            )
-        except Exception as e:  # type: ignore[return]
-            log_error(f"Failed to transcribe audio: {str(e)}")
-            return f"Failed to transcribe audio: {str(e)}"
+            with open(audio_path, "rb") as audio_file:
+                transcript = OpenAIClient().audio.transcriptions.create(
+                    model=self.transcription_model,
+                    file=audio_file,
+                    response_format="text",
+                )
+        except OpenAIError as e:
+            log_error(f"Failed to transcribe audio: {e!s}")
+            return f"Failed to transcribe audio: {e!s}"
 
         log_debug(f"Transcript: {transcript}")
         return transcript  # type: ignore[return-value]
@@ -105,9 +106,9 @@ class OpenAITools(Toolkit):
                 log_warning("OpenAI API did not return an image URL.")
                 return "Failed to generate image: No URL received from API."
 
-        except Exception as e:
-            log_error(f"Failed to generate image using {self.image_model}: {str(e)}")
-            return f"Failed to generate image: {str(e)}"
+        except OpenAIError as e:
+            log_error(f"Failed to generate image using {self.image_model}: {e!s}")
+            return f"Failed to generate image: {e!s}"
 
     def generate_speech(
         self,
@@ -143,5 +144,5 @@ class OpenAITools(Toolkit):
                 )
             )
             return f"Speech generated successfully with ID: {media_id}"
-        except Exception as e:
-            return f"Failed to generate speech: {str(e)}"
+        except OpenAIError as e:
+            return f"Failed to generate speech: {e!s}"

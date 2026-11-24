@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -164,9 +163,9 @@ class Workflow:
         try:
             self._subclass_run = cast(Callable, self._subclass_run)
             result = self._subclass_run(**kwargs)
-        except Exception as e:
-            logger.error(f"Workflow.run() failed: {e}")
-            raise e
+        except Exception:
+            logger.error("Workflow.run() failed")
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -329,8 +328,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -339,8 +338,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -465,21 +464,21 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
-                    log_warning(f"Failed to load runs from memory: {e}")
+                except Exception:
+                    log_warning("Failed to load runs from memory")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
-                            logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
-                    logger.warning(f"Failed to load WorkflowMemory: {e}")
+                        except Exception:
+                            logger.warning("Failed to load runs from memory")
+                except Exception:
+                    logger.warning("Failed to load WorkflowMemory")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
-    def read_from_storage(self) -> Optional[WorkflowSession]:
+    def read_from_storage(self) -> WorkflowSession | None:
         """Load the WorkflowSession from storage.
 
         Returns:

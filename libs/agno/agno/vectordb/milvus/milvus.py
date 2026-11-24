@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     import asyncio
@@ -132,15 +134,15 @@ class Milvus(VectorDb):
         Args:
             document (Document): Document to validate
         """
-        if self.client:
-            cleaned_content = document.content.replace("\x00", "\ufffd")
-            doc_id = md5(cleaned_content.encode()).hexdigest()
-            collection_points = self.client.get(
-                collection_name=self.collection,
-                ids=[doc_id],
-            )
-            return len(collection_points) > 0
-        return False
+        if not self.client:
+            return False
+        cleaned_content = document.content.replace("\x00", "\ufffd")
+        doc_id = md5(cleaned_content.encode()).hexdigest()
+        collection_points = self.client.get(
+            collection_name=self.collection,
+            ids=[doc_id],
+        )
+        return len(collection_points) > 0
 
     async def async_doc_exists(self, document: Document) -> bool:
         """
@@ -165,24 +167,24 @@ class Milvus(VectorDb):
         Returns:
             bool: True if a document with the given name exists, False otherwise.
         """
-        if self.client:
-            expr = f"name == '{name}'"
-            scroll_result = self.client.query(
-                collection_name=self.collection,
-                filter=expr,
-                limit=1,
-            )
-            return len(scroll_result[0]) > 0
-        return False
+        if not self.client:
+            return False
+        expr = f"name == '{name}'"
+        scroll_result = self.client.query(
+            collection_name=self.collection,
+            filter=expr,
+            limit=1,
+        )
+        return len(scroll_result[0]) > 0
 
     def id_exists(self, id: str) -> bool:
-        if self.client:
-            collection_points = self.client.get(
-                collection_name=self.collection,
-                ids=[id],
-            )
-            return len(collection_points) > 0
-        return False
+        if not self.client:
+            return False
+        collection_points = self.client.get(
+            collection_name=self.collection,
+            ids=[id],
+        )
+        return len(collection_points) > 0
 
     def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
         """

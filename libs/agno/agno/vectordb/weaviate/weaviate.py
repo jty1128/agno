@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import uuid
 from hashlib import md5
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from warnings import filterwarnings
@@ -116,7 +118,7 @@ class Weaviate(VectorDb):
             await self.async_client.connect()  # type: ignore
 
         if not await self.async_client.is_ready():  # type: ignore
-            raise Exception("Weaviate async client is not ready")
+            raise RuntimeError("Weaviate async client is not ready")
 
         return self.async_client  # type: ignore
 
@@ -318,11 +320,11 @@ class Weaviate(VectorDb):
                     log_debug(f"Inserted document asynchronously: {document.name}")
 
                 except Exception as e:
-                    logger.error(f"Error inserting document {document.name}: {str(e)}")
+                    logger.error(f"Error inserting document {document.name}: {e!s}")
         finally:
             await client.close()
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Upsert documents into Weaviate.
 
@@ -333,7 +335,7 @@ class Weaviate(VectorDb):
         log_debug(f"Upserting {len(documents)} documents into Weaviate.")
         self.insert(documents)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Upsert documents into Weaviate asynchronously.
         When documents with the same ID already exist, they will be replaced.
@@ -377,7 +379,7 @@ class Weaviate(VectorDb):
         finally:
             await client.close()
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Perform a search based on the configured search type.
 
@@ -399,9 +401,7 @@ class Weaviate(VectorDb):
             logger.error(f"Invalid search type '{self.search_type}'.")
             return []
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Perform a search based on the configured search type asynchronously.
 
@@ -423,7 +423,7 @@ class Weaviate(VectorDb):
             logger.error(f"Invalid search type '{self.search_type}'.")
             return []
 
-    def vector_search(self, query: str, limit: int = 5) -> List[Document]:
+    def vector_search(self, query: str, limit: int = 5) -> list[Document]:
         """
         Perform a vector search in Weaviate.
 
@@ -447,7 +447,7 @@ class Weaviate(VectorDb):
             include_vector=True,
         )
 
-        search_results: List[Document] = self.get_search_results(response)
+        search_results: list[Document] = self.get_search_results(response)
 
         if self.reranker:
             search_results = self.reranker.rerank(query=query, documents=search_results)
@@ -455,7 +455,7 @@ class Weaviate(VectorDb):
         self.get_client().close()
         return search_results
 
-    async def async_vector_search(self, query: str, limit: int = 5) -> List[Document]:
+    async def async_vector_search(self, query: str, limit: int = 5) -> list[Document]:
         """
         Perform a vector search in Weaviate asynchronously.
 
@@ -656,7 +656,6 @@ class Weaviate(VectorDb):
 
     def optimize(self) -> None:
         """Optimize the vector database (e.g., rebuild indexes)."""
-        pass
 
     def delete(self) -> bool:
         """Delete all records from the database."""

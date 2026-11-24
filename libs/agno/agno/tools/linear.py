@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Optional
 
 import requests
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
+
+
+class LinearError(Exception):
+    """Exception raised for errors in the Linear API interactions."""
 
 
 class LinearTools(Toolkit):
@@ -55,7 +60,7 @@ class LinearTools(Toolkit):
 
             if "errors" in data:
                 logger.error(f"GraphQL Error: {data['errors']}")
-                raise Exception(f"GraphQL Error: {data['errors']}")
+                raise LinearError(f"GraphQL Error: {data['errors']}")
 
             log_info("GraphQL query executed successfully.")
             return data.get("data")
@@ -251,11 +256,11 @@ class LinearTools(Toolkit):
                 logger.error(f"Failed to update issue ID {issue_id}. Success flag was false.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error updating issue ID {issue_id}: {e}")
+        except Exception:
+            logger.error(f"Error updating issue ID {issue_id}")
             raise
 
-    def get_user_assigned_issues(self, user_id: str) -> Optional[str]:
+    def get_user_assigned_issues(self, user_id: str) -> str | None:
         """
         Retrieve issues assigned to a specific user by user ID.
 
@@ -299,11 +304,11 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve user or issues.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error retrieving issues for user ID {user_id}: {e}")
+        except Exception:
+            logger.error(f"Error retrieving issues for user ID {user_id}")
             raise
 
-    def get_workflow_issues(self, workflow_id: str) -> Optional[str]:
+    def get_workflow_issues(self, workflow_id: str) -> str | None:
         """
         Retrieve issues within a specific workflow state by workflow ID.
 
@@ -342,11 +347,11 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve issues for the specified workflow state.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error retrieving issues for workflow state ID {workflow_id}: {e}")
+        except Exception:
+            logger.error(f"Error retrieving issues for workflow state ID {workflow_id}")
             raise
 
-    def get_high_priority_issues(self) -> Optional[str]:
+    def get_high_priority_issues(self) -> str | None:
         """
         Retrieve issues with a high priority (priority <= 2).
 

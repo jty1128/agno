@@ -1,17 +1,18 @@
+from __future__ import annotations
+
 from time import perf_counter
-from typing import Optional
 
 
 class Timer:
     """Timer class for timing code execution"""
 
     def __init__(self):
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
-        self.elapsed_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+        self.elapsed_time: float | None = None
 
     @property
-    def elapsed(self) -> float:
+    def elapsed(self) -> float | None:
         return self.elapsed_time or (perf_counter() - self.start_time) if self.start_time else 0.0
 
     def start(self) -> float:

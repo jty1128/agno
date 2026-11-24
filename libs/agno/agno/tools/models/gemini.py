@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import base64
 import time
 from os import getenv
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -56,7 +58,7 @@ class GeminiTools(Toolkit):
         try:
             self.client = Client(**client_params)
             log_debug("Google GenAI Client created successfully.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to create Google GenAI Client: {e}", exc_info=True)
             raise ValueError(f"Failed to create Google GenAI Client. Error: {e}")
 
@@ -104,9 +106,9 @@ class GeminiTools(Toolkit):
                     )
                 )
                 log_debug(f"Successfully generated image {media_id} with model {self.image_model}")
-            return "Image generated successfully"
+            return f"Image generated successfully with ID: {media_id}"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate image: Client or method not available ({e})")
             return f"Failed to generate image: Client or method not available ({e})"
 
@@ -159,7 +161,7 @@ class GeminiTools(Toolkit):
                     )
                 )
                 log_debug(f"Successfully generated video {media_id} with model {self.video_model}")
-            return "Video generated successfully"
-        except Exception as e:
+            return f"Video generated successfully with ID: {media_id}"
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate video: {e}")
             return f"Failed to generate video: {e}"
