@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Optional
 from uuid import uuid4
 
 from agno.tools import Toolkit
@@ -70,8 +71,8 @@ class LocalFileSystemTools(Toolkit):
 
             return f"Successfully wrote file to: {file_path}"
 
-        except Exception as e:
-            error_msg = f"Failed to write file: {str(e)}"
+        except OSError as e:
+            error_msg = f"Failed to write file: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
 

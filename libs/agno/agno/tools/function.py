@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, get_type_hints
+from typing import Any, Callable, TypeVar, get_type_hints
 
 from docstring_parser import parse
 from pydantic import BaseModel, Field, validate_call
@@ -89,7 +91,7 @@ class Function(BaseModel):
         return self.model_dump(exclude_none=True, include={"name", "description", "parameters", "strict"})
 
     @classmethod
-    def from_callable(cls, c: Callable, strict: bool = False) -> "Function":
+    def from_callable(cls, c: Callable, strict: bool = False) -> Function:
         from inspect import getdoc, isasyncgenfunction, signature
 
         from agno.utils.json_schema import get_json_schema
@@ -115,7 +117,7 @@ class Function(BaseModel):
             }
 
             # Parse docstring for parameters
-            param_descriptions: Dict[str, Any] = {}
+            param_descriptions: dict[str, Any] = {}
             if docstring := getdoc(c):
                 parsed_doc = parse(docstring)
                 param_docs = parsed_doc.params
@@ -147,14 +149,14 @@ class Function(BaseModel):
                 ]
 
             # log_debug(f"JSON schema for {function_name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {function_name}: {e}", exc_info=True)
 
         # Don't wrap async generator with validate_call
         if isasyncgenfunction(c):
             entrypoint = c
         else:
-            entrypoint = validate_call(c, config=dict(arbitrary_types_allowed=True))  # type: ignore
+            entrypoint = validate_call(c, config={"arbitrary_types_allowed": True})  # type: ignore
         return cls(
             name=function_name,
             description=get_entrypoint_docstring(entrypoint=c),
@@ -248,7 +250,7 @@ class Function(BaseModel):
                     ]
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
 
         self.description = self.description or get_entrypoint_docstring(self.entrypoint)
@@ -258,8 +260,8 @@ class Function(BaseModel):
         try:
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
-                self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
+                self.entrypoint = validate_call(self.entrypoint, config={"arbitrary_types_allowed": True})  # type: ignore
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to add validate decorator to entrypoint: {e}")
 
     def process_schema_for_strict(self):
@@ -328,7 +330,7 @@ class Function(BaseModel):
         func_cache_dir.mkdir(parents=True, exist_ok=True)
         return str(func_cache_dir / f"{cache_key}.json")
 
-    def _get_cached_result(self, cache_file: str) -> Optional[Any]:
+    def _get_cached_result(self, cache_file: str) -> Any | None:
         """Retrieve cached result if valid."""
         import json
         from pathlib import Path
@@ -350,7 +352,7 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error reading cache: {e}")
 
         return None
@@ -363,7 +365,7 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error writing cache: {e}")
 
 
@@ -429,7 +431,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -454,7 +456,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
@@ -576,7 +578,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
@@ -609,7 +611,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -635,7 +637,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
@@ -763,7 +765,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)

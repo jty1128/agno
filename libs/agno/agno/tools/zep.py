@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from os import getenv
 from textwrap import dedent
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_error, log_warning
@@ -111,7 +112,15 @@ class ZepTools(Toolkit):
             self._initialized = True
             return True
 
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             log_error(f"Failed to initialize ZepTools: {e}")
             self.zep_client = None
             self._initialized = False
@@ -147,7 +156,15 @@ class ZepTools(Toolkit):
                 ignore_roles=ignore_roles_list,
             )
             return f"Message from '{role}' added successfully to session {self.session_id}."
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             error_msg = f"Failed to add message to Zep session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error adding message: {e}"
@@ -186,7 +203,15 @@ class ZepTools(Toolkit):
                 log_warning(warning_msg)
                 return warning_msg
 
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             log_error(f"Failed to get Zep memory for session {self.session_id}: {e}")
             return f"Error getting memory for session {self.session_id}"
 
@@ -199,14 +224,14 @@ class ZepTools(Toolkit):
         Returns:
             A string of the search result
         """
-        results: List = []
+        results: list = []
         search_result = ""
         if not self.zep_client or not self.user_id or not self.session_id:
             log_error("Zep client or user ID or session ID not initialized. Cannot search memory.")
             return "Error: Zep client/user/session not initialized."
 
         try:
-            search_response: List[MemorySearchResult] = self.zep_client.memory.search(
+            search_response: list[MemorySearchResult] = self.zep_client.memory.search(
                 text=query, session_id=self.session_id, search_scope=search_scope
             )
             results = [
@@ -221,7 +246,15 @@ class ZepTools(Toolkit):
                 if response.message is not None
             ]
             log_debug(f"Memory search found {len(results)} relevant messages.")
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             log_error(f"Failed to search Zep graph memory for user {self.user_id}: {e}")
 
         if results is not None and results != []:
@@ -270,15 +303,15 @@ class ZepAsyncTools(Toolkit):
         if instructions is None:
             self.instructions = "<Memory Instructions>\n" + DEFAULT_INSTRUCTIONS + "\n</Memory Instructions>"
 
-        self.zep_client: Optional[AsyncZep] = None
+        self.zep_client: AsyncZep | None = None
         self._initialized = False
 
         self.session_id_provided = session_id
         self.user_id_provided = user_id
         self.ignore_assistant_messages = ignore_assistant_messages
 
-        self.session_id: Optional[str] = None
-        self.user_id: Optional[str] = None
+        self.session_id: str | None = None
+        self.user_id: str | None = None
 
         self._initialized = False
 
@@ -327,7 +360,15 @@ class ZepAsyncTools(Toolkit):
             self._initialized = True
             return True
 
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             log_error(f"Failed to initialize ZepTools: {e}")
             self.zep_client = None
             self._initialized = False
@@ -366,7 +407,15 @@ class ZepAsyncTools(Toolkit):
                 ignore_roles=ignore_roles_list,
             )
             return f"Message from '{role}' added successfully to session {self.session_id}."
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             error_msg = f"Failed to add message to Zep session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error adding message: {e}"
@@ -407,7 +456,15 @@ class ZepAsyncTools(Toolkit):
                 log_warning(warning_msg)
                 return warning_msg
 
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             error_msg = f"Failed to get Zep memory for session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error getting memory: {e}"
@@ -424,7 +481,7 @@ class ZepAsyncTools(Toolkit):
         if not self._initialized:
             await self.initialize()
 
-        results: List = []
+        results: list = []
         search_result = ""
 
         if not self.zep_client or not self.user_id or not self.session_id:
@@ -432,7 +489,7 @@ class ZepAsyncTools(Toolkit):
             return "Error: Zep client/user/session not initialized."
 
         try:
-            search_response: List[MemorySearchResult] = await self.zep_client.memory.search(
+            search_response: list[MemorySearchResult] = await self.zep_client.memory.search(
                 text=query, session_id=self.session_id, search_scope=search_scope
             )
 
@@ -449,7 +506,15 @@ class ZepAsyncTools(Toolkit):
             ]
 
             log_debug(f"Memory search found {len(results)} relevant messages.")
-        except Exception as e:
+        except (
+            APIError,
+            AuthError,
+            BadRequestError,
+            NotFoundError,
+            RateLimitError,
+            APIConnectionError,
+            APITimeoutError,
+        ) as e:
             log_error(f"Failed to search Zep graph memory for user {self.user_id}: {e}")
 
         if results is not None and results != []:

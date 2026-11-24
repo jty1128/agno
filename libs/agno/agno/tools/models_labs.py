@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Any, Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -56,9 +58,9 @@ class ModelsLabTools(Toolkit):
 
         self.register(self.generate_media)
 
-    def _create_payload(self, prompt: str) -> Dict[str, Any]:
+    def _create_payload(self, prompt: str) -> dict[str, Any]:
         """Create payload based on file type."""
-        base_payload: Dict[str, Any] = {
+        base_payload: dict[str, Any] = {
             "key": self.api_key,
             "prompt": prompt,
             "webhook": None,

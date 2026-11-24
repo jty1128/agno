@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Optional
 
 from agno.tools import Toolkit
 
@@ -60,4 +61,4 @@ class ScrapeGraphTools(Toolkit):
             response = self.client.markdownify(website_url=url)
             return response["result"]
         except Exception as e:
-            return f"Error converting to markdown: {str(e)}"
+            return "Error converting to markdown: " + str(e)

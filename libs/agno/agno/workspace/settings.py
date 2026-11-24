@@ -17,17 +17,17 @@ class WorkspaceSettings(BaseSettings):
     # Path to the workspace root
     ws_root: Path
     # Workspace git repo url
-    ws_repo: Optional[str] = None
+    ws_repo: str | None = None
     # default env for agno ws commands
-    default_env: Optional[str] = "dev"
+    default_env: str | None = "dev"
     # default infra for agno ws commands
-    default_infra: Optional[str] = None
+    default_infra: str | None = None
 
     # Image Settings
     # Repository for images
     image_repo: str = "agnohq"
     # 'name:tag' for the image
-    image_name: Optional[str] = None
+    image_name: str | None = None
     # If True, build images locally
     build_images: bool = False
     # If True, push images after building
@@ -39,15 +39,15 @@ class WorkspaceSettings(BaseSettings):
 
     # Development Settings
     dev_env: str = "dev"
-    dev_key: Optional[str] = None
+    dev_key: str | None = None
 
     # Staging Settings
     stg_env: str = "stg"
-    stg_key: Optional[str] = None
+    stg_key: str | None = None
 
     # Production Settings
     prd_env: str = "prd"
-    prd_key: Optional[str] = None
+    prd_key: str | None = None
 
     # ag cli settings
     # Set to True if Agno should continue creating

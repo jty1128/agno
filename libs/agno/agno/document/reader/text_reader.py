@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from pathlib import Path
-from typing import IO, Any, List, Union
+from typing import IO, Any, Union
 
 from agno.document.base import Document
 from agno.document.reader.base import Reader
@@ -11,7 +11,7 @@ from agno.utils.log import log_info, logger
 class TextReader(Reader):
     """Reader for Text files"""
 
-    def read(self, file: Union[Path, IO[Any]]) -> List[Document]:
+    def read(self, file: Union[Path, IO[Any]]) -> list[Document]:
         try:
             if isinstance(file, Path):
                 if not file.exists():
@@ -38,11 +38,11 @@ class TextReader(Reader):
                     chunked_documents.extend(self.chunk_document(document))
                 return chunked_documents
             return documents
-        except Exception as e:
+        except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
             logger.error(f"Error reading: {file}: {e}")
             return []
 
-    async def async_read(self, file: Union[Path, IO[Any]]) -> List[Document]:
+    async def async_read(self, file: Union[Path, IO[Any]]) -> list[Document]:
         try:
             if isinstance(file, Path):
                 if not file.exists():
@@ -74,11 +74,11 @@ class TextReader(Reader):
             if self.chunk:
                 return await self._async_chunk_document(document)
             return [document]
-        except Exception as e:
+        except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
             logger.error(f"Error reading asynchronously: {file}: {e}")
             return []
 
-    async def _async_chunk_document(self, document: Document) -> List[Document]:
+    async def _async_chunk_document(self, document: Document) -> list[Document]:
         if not self.chunk or not document:
             return [document]
 

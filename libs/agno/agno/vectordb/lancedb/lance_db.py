@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import lancedb
@@ -122,7 +124,7 @@ class LanceDb(VectorDb):
                 import tantivy  # noqa: F401
             except ImportError:
                 raise ImportError(
-                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."  # noqa: E501
+                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."
                 )
 
         log_debug(f"Initialized LanceDb with table: '{self.table_name}'")
@@ -168,8 +170,8 @@ class LanceDb(VectorDb):
         schema = self._base_schema()
 
         log_info(f"Creating table: {self.table_name}")
-        tbl = self.connection.create_table(self.table_name, schema=schema, mode="overwrite", exist_ok=True)  # type: ignore
-        return tbl  # type: ignore
+        tbl = self.connection.create_table(self.table_name, schema=schema, mode="overwrite", exist_ok=True)
+        return tbl
 
     def doc_exists(self, document: Document) -> bool:
         """
@@ -184,7 +186,7 @@ class LanceDb(VectorDb):
                 doc_id = md5(cleaned_content.encode()).hexdigest()
                 result = self.table.search().where(f"{self._id}='{doc_id}'").to_arrow()
                 return len(result) > 0
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Search sometimes fails with stale cache data, it means the doc doesn't exist
             return False
 
@@ -204,7 +206,7 @@ class LanceDb(VectorDb):
             self.table = self.connection.open_table(name=self.table_name)
         return self.doc_exists(document)
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Insert documents into the database.
 
@@ -255,7 +257,7 @@ class LanceDb(VectorDb):
 
         log_debug(f"Inserted {len(data)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Asynchronously insert documents into the database.
 
@@ -309,7 +311,7 @@ class LanceDb(VectorDb):
             logger.error(f"Error during async document insertion: {e}")
             raise
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Upsert documents into the database.
 
@@ -319,10 +321,10 @@ class LanceDb(VectorDb):
         """
         self.insert(documents)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         await self.async_insert(documents, filters)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         if self.connection:
             self.table = self.connection.open_table(name=self.table_name)
         if self.search_type == SearchType.vector:
@@ -335,9 +337,7 @@ class LanceDb(VectorDb):
             logger.error(f"Invalid search type '{self.search_type}'.")
             return []
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Asynchronously search for documents matching the query.
 
@@ -362,7 +362,7 @@ class LanceDb(VectorDb):
             logger.error(f"Invalid search type '{self.search_type}'.")
             return []
 
-    def vector_search(self, query: str, limit: int = 5) -> List[Document]:
+    def vector_search(self, query: str, limit: int = 5) -> list[Document]:
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             logger.error(f"Error getting embedding for Query: {query}")
@@ -389,7 +389,7 @@ class LanceDb(VectorDb):
 
         return search_results
 
-    def hybrid_search(self, query: str, limit: int = 5) -> List[Document]:
+    def hybrid_search(self, query: str, limit: int = 5) -> list[Document]:
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             logger.error(f"Error getting embedding for Query: {query}")
@@ -423,7 +423,7 @@ class LanceDb(VectorDb):
 
         return search_results
 
-    def keyword_search(self, query: str, limit: int = 5) -> List[Document]:
+    def keyword_search(self, query: str, limit: int = 5) -> list[Document]:
         if self.table is None:
             logger.error("Table not initialized. Please create the table first")
             return []
@@ -445,8 +445,8 @@ class LanceDb(VectorDb):
             search_results = self.reranker.rerank(query=query, documents=search_results)
         return search_results
 
-    def _build_search_results(self, results) -> List[Document]:  # TODO: typehint pandas?
-        search_results: List[Document] = []
+    def _build_search_results(self, results) -> list[Document]:  # TODO: typehint pandas?
+        search_results: list[Document] = []
         try:
             for _, item in results.iterrows():
                 payload = json.loads(item["payload"])
@@ -461,7 +461,7 @@ class LanceDb(VectorDb):
                     )
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building search results: {e}")
 
         return search_results
@@ -519,7 +519,7 @@ class LanceDb(VectorDb):
 
             # Check if the name exists in any of the payloads
             return any(payload.get("name") == name for payload in payloads)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking name existence: {e}")
             return False
 

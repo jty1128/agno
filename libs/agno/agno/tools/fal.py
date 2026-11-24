@@ -2,6 +2,8 @@
 pip install fal-client
 """
 
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional, Union
 from uuid import uuid4
