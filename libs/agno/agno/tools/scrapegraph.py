@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 from typing import Optional
@@ -45,8 +47,8 @@ class ScrapeGraphTools(Toolkit):
         try:
             response = self.client.smartscraper(website_url=url, user_prompt=prompt)
             return json.dumps(response["result"])
-        except Exception as e:
-            return json.dumps({"error": str(e)})
+        except Exception:
+            return json.dumps({"error": "An unexpected error occurred"})
 
     def markdownify(self, url: str) -> str:
         """Use this function to convert a webpage to markdown format.
@@ -59,5 +61,5 @@ class ScrapeGraphTools(Toolkit):
         try:
             response = self.client.markdownify(website_url=url)
             return response["result"]
-        except Exception as e:
-            return f"Error converting to markdown: {str(e)}"
+        except Exception:
+            return "Error converting to markdown: An unexpected error occurred"

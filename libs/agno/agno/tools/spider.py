@@ -1,5 +1,7 @@
 import json
 
+from __future__ import annotations
+
 try:
     from spider import Spider as ExternalSpider
 except ImportError:
@@ -66,7 +68,7 @@ class SpiderTools(Toolkit):
             return json.dumps(results)
         except Exception as e:
             logger.error(f"Error fetching results from spider: {e}")
-            return f"Error fetching results from spider: {e}"
+            return f"Error fetching results from spider: {e}"  # noqa: BLE001
 
     def _scrape(self, url: str) -> str:
         app = ExternalSpider()
@@ -77,7 +79,7 @@ class SpiderTools(Toolkit):
             return json.dumps(results)
         except Exception as e:
             logger.error(f"Error fetching content from spider: {e}")
-            return f"Error fetching content from spider: {e}"
+            return f"Error fetching content from spider: {e}"  # noqa: BLE001
 
     def _crawl(self, url: str, limit: Optional[int] = None) -> str:
         app = ExternalSpider()

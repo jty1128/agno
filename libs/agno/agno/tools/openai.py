@@ -61,16 +61,15 @@ class OpenAITools(Toolkit):
         """
         log_debug(f"Transcribing audio from {audio_path}")
         try:
-            audio_file = open(audio_path, "rb")
-
-            transcript = OpenAIClient().audio.transcriptions.create(
-                model=self.transcription_model,
-                file=audio_file,
-                response_format="text",
-            )
-        except Exception as e:  # type: ignore[return]
-            log_error(f"Failed to transcribe audio: {str(e)}")
-            return f"Failed to transcribe audio: {str(e)}"
+            with open(audio_path, "rb") as audio_file:
+                transcript = OpenAIClient().audio.transcriptions.create(
+                    model=self.transcription_model,
+                    file=audio_file,
+                    response_format="text",
+                )
+        except Exception as e:  # noqa: BLE001
+            log_error(f"Failed to transcribe audio: {e!s}")
+            return f"Failed to transcribe audio: {e!s}"
 
         log_debug(f"Transcript: {transcript}")
         return transcript  # type: ignore[return-value]
@@ -105,9 +104,9 @@ class OpenAITools(Toolkit):
                 log_warning("OpenAI API did not return an image URL.")
                 return "Failed to generate image: No URL received from API."
 
-        except Exception as e:
-            log_error(f"Failed to generate image using {self.image_model}: {str(e)}")
-            return f"Failed to generate image: {str(e)}"
+        except Exception as e:  # noqa: BLE001
+            log_error(f"Failed to generate image using {self.image_model}: {e!s}")
+            return f"Failed to generate image: {e!s}"
 
     def generate_speech(
         self,
@@ -144,4 +143,4 @@ class OpenAITools(Toolkit):
             )
             return f"Speech generated successfully with ID: {media_id}"
         except Exception as e:
-            return f"Failed to generate speech: {str(e)}"
+            return f"Failed to generate speech: {e!s}"

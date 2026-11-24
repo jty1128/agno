@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import time
 import uuid
 from os import getenv
-from typing import Any, Dict, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional, TypedDict
 
 from agno.agent import Agent
 from agno.media import VideoArtifact
@@ -71,7 +73,7 @@ class LumaLabTools(Toolkit):
 
         try:
             # Construct keyframes
-            keyframes: Dict[str, Dict[str, str]] = {"frame0": {"type": "image", "url": start_image_url}}
+            keyframes: dict[str, dict[str, str]] = {"frame0": {"type": "image", "url": start_image_url}}
 
             # Add end image if provided
             if end_image_url:
@@ -112,7 +114,7 @@ class LumaLabTools(Toolkit):
 
             return f"Video generation timed out after {self.max_wait_time} seconds"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate video: {e}")
             return f"Error: {e}"
 
@@ -127,7 +129,7 @@ class LumaLabTools(Toolkit):
         """Use this function to generate a video given a prompt."""
 
         try:
-            generation_params: Dict[str, Any] = {
+            generation_params: dict[str, Any] = {
                 "prompt": prompt,
                 "loop": loop,
                 "aspect_ratio": aspect_ratio,

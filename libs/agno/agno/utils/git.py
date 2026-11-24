@@ -3,6 +3,8 @@ from typing import Optional
 
 import git
 
+from __future__ import annotations
+
 from agno.utils.log import log_debug
 
 

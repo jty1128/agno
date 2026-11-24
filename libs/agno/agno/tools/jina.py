@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Dict, Optional
 
 import httpx
 from pydantic import BaseModel, Field, HttpUrl
@@ -52,8 +53,8 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error reading URL: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error reading URL: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -66,12 +67,12 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error performing search: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error performing search: {e!s}"
             logger.error(error_msg)
             return error_msg
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         headers = {
             "Accept": "application/json",
             "X-With-Links-Summary": "true",

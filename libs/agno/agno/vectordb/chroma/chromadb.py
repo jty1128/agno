@@ -1,6 +1,6 @@
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -126,8 +126,8 @@ class ChromaDb(VectorDb):
         if self.client:
             try:
                 collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                for col in collections:  # type: ignore
+                    if name in col:
                         return True
             except Exception as e:
                 logger.error(f"Document with given name does not exist: {e}")

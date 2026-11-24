@@ -1,5 +1,6 @@
 import json
-from typing import AsyncIterable, Iterable, Union
+from collections.abc import AsyncIterable, Iterable
+from typing import Union
 
 from pydantic import BaseModel
 

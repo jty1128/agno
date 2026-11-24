@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Dict, List, Optional, Union
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -102,7 +103,7 @@ class RedditTools(Toolkit):
             # Verify authentication by checking if we can get the authenticated user
             self.reddit.user.me()
             return True
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             logger.error(f"Authentication error: {e}")
             return False
 
@@ -127,7 +128,7 @@ class RedditTools(Toolkit):
 
             return json.dumps(info)
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting user info: {e}"
 
     def get_top_posts(self, subreddit: str, time_filter: str = "week", limit: int = 10) -> str:
@@ -162,7 +163,7 @@ class RedditTools(Toolkit):
                 for post in posts
             ]
             return json.dumps({"top_posts": top_posts})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting top posts: {e}"
 
     def get_subreddit_info(self, subreddit_name: str) -> str:
@@ -195,7 +196,7 @@ class RedditTools(Toolkit):
 
             return json.dumps(info)
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting subreddit info: {e}"
 
     def get_trending_subreddits(self) -> str:
@@ -208,7 +209,7 @@ class RedditTools(Toolkit):
             popular_subreddits = self.reddit.subreddits.popular(limit=5)
             trending: List[str] = [subreddit.display_name for subreddit in popular_subreddits]
             return json.dumps({"trending_subreddits": trending})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting trending subreddits: {e}"
 
     def get_subreddit_stats(self, subreddit: str) -> str:
@@ -235,7 +236,7 @@ class RedditTools(Toolkit):
                 "public_description": sub.public_description,
             }
             return json.dumps({"subreddit_stats": stats})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting subreddit stats: {e}"
 
     def create_post(
@@ -300,7 +301,7 @@ class RedditTools(Toolkit):
 
             return json.dumps({"post": post_info})
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error creating post: {e}"
 
     def reply_to_post(self, post_id: str, content: str, subreddit: Optional[str] = None) -> str:
@@ -381,8 +382,8 @@ class RedditTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-        except Exception as e:
-            error_msg = f"Error creating reply: {str(e)}"
+        except praw.exceptions.PRAWException as e:
+            error_msg = f"Error creating reply: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -455,8 +456,8 @@ class RedditTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-        except Exception as e:
-            error_msg = f"Error creating reply: {str(e)}"
+        except praw.exceptions.PRAWException as e:
+            error_msg = f"Error creating reply: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -476,6 +477,6 @@ class RedditTools(Toolkit):
             _ = submission.title
             _ = submission.author
             return True
-        except Exception as e:
-            logger.error(f"Error checking post existence: {str(e)}")
+        except praw.exceptions.PRAWException as e:
+            logger.error(f"Error checking post existence: {e!s}")
             return False

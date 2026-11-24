@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Any, Dict, List, Optional
@@ -117,7 +119,7 @@ class ExaTools(Toolkit):
                 try:
                     if result.highlights:  # type: ignore
                         result_dict["highlights"] = result.highlights  # type: ignore
-                except Exception as e:
+                except AttributeError as e:
                     log_debug(f"Failed to get highlights {e}")
                     result_dict["highlights"] = f"Failed to get highlights {e}"
             exa_results_parsed.append(result_dict)

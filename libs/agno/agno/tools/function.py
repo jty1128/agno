@@ -248,7 +248,7 @@ class Function(BaseModel):
                     ]
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
 
         self.description = self.description or get_entrypoint_docstring(self.entrypoint)
@@ -259,7 +259,7 @@ class Function(BaseModel):
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
                 self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to add validate decorator to entrypoint: {e}")
 
     def process_schema_for_strict(self):
@@ -350,7 +350,7 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error reading cache: {e}")
 
         return None
@@ -363,7 +363,7 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error writing cache: {e}")
 
 
@@ -429,7 +429,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -454,7 +454,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
@@ -576,7 +576,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
@@ -609,7 +609,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -635,7 +635,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 

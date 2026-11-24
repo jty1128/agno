@@ -2,6 +2,15 @@ import json
 from hashlib import md5
 from typing import Any, Dict, List, Optional
 
+from agno.document import Document
+from agno.embedder import Embedder
+from agno.reranker.base import Reranker
+
+# from agno.vectordb.singlestore.index import Ivfflat, HNSWFlat
+from agno.utils.log import log_debug, log_info, logger
+from agno.vectordb.base import VectorDb
+from agno.vectordb.distance import Distance
+
 try:
     from sqlalchemy.dialects import mysql
     from sqlalchemy.engine import Engine, create_engine
@@ -13,14 +22,8 @@ try:
 except ImportError:
     raise ImportError("`sqlalchemy` not installed")
 
-from agno.document import Document
-from agno.embedder import Embedder
-from agno.reranker.base import Reranker
 
 # from agno.vectordb.singlestore.index import Ivfflat, HNSWFlat
-from agno.utils.log import log_debug, log_info, logger
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
 
 
 class SingleStore(VectorDb):
@@ -119,7 +122,7 @@ class SingleStore(VectorDb):
         log_debug(f"Checking if table exists: {self.table.name}")
         try:
             return inspect(self.db_engine).has_table(self.table.name, schema=self.schema)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(e)
             return False
 

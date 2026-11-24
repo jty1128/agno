@@ -48,7 +48,7 @@ import json
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 
@@ -190,7 +190,7 @@ class GoogleSheetsTools(Toolkit):
             token_file.write_text(self.creds.to_json()) if self.creds else None
 
     @authenticate
-    def read_sheet(self, spreadsheet_id: Optional[str] = None, spreadsheet_range: Optional[str] = None) -> str:
+    def read_sheet(self, spreadsheet_id: str | None = None, spreadsheet_range: str | None = None) -> str:
         """
         Read values from a Google Sheet. Prioritizes instance attributes over method parameters.
 
@@ -282,7 +282,7 @@ class GoogleSheetsTools(Toolkit):
 
     @authenticate
     def create_duplicate_sheet(
-        self, source_id: str, new_title: Optional[str] = None, copy_permissions: bool = True
+        self, source_id: str, new_title: str | None = None, copy_permissions: bool = True
     ) -> str:
         """Duplicate a Google Spreadsheet using the Google Drive API's copy feature.
         This ensures an exact duplicate including formatting and data.
