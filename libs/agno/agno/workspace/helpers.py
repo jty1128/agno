@@ -45,4 +45,4 @@ def get_workspace_dir_path(ws_root_path: Path) -> Path:
                 return agno_conf_workspace_dir_path
 
     logger.error(f"Could not find a workspace at: {ws_root_path}")
-    exit(0)
+    raise Exception(f"Could not find a workspace at: {ws_root_path}")

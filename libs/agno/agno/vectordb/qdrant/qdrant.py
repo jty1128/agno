@@ -2,7 +2,7 @@ from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -75,7 +75,7 @@ class Qdrant(VectorDb):
         self.reranker: Optional[Reranker] = reranker
 
         # Qdrant client kwargs
-        self.kwargs = kwargs
+        self.kwargs: dict[str, Any] = kwargs
 
     @property
     def client(self) -> QdrantClient:
@@ -261,7 +261,7 @@ class Qdrant(VectorDb):
             self.client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upsert {len(points)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Insert documents asynchronously.
 
@@ -378,7 +378,7 @@ class Qdrant(VectorDb):
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results:
             if result.payload is None:
                 continue
@@ -448,7 +448,7 @@ class Qdrant(VectorDb):
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results:
             if result.payload is None:
                 continue
@@ -482,7 +482,7 @@ class Qdrant(VectorDb):
     def exists(self) -> bool:
         if self.client:
             collections_response: models.CollectionsResponse = self.client.get_collections()
-            collections: List[models.CollectionDescription] = collections_response.collections
+            collections: list[models.CollectionDescription] = collections_response.collections
             for collection in collections:
                 if collection.name == self.collection:
                     # collection.status == models.CollectionStatus.GREEN
@@ -492,7 +492,7 @@ class Qdrant(VectorDb):
     async def async_exists(self) -> bool:
         """Check if the collection exists asynchronously."""
         collections_response = await self.async_client.get_collections()
-        collections: List[models.CollectionDescription] = collections_response.collections
+        collections: list[models.CollectionDescription] = collections_response.collections
         for collection in collections:
             if collection.name == self.collection:
                 return True

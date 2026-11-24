@@ -3,7 +3,9 @@ from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Union
+
+from typing_extensions import Self
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -25,9 +27,9 @@ class SSEClientParams:
     """Parameters for SSE client connection."""
 
     url: str
-    headers: Optional[Dict[str, Any]] = None
-    timeout: Optional[float] = 5
-    sse_read_timeout: Optional[float] = 60 * 5
+    headers: dict[str, Any] | None = None
+    timeout: float | None = 5
+    sse_read_timeout: float | None = 60 * 5
 
 
 @dataclass
@@ -35,10 +37,10 @@ class StreamableHTTPClientParams:
     """Parameters for Streamable HTTP client connection."""
 
     url: str
-    headers: Optional[Dict[str, Any]] = None
-    timeout: Optional[timedelta] = timedelta(seconds=30)
-    sse_read_timeout: Optional[timedelta] = timedelta(seconds=60 * 5)
-    terminate_on_close: Optional[bool] = None
+    headers: dict[str, Any] | None = None
+    timeout: timedelta | None = timedelta(seconds=30)
+    sse_read_timeout: timedelta | None = timedelta(seconds=60 * 5)
+    terminate_on_close: bool | None = None
 
 
 class MCPTools(Toolkit):
@@ -54,17 +56,17 @@ class MCPTools(Toolkit):
 
     def __init__(
         self,
-        command: Optional[str] = None,
+        command: str | None = None,
         *,
-        url: Optional[str] = None,
-        env: Optional[dict[str, str]] = None,
+        url: str | None = None,
+        env: dict[str, str] | None = None,
         transport: Literal["stdio", "sse", "streamable-http"] = "stdio",
-        server_params: Optional[Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams]] = None,
-        session: Optional[ClientSession] = None,
+        server_params: Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams] | None = None,
+        session: ClientSession | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -89,39 +91,36 @@ class MCPTools(Toolkit):
         self.include_tools = include_tools
         self.exclude_tools = exclude_tools
 
-        if session is None and server_params is None:
-            if transport == "sse" and url is None:
-                raise ValueError("One of 'url' or 'server_params' parameters must be provided when using SSE transport")
-            if transport == "stdio" and command is None:
-                raise ValueError(
-                    "One of 'command' or 'server_params' parameters must be provided when using stdio transport"
-                )
-            if transport == "streamable-http" and url is None:
-                raise ValueError(
-                    "One of 'url' or 'server_params' parameters must be provided when using Streamable HTTP transport"
-                )
+        if session is None and server_params is None and transport == "sse" and url is None:
+            raise ValueError("One of 'url' or 'server_params' parameters must be provided when using SSE transport")
+        if session is None and server_params is None and transport == "stdio" and command is None:
+            raise ValueError(
+                "One of 'command' or 'server_params' parameters must be provided when using stdio transport"
+            )
+        if session is None and server_params is None and transport == "streamable-http" and url is None:
+            raise ValueError(
+                "One of 'url' or 'server_params' parameters must be provided when using Streamable HTTP transport"
+            )
 
         # Ensure the received server_params are valid for the given transport
-        if server_params is not None:
-            if transport == "sse":
-                if not isinstance(server_params, SSEClientParams):
-                    raise ValueError(
-                        "If using the SSE transport, server_params must be an instance of SSEClientParams."
-                    )
-            elif transport == "stdio":
-                if not isinstance(server_params, StdioServerParameters):
-                    raise ValueError(
-                        "If using the stdio transport, server_params must be an instance of StdioServerParameters."
-                    )
-            elif transport == "streamable-http":
-                if not isinstance(server_params, StreamableHTTPClientParams):
-                    raise ValueError(
-                        "If using the streamable-http transport, server_params must be an instance of StreamableHTTPClientParams."
-                    )
+        if server_params is not None and transport == "sse" and not isinstance(server_params, SSEClientParams):
+            raise ValueError("If using the SSE transport, server_params must be an instance of SSEClientParams.")
+        if server_params is not None and transport == "stdio" and not isinstance(server_params, StdioServerParameters):
+            raise ValueError(
+                "If using the stdio transport, server_params must be an instance of StdioServerParameters."
+            )
+        if (
+            server_params is not None
+            and transport == "streamable-http"
+            and not isinstance(server_params, StreamableHTTPClientParams)
+        ):
+            raise ValueError(
+                "If using the streamable-http transport, server_params must be an instance of StreamableHTTPClientParams."
+            )
 
         self.timeout_seconds = timeout_seconds
-        self.session: Optional[ClientSession] = session
-        self.server_params: Optional[Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams]] = (
+        self.session: ClientSession | None = session
+        self.server_params: Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams] | None = (
             server_params
         )
         self.transport = transport
@@ -151,7 +150,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> Self:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -171,9 +170,9 @@ class MCPTools(Toolkit):
             if "url" not in streamable_http_params:
                 streamable_http_params["url"] = self.url
             self._context = streamablehttp_client(**streamable_http_params)
+        elif self.transport == "stdio" and self.server_params is None:
+            raise ValueError("server_params must be provided when using stdio transport.")
         elif self.transport == "stdio":
-            if self.server_params is None:
-                raise ValueError("server_params must be provided when using stdio transport.")
             self._context = stdio_client(self.server_params)  # type: ignore
 
         session_params = await self._context.__aenter__()  # type: ignore
@@ -246,12 +245,12 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError) as e:
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.error(f"Failed to get MCP tools: {e}")
             raise
 
@@ -269,18 +268,17 @@ class MultiMCPTools(Toolkit):
 
     def __init__(
         self,
-        commands: Optional[List[str]] = None,
-        urls: Optional[List[str]] = None,
-        urls_transports: Optional[List[Literal["sse", "streamable-http"]]] = None,
+        commands: list[str] | None = None,
+        urls: list[str] | None = None,
+        urls_transports: list[Literal["sse", "streamable-http"]] | None = None,
         *,
-        env: Optional[dict[str, str]] = None,
-        server_params_list: Optional[
-            List[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]]
-        ] = None,
+        env: dict[str, str] | None = None,
+        server_params_list: list[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]]
+        | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -299,14 +297,12 @@ class MultiMCPTools(Toolkit):
         """
         super().__init__(name="MultiMCPTools", **kwargs)
 
-        if urls is not None:
-            if urls_transports is None:
-                log_warning(
-                    "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
-                )
-            else:
-                if len(urls) != len(urls_transports):
-                    raise ValueError("urls and urls_transports must be of the same length")
+        if urls is not None and urls_transports is None:
+            log_warning(
+                "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
+            )
+        if urls is not None and urls_transports is not None and len(urls) != len(urls_transports):
+            raise ValueError("urls and urls_transports must be of the same length")
 
         # Set these after `__init__` to bypass the `_check_tools_filters`
         # beacuse tools are not available until `initialize()` is called.
@@ -316,12 +312,12 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]] = (
+        self.server_params_list: list[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]] = (
             server_params_list or []
         )
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: list[str] | None = commands
+        self.urls: list[str] | None = urls
         # Merge provided env with system env
         if env is not None:
             env = {
@@ -357,7 +353,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> Self:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -391,9 +387,9 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ):
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
@@ -435,11 +431,11 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError) as e:
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.error(f"Failed to get MCP tools: {e}")
             raise

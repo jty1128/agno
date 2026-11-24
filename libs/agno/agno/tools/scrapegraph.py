@@ -44,7 +44,7 @@ class ScrapeGraphTools(Toolkit):
 
         try:
             response = self.client.smartscraper(website_url=url, user_prompt=prompt)
-            return json.dumps(response["result"])
+            return f"{response['result']}"
         except Exception as e:
             return json.dumps({"error": str(e)})
 
@@ -60,4 +60,4 @@ class ScrapeGraphTools(Toolkit):
             response = self.client.markdownify(website_url=url)
             return response["result"]
         except Exception as e:
-            return f"Error converting to markdown: {str(e)}"
+            return f"Error converting to markdown: {e!s}"
