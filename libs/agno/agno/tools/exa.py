@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -117,7 +119,7 @@ class ExaTools(Toolkit):
                 try:
                     if result.highlights:  # type: ignore
                         result_dict["highlights"] = result.highlights  # type: ignore
-                except Exception as e:
+                except AttributeError as e:
                     log_debug(f"Failed to get highlights {e}")
                     result_dict["highlights"] = f"Failed to get highlights {e}"
             exa_results_parsed.append(result_dict)
@@ -163,7 +165,7 @@ class ExaTools(Toolkit):
             if self.show_results:
                 log_info(parsed_results)
             return parsed_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to search exa {e}")
             return f"Error: {e}"
 
@@ -195,7 +197,7 @@ class ExaTools(Toolkit):
                 log_info(parsed_results)
 
             return parsed_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get contents from Exa: {e}")
             return f"Error: {e}"
 
@@ -235,7 +237,7 @@ class ExaTools(Toolkit):
                 log_info(parsed_results)
 
             return parsed_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get similar links from Exa: {e}")
             return f"Error: {e}"
 
@@ -255,7 +257,7 @@ class ExaTools(Toolkit):
         try:
             if self.show_results:
                 log_info(f"Generating answer for query: {query}")
-            answer_kwargs: Dict[str, Any] = {
+            answer_kwargs: dict[str, Any] = {
                 "model": self.model,
                 "text": text,
             }
@@ -280,6 +282,6 @@ class ExaTools(Toolkit):
 
             return json.dumps(result, indent=4)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get answer from Exa: {e}")
             return f"Error: {e}"

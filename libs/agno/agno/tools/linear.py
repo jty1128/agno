@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional
 
@@ -5,6 +7,10 @@ import requests
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
+
+
+class LinearError(Exception):
+    """Exception raised for errors in Linear API interactions."""
 
 
 class LinearTools(Toolkit):
@@ -55,7 +61,7 @@ class LinearTools(Toolkit):
 
             if "errors" in data:
                 logger.error(f"GraphQL Error: {data['errors']}")
-                raise Exception(f"GraphQL Error: {data['errors']}")
+                raise LinearError(f"GraphQL Error: {data['errors']}")
 
             log_info("GraphQL query executed successfully.")
             return data.get("data")

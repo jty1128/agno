@@ -1,7 +1,7 @@
 import asyncio
 from hashlib import md5
 from math import sqrt
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, cast
 
 try:
     from sqlalchemy.dialects import postgresql
@@ -41,18 +41,18 @@ class PgVector(VectorDb):
         self,
         table_name: str,
         schema: str = "ai",
-        db_url: Optional[str] = None,
-        db_engine: Optional[Engine] = None,
-        embedder: Optional[Embedder] = None,
+        db_url: str | None = None,
+        db_engine: Engine | None = None,
+        embedder: Embedder | None = None,
         search_type: SearchType = SearchType.vector,
-        vector_index: Union[Ivfflat, HNSW] = HNSW(),
+        vector_index: Ivfflat | HNSW | None = None,
         distance: Distance = Distance.cosine,
         prefix_match: bool = False,
         vector_score_weight: float = 0.5,
         content_language: str = "english",
         schema_version: int = 1,
         auto_upgrade_schema: bool = False,
-        reranker: Optional[Reranker] = None,
+        reranker: Reranker | None = None,
     ):
         """
         Initialize the PgVector instance.
@@ -60,11 +60,11 @@ class PgVector(VectorDb):
         Args:
             table_name (str): Name of the table to store vector data.
             schema (str): Database schema name.
-            db_url (Optional[str]): Database connection URL.
-            db_engine (Optional[Engine]): SQLAlchemy database engine.
-            embedder (Optional[Embedder]): Embedder instance for creating embeddings.
+            db_url (str | None): Database connection URL.
+            db_engine (Engine | None): SQLAlchemy database engine.
+            embedder (Embedder | None): Embedder instance for creating embeddings.
             search_type (SearchType): Type of search to perform.
-            vector_index (Union[Ivfflat, HNSW]): Vector index configuration.
+            vector_index (Ivfflat | HNSW | None): Vector index configuration.
             distance (Distance): Distance metric for vector comparisons.
             prefix_match (bool): Enable prefix matching for full-text search.
             vector_score_weight (float): Weight for vector similarity in hybrid search.
@@ -83,14 +83,14 @@ class PgVector(VectorDb):
                 raise ValueError("Must provide 'db_url' if 'db_engine' is None.")
             try:
                 db_engine = create_engine(db_url)
-            except Exception as e:
-                logger.error(f"Failed to create engine from 'db_url': {e}")
+            except Exception:
+                logger.exception("Failed to create engine from 'db_url'")
                 raise
 
         # Database settings
         self.table_name: str = table_name
         self.schema: str = schema
-        self.db_url: Optional[str] = db_url
+        self.db_url: str | None = db_url
         self.db_engine: Engine = db_engine
         self.metadata: MetaData = MetaData(schema=self.schema)
 
@@ -101,7 +101,7 @@ class PgVector(VectorDb):
             embedder = OpenAIEmbedder()
             log_info("Embedder not provided, using OpenAIEmbedder as default.")
         self.embedder: Embedder = embedder
-        self.dimensions: Optional[int] = self.embedder.dimensions
+        self.dimensions: int | None = self.embedder.dimensions
 
         if self.dimensions is None:
             raise ValueError("Embedder.dimensions must be set.")
@@ -111,7 +111,9 @@ class PgVector(VectorDb):
         # Distance metric
         self.distance: Distance = distance
         # Index for the table
-        self.vector_index: Union[Ivfflat, HNSW] = vector_index
+        if vector_index is None:
+            vector_index = HNSW()
+        self.vector_index: Ivfflat | HNSW = vector_index
         # Enable prefix matching for full-text search
         self.prefix_match: bool = prefix_match
         # Weight for the vector similarity score in hybrid search
@@ -125,7 +127,7 @@ class PgVector(VectorDb):
         self.auto_upgrade_schema: bool = auto_upgrade_schema
 
         # Reranker instance
-        self.reranker: Optional[Reranker] = reranker
+        self.reranker: Reranker | None = reranker
 
         # Database session
         self.Session: scoped_session = scoped_session(sessionmaker(bind=self.db_engine))
@@ -187,8 +189,8 @@ class PgVector(VectorDb):
         log_debug(f"Checking if table '{self.table.fullname}' exists.")
         try:
             return inspect(self.db_engine).has_table(self.table_name, schema=self.schema)
-        except Exception as e:
-            logger.error(f"Error checking if table exists: {e}")
+        except Exception:
+            logger.exception("Error checking if table exists")
             return False
 
     def create(self) -> None:
@@ -225,8 +227,8 @@ class PgVector(VectorDb):
                 stmt = select(1).where(column == value).limit(1)
                 result = sess.execute(stmt).first()
                 return result is not None
-        except Exception as e:
-            logger.error(f"Error checking if record exists: {e}")
+        except Exception:
+            logger.exception("Error checking if record exists")
             return False
 
     def doc_exists(self, document: Document) -> bool:
@@ -289,16 +291,16 @@ class PgVector(VectorDb):
 
     def insert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
         batch_size: int = 100,
     ) -> None:
         """
         Insert documents into the database.
 
         Args:
-            documents (List[Document]): List of documents to insert.
-            filters (Optional[Dict[str, Any]]): Filters to apply to the documents.
+            documents (list[Document]): List of documents to insert.
+            filters (dict[str, Any] | None): Filters to apply to the documents.
             batch_size (int): Number of documents to insert in each batch.
         """
         try:
@@ -326,23 +328,23 @@ class PgVector(VectorDb):
                                     "content_hash": content_hash,
                                 }
                                 batch_records.append(record)
-                            except Exception as e:
-                                logger.error(f"Error processing document '{doc.name}': {e}")
+                            except Exception:
+                                logger.exception(f"Error processing document '{doc.name}'")
 
                         # Insert the batch of records
                         insert_stmt = postgresql.insert(self.table)
                         sess.execute(insert_stmt, batch_records)
                         sess.commit()  # Commit batch independently
                         log_info(f"Inserted batch of {len(batch_records)} documents.")
-                    except Exception as e:
-                        logger.error(f"Error with batch starting at index {i}: {e}")
+                    except Exception:
+                        logger.exception(f"Error with batch starting at index {i}")
                         sess.rollback()  # Rollback the current batch if there's an error
                         raise
-        except Exception as e:
-            logger.error(f"Error inserting documents: {e}")
+        except Exception:
+            logger.exception("Error inserting documents")
             raise
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents asynchronously by running in a thread."""
         await asyncio.to_thread(self.insert, documents, filters)
 
@@ -357,16 +359,16 @@ class PgVector(VectorDb):
 
     def upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
         batch_size: int = 100,
     ) -> None:
         """
         Upsert (insert or update) documents in the database.
 
         Args:
-            documents (List[Document]): List of documents to upsert.
-            filters (Optional[Dict[str, Any]]): Filters to apply to the documents.
+            documents (list[Document]): List of documents to upsert.
+            filters (dict[str, Any] | None): Filters to apply to the documents.
             batch_size (int): Number of documents to upsert in each batch.
         """
         try:
@@ -394,8 +396,8 @@ class PgVector(VectorDb):
                                     "content_hash": content_hash,
                                 }
                                 batch_records.append(record)
-                            except Exception as e:
-                                logger.error(f"Error processing document '{doc.name}': {e}")
+                            except Exception:
+                                logger.exception(f"Error processing document '{doc.name}'")
 
                         # Upsert the batch of records
                         insert_stmt = postgresql.insert(self.table).values(batch_records)
@@ -414,29 +416,29 @@ class PgVector(VectorDb):
                         sess.execute(upsert_stmt)
                         sess.commit()  # Commit batch independently
                         log_info(f"Upserted batch of {len(batch_records)} documents.")
-                    except Exception as e:
-                        logger.error(f"Error with batch starting at index {i}: {e}")
+                    except Exception:
+                        logger.exception(f"Error with batch starting at index {i}")
                         sess.rollback()  # Rollback the current batch if there's an error
                         raise
-        except Exception as e:
-            logger.error(f"Error upserting documents: {e}")
+        except Exception:
+            logger.exception("Error upserting documents")
             raise
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents asynchronously by running in a thread."""
         await asyncio.to_thread(self.upsert, documents, filters)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Perform a search based on the configured search type.
 
         Args:
             query (str): The search query.
             limit (int): Maximum number of results to return.
-            filters (Optional[Dict[str, Any]]): Filters to apply to the search.
+            filters (dict[str, Any] | None): Filters to apply to the search.
 
         Returns:
-            List[Document]: List of matching documents.
+            list[Document]: List of matching documents.
         """
         if self.search_type == SearchType.vector:
             return self.vector_search(query=query, limit=limit, filters=filters)
@@ -448,23 +450,21 @@ class PgVector(VectorDb):
             logger.error(f"Invalid search type '{self.search_type}'.")
             return []
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """Search asynchronously by running in a thread."""
         return await asyncio.to_thread(self.search, query, limit, filters)
 
-    def vector_search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def vector_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Perform a vector similarity search.
 
         Args:
             query (str): The search query.
             limit (int): Maximum number of results to return.
-            filters (Optional[Dict[str, Any]]): Filters to apply to the search.
+            filters (dict[str, Any] | None): Filters to apply to the search.
 
         Returns:
-            List[Document]: List of matching documents.
+            list[Document]: List of matching documents.
         """
         try:
             # Get the embedding for the query string
@@ -516,14 +516,14 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
-                logger.error(f"Error performing semantic search: {e}")
+            except Exception:
+                logger.exception("Error performing semantic search")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
                 return []
 
             # Process the results and convert to Document objects
-            search_results: List[Document] = []
+            search_results: list[Document] = []
             for result in results:
                 search_results.append(
                     Document(
@@ -541,8 +541,8 @@ class PgVector(VectorDb):
                 search_results = self.reranker.rerank(query=query, documents=search_results)
 
             return search_results
-        except Exception as e:
-            logger.error(f"Error during vector search: {e}")
+        except Exception:
+            logger.exception("Error during vector search")
             return []
 
     def enable_prefix_matching(self, query: str) -> str:
@@ -612,8 +612,8 @@ class PgVector(VectorDb):
             try:
                 with self.Session() as sess, sess.begin():
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
-                logger.error(f"Error performing keyword search: {e}")
+            except Exception:
+                logger.exception("Error performing keyword search")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
                 return []
@@ -634,8 +634,8 @@ class PgVector(VectorDb):
                 )
 
             return search_results
-        except Exception as e:
-            logger.error(f"Error during keyword search: {e}")
+        except Exception:
+            logger.exception("Error during keyword search")
             return []
 
     def hybrid_search(
@@ -737,12 +737,12 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
-                logger.error(f"Error performing hybrid search: {e}")
+            except Exception:
+                logger.exception("Error performing hybrid search")
                 return []
 
             # Process the results and convert to Document objects
-            search_results: List[Document] = []
+            search_results: list[Document] = []
             for result in results:
                 search_results.append(
                     Document(
@@ -757,8 +757,8 @@ class PgVector(VectorDb):
                 )
 
             return search_results
-        except Exception as e:
-            logger.error(f"Error during hybrid search: {e}")
+        except Exception:
+            logger.exception("Error during hybrid search")
             return []
 
     def drop(self) -> None:
@@ -770,8 +770,8 @@ class PgVector(VectorDb):
                 log_debug(f"Dropping table '{self.table.fullname}'.")
                 self.table.drop(self.db_engine)
                 log_info(f"Table '{self.table.fullname}' dropped successfully.")
-            except Exception as e:
-                logger.error(f"Error dropping table '{self.table.fullname}': {e}")
+            except Exception:
+                logger.exception(f"Error dropping table '{self.table.fullname}'")
                 raise
         else:
             log_info(f"Table '{self.table.fullname}' does not exist.")
@@ -805,8 +805,8 @@ class PgVector(VectorDb):
                 stmt = select(func.count(self.table.c.name)).select_from(self.table)
                 result = sess.execute(stmt).scalar()
                 return int(result) if result is not None else 0
-        except Exception as e:
-            logger.error(f"Error getting count from table '{self.table.fullname}': {e}")
+        except Exception:
+            logger.exception(f"Error getting count from table '{self.table.fullname}'")
             return 0
 
     def optimize(self, force_recreate: bool = False) -> None:
@@ -846,8 +846,8 @@ class PgVector(VectorDb):
             with self.Session() as sess, sess.begin():
                 drop_index_sql = f'DROP INDEX IF EXISTS "{self.schema}"."{index_name}";'
                 sess.execute(text(drop_index_sql))
-        except Exception as e:
-            logger.error(f"Error dropping index '{index_name}': {e}")
+        except Exception:
+            logger.exception(f"Error dropping index '{index_name}'")
             raise
 
     def _create_vector_index(self, force_recreate: bool = False) -> None:
@@ -904,8 +904,8 @@ class PgVector(VectorDb):
                 else:
                     logger.error(f"Unknown index type: {type(self.vector_index)}")
                     return
-        except Exception as e:
-            logger.error(f"Error creating vector index '{self.vector_index.name}': {e}")
+        except Exception:
+            logger.exception(f"Error creating vector index '{self.vector_index.name}'")
             raise
 
     def _create_ivfflat_index(self, sess: Session, table_fullname: str, index_distance: str) -> None:
@@ -1003,8 +1003,8 @@ class PgVector(VectorDb):
                     f"USING GIN (to_tsvector({self.content_language}, content));"
                 )
                 sess.execute(create_gin_index_sql)
-        except Exception as e:
-            logger.error(f"Error creating GIN index '{gin_index_name}': {e}")
+        except Exception:
+            logger.exception(f"Error creating GIN index '{gin_index_name}'")
             raise
 
     def delete(self) -> bool:
@@ -1022,8 +1022,8 @@ class PgVector(VectorDb):
                 sess.commit()
                 log_info(f"Deleted all records from table '{self.table.fullname}'.")
                 return True
-        except Exception as e:
-            logger.error(f"Error deleting rows from table '{self.table.fullname}': {e}")
+        except Exception:
+            logger.exception(f"Error deleting rows from table '{self.table.fullname}'")
             sess.rollback()
             return False
 

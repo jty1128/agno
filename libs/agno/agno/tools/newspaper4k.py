@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -54,8 +56,8 @@ class Newspaper4kTools(Toolkit):
             try:
                 if article.publish_date:
                     article_data["publish_date"] = article.publish_date.isoformat() if article.publish_date else None
-            except Exception:
-                pass
+            except (AttributeError, ValueError) as e:
+                logger.warning(f"Error extracting publish_date from {url}: {e}")
 
             return article_data
         except Exception as e:

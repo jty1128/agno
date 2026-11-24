@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from agno.media import Image
 from agno.models.message import Message
@@ -22,7 +24,7 @@ ROLE_MAP = {
 }
 
 
-def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
+def _format_image_for_message(image: Image) -> Optional[dict[str, Any]]:
     """
     Add an image to a message by converting it to base64 encoded format.
     """
@@ -103,7 +105,7 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
             },
         }
 
-    except Exception as e:
+    except (ValueError, TypeError, OSError) as e:
         log_error(f"Error processing image: {e}")
         return None
 

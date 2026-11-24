@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import base64
 import mimetypes
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Optional, Union
 
 from agno.media import Audio, File, Image
 from agno.utils.log import log_error, log_warning
@@ -54,7 +57,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                                 f"Could not determine audio format from URL path: {parsed_url.path}. Defaulting."
                             )
                             audio_format = "wav"
-                    except Exception as e:
+                    except ValueError as e:
                         log_warning(
                             f"Could not determine audio format from URL: {audio_snippet.url}. Error: {e}. Defaulting."
                         )
@@ -69,7 +72,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                         encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
                     if not audio_format:
                         audio_format = path.suffix.lstrip(".")
-                except Exception as e:
+                except OSError as e:
                     log_error(f"Failed to read audio file {path}: {e}")
                     continue  # Skip this audio snippet if file reading fails
             else:
@@ -116,7 +119,7 @@ def _process_image_path(image_path: Union[Path, str]) -> Dict[str, Any]:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
             image_url = f"data:{mime_type};base64,{base64_image}"
             return {"type": "image_url", "image_url": {"url": image_url}}
-    except Exception as e:
+    except OSError as e:
         log_error(f"Failed to read image file {path}: {e}")
         raise  # Re-raise the exception after logging
 
@@ -156,10 +159,10 @@ def process_image(image: Image) -> Optional[Dict[str, Any]]:
         return image_payload
 
     except (FileNotFoundError, IsADirectoryError, ValueError) as e:
-        log_error(f"Failed to process image due to invalid input: {str(e)}")
+        log_error(f"Failed to process image due to invalid input: {e!s}")
         return None  # Return None for handled validation errors
-    except Exception as e:
-        log_error(f"An unexpected error occurred while processing image: {str(e)}")
+    except OSError as e:
+        log_error(f"An unexpected error occurred while processing image: {e!s}")
         # Depending on policy, you might want to return None or re-raise
         return None  # Return None for unexpected errors as well, preventing crashes
 
@@ -188,8 +191,8 @@ def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
             image_data = process_image(image)
             if image_data:
                 image_messages.append(image_data)
-        except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+        except OSError as e:
+            log_error(f"Failed to process image: {e!s}")
             continue
 
     return image_messages
@@ -199,10 +202,6 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
     """
     Add a document url, base64 encoded content or OpenAI file to a message.
     """
-    import base64
-    import mimetypes
-    from pathlib import Path
-
     # Case 1: Document is a URL
     if file.url is not None:
         from urllib.parse import urlparse

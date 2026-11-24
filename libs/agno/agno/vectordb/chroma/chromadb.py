@@ -109,7 +109,7 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Document does not exist: {e}")
         return False
 
@@ -129,7 +129,7 @@ class ChromaDb(VectorDb):
                 for collection in collections:  # type: ignore
                     if name in collection:
                         return True
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Document with given name does not exist: {e}")
         return False
 
@@ -263,7 +263,7 @@ class ChromaDb(VectorDb):
                         embedding=embeddings[idx],  # type: ignore
                     )
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building search results: {e}")
 
         if self.reranker:
@@ -292,7 +292,7 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Collection does not exist: {e}")
         return False
 
@@ -306,7 +306,7 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error getting count: {e}")
         return 0
 

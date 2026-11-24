@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.utils.log import logger
