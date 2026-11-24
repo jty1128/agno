@@ -1,8 +1,9 @@
 from base64 import b64encode
+from collections.abc import Iterator
 from io import BytesIO
 from os import getenv, path
 from pathlib import Path
-from typing import Iterator, Literal, Optional, Union
+from typing import Literal, Optional, Union
 from uuid import uuid4
 
 from agno.agent import Agent

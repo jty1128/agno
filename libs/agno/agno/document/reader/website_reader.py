@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import random
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -12,7 +14,7 @@ from agno.document.reader.base import Reader
 from agno.utils.log import log_debug, logger
 
 try:
-    from bs4 import BeautifulSoup, Tag  # noqa: F401
+    from bs4 import BeautifulSoup, Tag
 except ImportError:
     raise ImportError("The `bs4` package is not installed. Please install it via `pip install beautifulsoup4`.")
 
@@ -24,8 +26,8 @@ class WebsiteReader(Reader):
     max_depth: int = 3
     max_links: int = 10
 
-    _visited: Set[str] = field(default_factory=set)
-    _urls_to_crawl: List[Tuple[str, int]] = field(default_factory=list)
+    _visited: set[str] = field(default_factory=set)
+    _urls_to_crawl: list[tuple[str, int]] = field(default_factory=list)
 
     def __init__(
         self, max_depth: int = 3, max_links: int = 10, timeout: int = 10, proxy: Optional[str] = None, **kwargs
@@ -96,7 +98,7 @@ class WebsiteReader(Reader):
 
         return soup.get_text(strip=True, separator=" ")
 
-    def crawl(self, url: str, starting_depth: int = 1) -> Dict[str, str]:
+    def crawl(self, url: str, starting_depth: int = 1) -> dict[str, str]:
         """
         Crawls a website and returns a dictionary of URLs and their corresponding content.
 
@@ -119,7 +121,7 @@ class WebsiteReader(Reader):
         crawl deeper than the specified depth.
         """
         num_links = 0
-        crawler_result: Dict[str, str] = {}
+        crawler_result: dict[str, str] = {}
         primary_domain = self._get_primary_domain(url)
         # Add starting URL with its depth to the global list
         self._urls_to_crawl.append((url, starting_depth))
@@ -200,7 +202,7 @@ class WebsiteReader(Reader):
                 # For the initial URL, we should raise the error
                 if current_url == url and not crawler_result:
                     # Wrap non-HTTP exceptions in a RequestError
-                    raise httpx.RequestError(f"Failed to crawl starting URL {url}: {str(e)}", request=None) from e
+                    raise httpx.RequestError(f"Failed to crawl starting URL {url}: {e!s}", request=None) from e
 
         # If we couldn't crawl any pages, raise an error
         if not crawler_result:
@@ -208,7 +210,7 @@ class WebsiteReader(Reader):
 
         return crawler_result
 
-    async def async_crawl(self, url: str, starting_depth: int = 1) -> Dict[str, str]:
+    async def async_crawl(self, url: str, starting_depth: int = 1) -> dict[str, str]:
         """
         Asynchronously crawls a website and returns a dictionary of URLs and their corresponding content.
 
@@ -225,7 +227,7 @@ class WebsiteReader(Reader):
         - httpx.RequestError: If there's a request-related error (connection, timeout, etc).
         """
         num_links = 0
-        crawler_result: Dict[str, str] = {}
+        crawler_result: dict[str, str] = {}
         primary_domain = self._get_primary_domain(url)
 
         # Clear previously visited URLs and URLs to crawl
@@ -302,7 +304,7 @@ class WebsiteReader(Reader):
                     if current_url == url and not crawler_result:
                         # Wrap non-HTTP exceptions in a RequestError
                         raise httpx.RequestError(
-                            f"Failed to crawl starting URL {url} asynchronously: {str(e)}", request=None
+                            f"Failed to crawl starting URL {url} asynchronously: {e!s}", request=None
                         ) from e
 
         # If we couldn't crawl any pages, raise an error
@@ -311,7 +313,7 @@ class WebsiteReader(Reader):
 
         return crawler_result
 
-    def read(self, url: str) -> List[Document]:
+    def read(self, url: str) -> list[Document]:
         """
         Reads a website and returns a list of documents.
 
@@ -354,7 +356,7 @@ class WebsiteReader(Reader):
             logger.error(f"Error reading website {url}: {e}")
             raise
 
-    async def async_read(self, url: str) -> List[Document]:
+    async def async_read(self, url: str) -> list[Document]:
         """
         Asynchronously reads a website and returns a list of documents.
 

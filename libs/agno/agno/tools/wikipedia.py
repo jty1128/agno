@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import List, Optional
 
@@ -44,7 +46,7 @@ class WikipediaTools(Toolkit):
         :return: Relevant documents from wikipedia.
         """
         try:
-            import wikipedia  # noqa: F401
+            import wikipedia
         except ImportError:
             raise ImportError(
                 "The `wikipedia` package is not installed. Please install it via `pip install wikipedia`."

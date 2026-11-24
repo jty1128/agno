@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -146,8 +148,6 @@ class DuckDbTools(Toolkit):
         except duckdb.ProgrammingError as e:
             return str(e)
         except duckdb.Error as e:
-            return str(e)
-        except Exception as e:
             return str(e)
 
     def summarize_table(self, table: str) -> str:

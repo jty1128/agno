@@ -1,6 +1,6 @@
 import json
 from os import getenv
-from typing import Dict, Optional
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger

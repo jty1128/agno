@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import List, Optional, Union, cast
+from typing import cast
 
 from agno.document import Document
 from agno.knowledge.combined import CombinedKnowledgeBase
@@ -79,5 +81,5 @@ class WebsiteTools(Toolkit):
         website = WebsiteReader()
 
         log_debug(f"Reading website: {url}")
-        relevant_docs: List[Document] = website.read(url=url)
+        relevant_docs: list[Document] = website.read(url=url)
         return json.dumps([doc.to_dict() for doc in relevant_docs])

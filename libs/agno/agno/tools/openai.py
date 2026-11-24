@@ -69,8 +69,8 @@ class OpenAITools(Toolkit):
                 response_format="text",
             )
         except Exception as e:  # type: ignore[return]
-            log_error(f"Failed to transcribe audio: {str(e)}")
-            return f"Failed to transcribe audio: {str(e)}"
+            log_error(f"Failed to transcribe audio: {e!s}")
+            return f"Failed to transcribe audio: {e!s}"
 
         log_debug(f"Transcript: {transcript}")
         return transcript  # type: ignore[return-value]
@@ -106,8 +106,8 @@ class OpenAITools(Toolkit):
                 return "Failed to generate image: No URL received from API."
 
         except Exception as e:
-            log_error(f"Failed to generate image using {self.image_model}: {str(e)}")
-            return f"Failed to generate image: {str(e)}"
+            log_error(f"Failed to generate image using {self.image_model}: {e!s}")
+            return f"Failed to generate image: {e!s}"
 
     def generate_speech(
         self,
@@ -132,7 +132,7 @@ class OpenAITools(Toolkit):
             audio_data: bytes = response.content
 
             # Base64 encode the audio data
-            base64_encoded_audio = base64.b64encode(audio_data).decode("utf-8")
+            base64_encoded_audio = f"{base64.b64encode(audio_data)!s}"
 
             # Create and add AudioArtifact using base64_audio field
             media_id = str(uuid4())
@@ -144,4 +144,4 @@ class OpenAITools(Toolkit):
             )
             return f"Speech generated successfully with ID: {media_id}"
         except Exception as e:
-            return f"Failed to generate speech: {str(e)}"
+            return f"Failed to generate speech: {e!s}"

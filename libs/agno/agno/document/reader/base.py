@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.document.base import Document
 from agno.document.chunking.fixed import FixedSizeChunking
@@ -13,23 +13,23 @@ class Reader:
 
     chunk: bool = True
     chunk_size: int = 5000
-    separators: List[str] = field(default_factory=lambda: ["\n", "\n\n", "\r", "\r\n", "\n\r", "\t", " ", "  "])
+    separators: list[str] = field(default_factory=lambda: ["\n", "\n\n", "\r", "\r\n", "\n\r", "\t", " ", "  "])
     chunking_strategy: Optional[ChunkingStrategy] = None
 
     def __init__(self, chunk_size: int = 5000, chunking_strategy: Optional[ChunkingStrategy] = None) -> None:
         self.chunk_size = chunk_size
         self.chunking_strategy = chunking_strategy or FixedSizeChunking(chunk_size=self.chunk_size)
 
-    def read(self, obj: Any) -> List[Document]:
+    def read(self, obj: Any) -> list[Document]:
         raise NotImplementedError
 
-    async def async_read(self, obj: Any) -> List[Document]:
+    async def async_read(self, obj: Any) -> list[Document]:
         raise NotImplementedError
 
-    def chunk_document(self, document: Document) -> List[Document]:
+    def chunk_document(self, document: Document) -> list[Document]:
         return self.chunking_strategy.chunk(document)  # type: ignore
 
-    async def chunk_documents_async(self, documents: List[Document]) -> List[Document]:
+    async def chunk_documents_async(self, documents: list[Document]) -> list[Document]:
         """
         Asynchronously chunk a list of documents using the instance's chunk_document method.
 
@@ -40,7 +40,7 @@ class Reader:
             A flattened list of chunked documents.
         """
 
-        async def _chunk_document_async(doc: Document) -> List[Document]:
+        async def _chunk_document_async(doc: Document) -> list[Document]:
             return await asyncio.to_thread(self.chunk_document, doc)
 
         # Process chunking in parallel for all documents

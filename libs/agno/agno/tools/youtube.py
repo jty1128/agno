@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -72,7 +74,7 @@ class YouTubeTools(Toolkit):
         if not url:
             return "No URL provided"
 
-        log_debug(f"Getting video data for youtube video: {url}")
+        log_debug(f"Getting video data for youtube video: {url!s}")
 
         try:
             video_id = self.get_youtube_video_id(url)
@@ -80,7 +82,7 @@ class YouTubeTools(Toolkit):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            params = {"format": "json", "url": f"https://www.youtube.com/watch?v={video_id}"}
+            params = {"format": "json", "url": f"https://www.youtube.com/watch?v={video_id!s}"}
             url = "https://www.youtube.com/oembed"
             query_string = urlencode(params)
             url = url + "?" + query_string
@@ -116,7 +118,7 @@ class YouTubeTools(Toolkit):
         if not url:
             return "No URL provided"
 
-        log_debug(f"Getting captions for youtube video: {url}")
+        log_debug(f"Getting captions for youtube video: {url!s}")
 
         try:
             video_id = self.get_youtube_video_id(url)
@@ -125,7 +127,7 @@ class YouTubeTools(Toolkit):
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -150,7 +152,7 @@ class YouTubeTools(Toolkit):
         if not url:
             return "No URL provided"
 
-        log_debug(f"Getting timestamps for youtube video: {url}")
+        log_debug(f"Getting timestamps for youtube video: {url!s}")
 
         try:
             video_id = self.get_youtube_video_id(url)
@@ -158,7 +160,7 @@ class YouTubeTools(Toolkit):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:

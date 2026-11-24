@@ -1,7 +1,7 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from os import getenv
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from pydantic import BaseModel
@@ -352,7 +352,7 @@ class Llama(Model):
                 parsed_object = response_message.content  # type: ignore
                 if parsed_object is not None:
                     model_response.parsed = parsed_object
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Error retrieving structured outputs: {e}")
 
         # Add role
@@ -385,7 +385,7 @@ class Llama(Model):
                         }
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error processing tool calls: {e}")
 
         # Add metrics from the metrics list

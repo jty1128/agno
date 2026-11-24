@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Optional, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -42,15 +42,15 @@ class Workflow:
     # Session name
     session_name: Optional[str] = None
     # Session state stored in the database
-    session_state: Dict[str, Any] = field(default_factory=dict)
+    session_state: dict[str, Any] = field(default_factory=dict)
 
     # --- Workflow Memory ---
-    memory: Optional[Union[WorkflowMemory, Memory]] = None
+    memory: Optional[WorkflowMemory | Memory] = None
 
     # --- Workflow Storage ---
     storage: Optional[Storage] = None
     # Extra data stored with this workflow
-    extra_data: Optional[Dict[str, Any]] = None
+    extra_data: Optional[dict[str, Any]] = None
 
     # --- Debug & Monitoring ---
     # Enable debug logs
@@ -81,10 +81,10 @@ class Workflow:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         session_name: Optional[str] = None,
-        session_state: Optional[Dict[str, Any]] = None,
-        memory: Optional[Union[WorkflowMemory, Memory]] = None,
+        session_state: Optional[dict[str, Any]] = None,
+        memory: Optional[WorkflowMemory | Memory] = None,
         storage: Optional[Storage] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
+        extra_data: Optional[dict[str, Any]] = None,
         debug_mode: bool = False,
         monitoring: bool = False,
         telemetry: bool = True,
@@ -97,7 +97,7 @@ class Workflow:
 
         self.session_id = session_id
         self.session_name = session_name
-        self.session_state: Dict[str, Any] = session_state or {}
+        self.session_state: dict[str, Any] = session_state or {}
 
         self.memory = memory
         self.storage = storage
@@ -120,7 +120,7 @@ class Workflow:
         # The run function provided by the subclass
         self._subclass_run: Optional[Callable] = None
         # Parameters of the run function
-        self._run_parameters: Optional[Dict[str, Any]] = None
+        self._run_parameters: Optional[dict[str, Any]] = None
         # Return type of the run function
         self._run_return_type: Optional[str] = None
 
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -329,8 +328,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -339,8 +338,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -465,21 +464,21 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     log_warning(f"Failed to load runs from memory: {e}")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
-    def read_from_storage(self) -> Optional[WorkflowSession]:
+    def read_from_storage(self) -> WorkflowSession | None:
         """Load the WorkflowSession from storage.
 
         Returns:
@@ -577,7 +576,7 @@ class Workflow:
         # -*- Delete session
         self.storage.delete_session(session_id=session_id)
 
-    def deep_copy(self, *, update: Optional[Dict[str, Any]] = None) -> Workflow:
+    def deep_copy(self, *, update: Optional[dict[str, Any]] = None) -> Workflow:
         """Create and return a deep copy of this Workflow, optionally updating fields.
 
         Args:
@@ -618,11 +617,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -630,11 +629,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 

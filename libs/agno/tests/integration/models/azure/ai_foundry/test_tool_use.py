@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 import pytest
 
@@ -170,7 +170,7 @@ def test_tool_call_custom_tool_no_parameters():
 
 
 def test_tool_call_custom_tool_optional_parameters():
-    def get_the_weather(city: Optional[str] = None):
+    def get_the_weather(city: str | None = None):
         """
         Get the weather in a city
 
@@ -179,8 +179,7 @@ def test_tool_call_custom_tool_optional_parameters():
         """
         if city is None:
             return "It is currently 70 degrees and cloudy in Tokyo"
-        else:
-            return f"It is currently 70 degrees and cloudy in {city}"
+        return f"It is currently 70 degrees and cloudy in {city}"
 
     agent = Agent(
         model=AzureAIFoundry(id="Phi-4"),

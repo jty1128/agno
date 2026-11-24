@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, List, Literal, Optional
+from typing import Literal, Optional
 
 from agno.document.base import Document
 from agno.document.reader.base import Reader

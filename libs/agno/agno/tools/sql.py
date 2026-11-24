@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -80,7 +80,7 @@ class SQLTools(Toolkit):
                 table_names = inspector.get_table_names()
             log_debug(f"table_names: {table_names}")
             return json.dumps(table_names)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting tables: {e}")
             return f"Error getting tables: {e}"
 
@@ -104,11 +104,11 @@ class SQLTools(Toolkit):
                     for column in table_schema
                 ]
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting table schema: {e}")
             return f"Error getting table schema: {e}"
 
-    def run_sql_query(self, query: str, limit: Optional[int] = 10) -> str:
+    def run_sql_query(self, query: str, limit: int | None = 10) -> str:
         """Use this function to run a SQL query and return the result.
 
         Args:
@@ -122,11 +122,11 @@ class SQLTools(Toolkit):
 
         try:
             return json.dumps(self.run_sql(sql=query, limit=limit), default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error running query: {e}")
             return f"Error running query: {e}"
 
-    def run_sql(self, sql: str, limit: Optional[int] = None) -> List[dict]:
+    def run_sql(self, sql: str, limit: int | None = None) -> list[dict]:
         """Internal function to run a sql query.
 
         Args:
@@ -148,6 +148,6 @@ class SQLTools(Toolkit):
                 else:
                     rows = result.fetchall()
                 return [row._asdict() for row in rows]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error while executing SQL: {e}")
                 return []

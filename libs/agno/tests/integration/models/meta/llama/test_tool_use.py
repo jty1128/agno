@@ -1,8 +1,6 @@
-from typing import Optional
-
 import pytest
 
-from agno.agent import Agent, RunResponse  # noqa
+from agno.agent import Agent, RunResponse
 from agno.models.meta import Llama
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.yfinance import YFinanceTools
@@ -181,7 +179,7 @@ def test_tool_call_custom_tool_no_parameters():
 
 
 def test_tool_call_custom_tool_optional_parameters():
-    def get_the_weather(city: Optional[str] = None):
+    def get_the_weather(city: str | None = None):
         """
         Get the weather in a city
 
