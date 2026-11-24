@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -38,11 +40,10 @@ class WorkspaceConfig(BaseModel):
 
     @property
     def workspace_dir_path(self) -> Optional[Path]:
-        if self._workspace_dir_path is None:
-            if self.ws_root_path is not None:
-                from agno.workspace.helpers import get_workspace_dir_path
+        if self._workspace_dir_path is None and self.ws_root_path is not None:
+            from agno.workspace.helpers import get_workspace_dir_path
 
-                self._workspace_dir_path = get_workspace_dir_path(self.ws_root_path)
+            self._workspace_dir_path = get_workspace_dir_path(self.ws_root_path)
         return self._workspace_dir_path
 
     def validate_workspace_settings(self, obj: Any) -> bool:
@@ -64,6 +65,26 @@ class WorkspaceConfig(BaseModel):
             _ws_settings_file = self.workspace_dir_path.joinpath("settings.py")
             if _ws_settings_file.exists() and _ws_settings_file.is_file():
                 ws_settings_file = _ws_settings_file
+        if ws_settings_file is None:
+            logger.debug("workspace_settings file not found")
+            return None
+
+        logger.debug(f"Loading workspace_settings from {ws_settings_file}")
+        try:
+            from agno.utils.py_io import get_python_objects_from_module
+
+            python_objects = get_python_objects_from_module(ws_settings_file)
+            for obj_name, obj in python_objects.items():
+                if isinstance(obj, WorkspaceSettings):
+                    if self.validate_workspace_settings(obj):
+                        self._workspace_settings = obj
+                        if self.ws_schema is not None:
+                            self._workspace_settings.ws_schema = self.ws_schema
+                            logger.debug("Added WorkspaceSchema to WorkspaceSettings")
+        except Exception:
+            logger.warning(f"Error in {ws_settings_file}")
+            raise
+        return self._workspace_settings
         if ws_settings_file is None:
             logger.debug("workspace_settings file not found")
             return None
@@ -121,7 +142,7 @@ class WorkspaceConfig(BaseModel):
         env: Optional[str] = None,
         infra: Optional[str] = None,
         order: str = "create",
-    ) -> List[InfraResources]:
+    ) -> list[InfraResources]:
         if self.ws_root_path is None:
             logger.warning("WorkspaceConfig.ws_root_path is None")
             return []
@@ -146,7 +167,7 @@ class WorkspaceConfig(BaseModel):
         if workspace_dir_path is not None:
             logger.debug(f"--^^-- Loading workspace from: {workspace_dir_path}")
             # Create a dict of objects in the workspace directory
-            workspace_objects: Dict[str, InfraResources] = {}
+            workspace_objects: dict[str, InfraResources] = {}
             resource_files = workspace_dir_path.rglob("*.py")
             for resource_file in resource_files:
                 if resource_file.name == "__init__.py":
@@ -168,7 +189,7 @@ class WorkspaceConfig(BaseModel):
                             logger.debug(f"Found: {obj.__class__.__module__}: {obj_name}")
                             if self.validate_workspace_settings(obj):
                                 self._workspace_settings = obj
-                                if self.ws_schema is not None and self._workspace_settings is not None:
+                                if self.ws_schema is not None:
                                     self._workspace_settings.ws_schema = self.ws_schema
                                     logger.debug("Added WorkspaceSchema to WorkspaceSettings")
                         elif isinstance(obj, InfraResources):
@@ -186,7 +207,7 @@ class WorkspaceConfig(BaseModel):
         sys_path.remove(str(self.ws_root_path))
 
         # Filter resources by infra
-        filtered_ws_objects_by_infra_type: Dict[str, InfraResources] = {}
+        filtered_ws_objects_by_infra_type: dict[str, InfraResources] = {}
         logger.debug(f"Filtering resources for env: {env} | infra: {infra} | order: {order}")
         if infra is None:
             filtered_ws_objects_by_infra_type = workspace_objects
@@ -196,7 +217,7 @@ class WorkspaceConfig(BaseModel):
                     filtered_ws_objects_by_infra_type[resource_name] = resource
 
         # Filter resources by env
-        filtered_infra_objects_by_env: Dict[str, InfraResources] = {}
+        filtered_infra_objects_by_env: dict[str, InfraResources] = {}
         if env is None:
             filtered_infra_objects_by_env = filtered_ws_objects_by_infra_type
         else:
@@ -219,11 +240,7 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
+        infra_resources_list: list[InfraResources] = list(filtered_infra_objects_by_env.values())
 
         return infra_resources_list
 
@@ -311,7 +328,7 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(temporary_ws_config._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
+        infra_resources_list: list[InfraResources] = []
         for resource_name, resource in filtered_infra_objects_by_env.items():
             # If the resource is an InfraResources object, add it to the list
             if isinstance(resource, InfraResources):

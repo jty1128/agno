@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -23,9 +25,9 @@ class SSEClientParams:
     """Parameters for SSE client connection."""
 
     url: str
-    headers: Optional[Dict[str, Any]] = None
-    timeout: Optional[float] = None
-    sse_read_timeout: Optional[float] = None
+    headers: dict[str, Any] | None = None
+    timeout: float | None = None
+    sse_read_timeout: float | None = None
 
 
 class MCPTools(Toolkit):
@@ -41,17 +43,17 @@ class MCPTools(Toolkit):
 
     def __init__(
         self,
-        command: Optional[str] = None,
+        command: str | None = None,
         *,
-        url: Optional[str] = None,
-        env: Optional[dict[str, str]] = None,
+        url: str | None = None,
+        env: dict[str, str] | None = None,
         transport: Literal["stdio", "sse"] = "stdio",
-        server_params: Optional[Union[StdioServerParameters, SSEClientParams]] = None,
-        session: Optional[ClientSession] = None,
+        server_params: StdioServerParameters | SSEClientParams | None = None,
+        session: ClientSession | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -98,8 +100,8 @@ class MCPTools(Toolkit):
                     )
 
         self.timeout_seconds = timeout_seconds
-        self.session: Optional[ClientSession] = session
-        self.server_params: Optional[Union[StdioServerParameters, SSEClientParams]] = server_params
+        self.session: ClientSession | None = session
+        self.server_params: StdioServerParameters | SSEClientParams | None = server_params
         self.transport = transport
         self.url = url
 
@@ -127,7 +129,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> MCPTools:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -195,7 +197,7 @@ class MCPTools(Toolkit):
             for tool in available_tools.tools:
                 if self.exclude_tools and tool.name in self.exclude_tools:
                     continue
-                if self.include_tools is None or tool.name in self.include_tools:
+                elif self.include_tools is None or tool.name in self.include_tools:
                     filtered_tools.append(tool)
 
             # Register the tools with the toolkit
@@ -216,7 +218,7 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
@@ -273,10 +275,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[SSEClientParams | StdioServerParameters] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: list[str] | None = commands
+        self.urls: list[str] | None = urls
 
         # Merge provided env with system env
         if env is not None:
@@ -306,7 +308,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> MultiMCPTools:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -377,7 +379,7 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")

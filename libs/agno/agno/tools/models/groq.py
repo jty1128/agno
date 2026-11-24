@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import base64
 import os
 from os import getenv
-from typing import Optional
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -71,8 +72,8 @@ class GroqTools(Toolkit):
             return transcription_text
 
         except Exception as e:
-            log_error(f"Failed to transcribe audio source '{audio_source}' with Groq: {str(e)}")
-            return f"Failed to transcribe audio source '{audio_source}' with Groq: {str(e)}"
+            log_error(f"Failed to transcribe audio source '{audio_source}' with Groq: {e!s}")
+            return f"Failed to transcribe audio source '{audio_source}' with Groq: {e!s}"
 
     def translate_audio(self, audio_source: str) -> str:
         """Translate audio file or URL to English using Groq's Whisper API.
@@ -102,8 +103,8 @@ class GroqTools(Toolkit):
             return translation
 
         except Exception as e:
-            log_error(f"Failed to translate audio source '{audio_source}' with Groq: {str(e)}")
-            return f"Failed to translate audio source '{audio_source}' with Groq: {str(e)}"
+            log_error(f"Failed to translate audio source '{audio_source}' with Groq: {e!s}")
+            return f"Failed to translate audio source '{audio_source}' with Groq: {e!s}"
 
     def generate_speech(
         self,
@@ -147,5 +148,5 @@ class GroqTools(Toolkit):
             return f"Speech generated successfully with ID: {media_id}"
 
         except Exception as e:
-            log_error(f"Failed to generate speech with Groq: {str(e)}")
-            return f"Failed to generate speech with Groq: {str(e)}"
+            log_error(f"Failed to generate speech with Groq: {e!s}")
+            return f"Failed to generate speech with Groq: {e!s}"

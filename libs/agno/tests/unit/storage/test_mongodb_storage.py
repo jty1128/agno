@@ -302,7 +302,7 @@ def test_deepcopy(agent_storage):
     """Test deep copying the storage instance."""
     from copy import deepcopy
 
-    storage, _ = agent_storage
+    storage, *_ = agent_storage
 
     # Deep copy the storage
     copied_storage = deepcopy(storage)

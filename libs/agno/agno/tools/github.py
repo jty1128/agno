@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -345,12 +346,10 @@ class GithubTools(Toolkit):
             pulls = repo.get_pulls(state=state, base=base, head=head)
 
             # If author is specified, filter the results
-            if author:
-                # If we need to filter by author and state, make sure both conditions are met
-                if state != "all":
-                    count = sum(1 for pr in pulls if pr.user.login == author and pr.state == state)
-                else:
-                    count = sum(1 for pr in pulls if pr.user.login == author)
+            if author and state != "all":
+                count = sum(1 for pr in pulls if pr.user.login == author and pr.state == state)
+            elif author:
+                count = sum(1 for pr in pulls if pr.user.login == author)
             else:
                 count = pulls.totalCount
 
@@ -1090,7 +1089,7 @@ class GithubTools(Toolkit):
                     if not issue.pull_request:
                         open_issues_count += 1
                 repo_info["actual_open_issues"] = open_issues_count
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting actual open issues: {e}")
                 repo_info["actual_open_issues"] = None
 
@@ -1098,7 +1097,7 @@ class GithubTools(Toolkit):
             try:
                 open_prs = repo.get_pulls(state="open")
                 repo_info["open_pr_count"] = int(open_prs.totalCount)
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting open PRs count: {e}")
                 repo_info["open_pr_count"] = None
 
@@ -1127,11 +1126,11 @@ class GithubTools(Toolkit):
                         }
                         open_prs_list.append(pr_data)
                         count += 1
-                    except Exception as e:
+                    except GithubException as e:
                         log_debug(f"Error processing individual PR: {e}")
 
                 repo_info["recent_open_prs"] = open_prs_list
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting recent open PRs: {e}")
                 repo_info["recent_open_prs"] = []
 
@@ -1169,7 +1168,7 @@ class GithubTools(Toolkit):
                     "avg_time_to_merge": (sum(merge_times) / len(merge_times) if merge_times else None),
                 }
                 repo_info["pr_metrics"] = pr_metrics
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error calculating PR metrics: {e}")
                 repo_info["pr_metrics"] = None
 
@@ -1187,7 +1186,7 @@ class GithubTools(Toolkit):
                         }
                     )
                 repo_info["contributors"] = contributors
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting contributors: {e}")
                 repo_info["contributors"] = []
 
@@ -1361,9 +1360,7 @@ class GithubTools(Toolkit):
             # Decode content
             try:
                 decoded_content = file_content.decoded_content.decode("utf-8")
-            except UnicodeDecodeError:
-                decoded_content = "Binary file (content not displayed)"
-            except Exception as e:
+            except (UnicodeDecodeError, GithubException) as e:
                 log_debug(f"Error decoding file content: {e}")
                 decoded_content = "Binary file (content not displayed)"
 

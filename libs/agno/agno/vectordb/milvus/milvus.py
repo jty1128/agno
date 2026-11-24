@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import asyncio
@@ -391,9 +393,8 @@ class Milvus(VectorDb):
             await self.async_client.drop_collection(self.collection)
 
     def exists(self) -> bool:
-        if self.client:
-            if self.client.has_collection(self.collection):
-                return True
+        if self.client and self.client.has_collection(self.collection):
+            return True
         return False
 
     async def async_exists(self) -> bool:

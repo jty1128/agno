@@ -1,8 +1,8 @@
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -218,7 +218,7 @@ class Qdrant(VectorDb):
             return len(scroll_result[0]) > 0
         return False
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, batch_size: int = 10) -> None:
+    def insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None, batch_size: int = 10) -> None:
         """
         Insert documents into the database.
 
@@ -250,7 +250,7 @@ class Qdrant(VectorDb):
             self.client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upsert {len(points)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Insert documents asynchronously."""
         log_debug(f"Inserting {len(documents)} documents asynchronously")
 
@@ -279,18 +279,18 @@ class Qdrant(VectorDb):
             await self.async_client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upserted {len(points)} documents asynchronously")
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Upsert documents into the database.
 
         Args:
             documents (List[Document]): List of documents to upsert
-            filters (Optional[Dict[str, Any]]): Filters to apply while upserting
+            filters (Optional[Dict[str, Any]): Filters to apply while upserting
         """
         log_debug("Redirecting the request to insert")
         self.insert(documents)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Upsert documents asynchronously."""
         log_debug("Redirecting the async request to async_insert")
         await self.async_insert(documents)
@@ -390,11 +390,8 @@ class Qdrant(VectorDb):
     def exists(self) -> bool:
         if self.client:
             collections_response: models.CollectionsResponse = self.client.get_collections()
-            collections: List[models.CollectionDescription] = collections_response.collections
-            for collection in collections:
-                if collection.name == self.collection:
-                    # collection.status == models.CollectionStatus.GREEN
-                    return True
+            collections: list[models.CollectionDescription] = collections_response.collections
+            return any(collection.name == self.collection for collection in collections)
         return False
 
     async def async_exists(self) -> bool:

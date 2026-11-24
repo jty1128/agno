@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Optional
@@ -69,10 +71,10 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except Exception as e:  # type: ignore[no-redef]
             return f"Error searching for the query {query}: {e}"
 
-    def search_youtube(self, query: str) -> str:
+    def search_youtube(self, query: str) -> str:  # type: ignore[no-redef]
         """
         Search Youtube using the Serpapi API. Returns the search results.
 
