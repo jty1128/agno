@@ -1,11 +1,11 @@
-from typing import Any, Dict
+from typing import Any
 
 from agno.models.message import Message
 from agno.utils.log import log_warning
 from agno.utils.openai import images_to_message
 
 
-def format_message(message: Message) -> Dict[str, Any]:
+def format_message(message: Message) -> dict[str, Any]:
     """
     Format a message into the format expected by OpenAI.
 
@@ -13,9 +13,9 @@ def format_message(message: Message) -> Dict[str, Any]:
         message (Message): The message to format.
 
     Returns:
-        Dict[str, Any]: The formatted message.
+        dict[str, Any]: The formatted message.
     """
-    message_dict: Dict[str, Any] = {
+    message_dict: dict[str, Any] = {
         "role": message.role,
         "content": message.content,
         "name": message.name,

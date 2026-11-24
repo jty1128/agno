@@ -65,6 +65,6 @@ class ThinkingTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"

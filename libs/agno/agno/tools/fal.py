@@ -120,6 +120,6 @@ class FalTools(Toolkit):
 
             return f"Image generated successfully at {url}"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate image: {e}")
             return f"Error: {e}"

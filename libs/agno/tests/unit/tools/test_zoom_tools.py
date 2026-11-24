@@ -105,7 +105,7 @@ def test_get_access_token_refresh_on_expiry(zoom_tools, mock_token_response):
         assert token1 == "test_access_token"
 
         # Manually expire the token
-        zoom_tools._ZoomTools__token_expiry = datetime.now() - timedelta(seconds=1)
+        zoom_tools._ZoomTools__token_expiry = datetime.now(tz=datetime.timezone.utc) - timedelta(seconds=1)
 
         # Should get new token
         token2 = zoom_tools.get_access_token()
@@ -313,9 +313,10 @@ def test_get_meeting_recordings_success(zoom_tools):
 
 def test_delete_meeting_success(zoom_tools):
     """Test successful meeting deletion"""
-    with patch.object(ZoomTools, "get_access_token", return_value="test_token"), patch(
-        "requests.delete"
-    ) as mock_delete:
+    with (
+        patch.object(ZoomTools, "get_access_token", return_value="test_token"),
+        patch("requests.delete") as mock_delete,
+    ):
         mock_delete.return_value.status_code = 204
         mock_delete.return_value.raise_for_status = MagicMock()
 

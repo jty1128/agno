@@ -2,7 +2,7 @@ from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -261,13 +261,13 @@ class Qdrant(VectorDb):
             self.client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upsert {len(points)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Insert documents asynchronously.
 
         Args:
-            documents (List[Document]): List of documents to insert
-            filters (Optional[Dict[str, Any]]): Filters to apply while inserting documents
+            documents (list[Document]): List of documents to insert
+            filters (dict[str, Any] | None): Filters to apply while inserting documents
         """
         log_debug(f"Inserting {len(documents)} documents asynchronously")
 
@@ -307,30 +307,30 @@ class Qdrant(VectorDb):
             await self.async_client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upserted {len(points)} documents asynchronously")
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Upsert documents into the database.
 
         Args:
-            documents (List[Document]): List of documents to upsert
-            filters (Optional[Dict[str, Any]]): Filters to apply while upserting
+            documents (list[Document]): List of documents to upsert
+            filters (dict[str, Any] | None): Filters to apply while upserting
         """
         log_debug("Redirecting the request to insert")
         self.insert(documents)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents asynchronously."""
         log_debug("Redirecting the async request to async_insert")
         await self.async_insert(documents)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Search for documents in the database.
 
         Args:
             query (str): Query to search for
             limit (int): Number of search results to return
-            filters (Optional[Dict[str, Any]]): Filters to apply while searching
+            filters (dict[str, Any] | None): Filters to apply while searching
         """
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
@@ -373,12 +373,12 @@ class Qdrant(VectorDb):
         try:
             # Execute search with parameters
             results = self.client.search(**search_params)  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results:
             if result.payload is None:
                 continue
@@ -398,9 +398,7 @@ class Qdrant(VectorDb):
 
         return search_results
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """Search for documents asynchronously."""
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
@@ -443,12 +441,12 @@ class Qdrant(VectorDb):
         try:
             # Execute search with parameters
             results = await self.async_client.search(**search_params)  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results:
             if result.payload is None:
                 continue
@@ -482,7 +480,7 @@ class Qdrant(VectorDb):
     def exists(self) -> bool:
         if self.client:
             collections_response: models.CollectionsResponse = self.client.get_collections()
-            collections: List[models.CollectionDescription] = collections_response.collections
+            collections: list[models.CollectionDescription] = collections_response.collections
             for collection in collections:
                 if collection.name == self.collection:
                     # collection.status == models.CollectionStatus.GREEN
@@ -492,7 +490,7 @@ class Qdrant(VectorDb):
     async def async_exists(self) -> bool:
         """Check if the collection exists asynchronously."""
         collections_response = await self.async_client.get_collections()
-        collections: List[models.CollectionDescription] = collections_response.collections
+        collections: list[models.CollectionDescription] = collections_response.collections
         for collection in collections:
             if collection.name == self.collection:
                 return True

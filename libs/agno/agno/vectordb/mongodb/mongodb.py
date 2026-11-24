@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -30,17 +32,17 @@ class MongoDb(VectorDb):
     def __init__(
         self,
         collection_name: str,
-        db_url: Optional[str] = "mongodb://localhost:27017/",
+        db_url: str | None = "mongodb://localhost:27017/",
         database: str = "agno",
-        embedder: Optional[Embedder] = None,
+        embedder: Embedder | None = None,
         distance_metric: str = Distance.cosine,
         overwrite: bool = False,
-        wait_until_index_ready: Optional[float] = None,
-        wait_after_insert: Optional[float] = None,
+        wait_until_index_ready: float | None = None,
+        wait_after_insert: float | None = None,
         max_pool_size: int = 100,
         retry_writes: bool = True,
-        client: Optional[MongoClient] = None,
-        search_index_name: Optional[str] = "vector_index_1",
+        client: MongoClient | None = None,
+        search_index_name: str | None = "vector_index_1",
         **kwargs,
     ):
         """
@@ -92,11 +94,11 @@ class MongoDb(VectorDb):
 
         self._client = client
         self._db = None
-        self._collection: Optional[Collection] = None
+        self._collection: Collection | None = None
 
-        self._async_client: Optional[AsyncMongoClient] = None
+        self._async_client: AsyncMongoClient | None = None
         self._async_db = None
-        self._async_collection: Optional[Collection] = None
+        self._async_collection: Collection | None = None
 
     def _get_client(self) -> MongoClient:
         """Create or retrieve the MongoDB client."""
@@ -287,7 +289,7 @@ class MongoDb(VectorDb):
             indexes = list(collection.list_search_indexes())
             exists = any(index["name"] == index_name for index in indexes)
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking search index existence: {e}")
             return False
 
@@ -299,7 +301,7 @@ class MongoDb(VectorDb):
                 if self._search_index_exists():
                     log_info(f"Search index '{index_name}' is ready.")
                     break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error checking index status: {e}")
                 raise TimeoutError("Timeout waiting for search index to become ready.")
             time.sleep(1)
@@ -315,7 +317,7 @@ class MongoDb(VectorDb):
                 if any(index["name"] == index_name for index in indexes):
                     log_info(f"Search index '{index_name}' is ready.")
                     break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error checking index status asynchronously: {e}")
                 import traceback
 
@@ -356,7 +358,7 @@ class MongoDb(VectorDb):
             exists = result is not None
             log_debug(f"Document {'exists' if exists else 'does not exist'}: {doc_id}")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking document existence: {e}")
             return False
 
@@ -367,7 +369,7 @@ class MongoDb(VectorDb):
             exists = collection.find_one({"name": name}) is not None
             log_debug(f"Document with name '{name}' {'exists' if exists else 'does not exist'}")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking document name existence: {e}")
             return False
 
@@ -378,11 +380,11 @@ class MongoDb(VectorDb):
             exists = collection.find_one({"_id": id}) is not None
             log_debug(f"Document with ID '{id}' {'exists' if exists else 'does not exist'}")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking document ID existence: {e}")
             return False
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents into the MongoDB collection."""
         log_info(f"Inserting {len(documents)} documents")
         collection = self._get_collection()
@@ -403,10 +405,10 @@ class MongoDb(VectorDb):
                     time.sleep(self.wait_after_insert)
             except errors.BulkWriteError as e:
                 logger.warning(f"Bulk write error while inserting documents: {e.details}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error inserting documents: {e}")
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents into the MongoDB collection."""
         log_info(f"Upserting {len(documents)} documents")
         collection = self._get_collection()
@@ -420,7 +422,7 @@ class MongoDb(VectorDb):
                     upsert=True,
                 )
                 log_info(f"Upserted document: {doc_data['_id']}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error upserting document '{document.name}': {e}")
 
     def upsert_available(self) -> bool:
@@ -428,8 +430,8 @@ class MongoDb(VectorDb):
         return True
 
     def search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None, min_score: float = 0.0
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: dict[str, Any] | None = None, min_score: float = 0.0
+    ) -> list[Document]:
         """Search for documents using vector similarity."""
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
@@ -492,12 +494,12 @@ class MongoDb(VectorDb):
             logger.error(f"Error during search: {e}")
             raise
 
-    def vector_search(self, query: str, limit: int = 5) -> List[Document]:
+    def vector_search(self, query: str, limit: int = 5) -> list[Document]:
         """Perform a vector-based search."""
         log_debug("Performing vector search.")
         return self.search(query, limit=limit)
 
-    def keyword_search(self, query: str, limit: int = 5) -> List[Document]:
+    def keyword_search(self, query: str, limit: int = 5) -> list[Document]:
         """Perform a keyword-based search."""
         try:
             collection = self._get_collection()
@@ -516,11 +518,11 @@ class MongoDb(VectorDb):
             ]
             log_debug(f"Keyword search completed. Found {len(results)} documents.")
             return results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error during keyword search: {e}")
             return []
 
-    def hybrid_search(self, query: str, limit: int = 5) -> List[Document]:
+    def hybrid_search(self, query: str, limit: int = 5) -> list[Document]:
         """Perform a hybrid search combining vector and keyword-based searches."""
         log_debug("Performing hybrid search is not yet implemented.")
         return []
@@ -552,7 +554,6 @@ class MongoDb(VectorDb):
 
     def optimize(self) -> None:
         """TODO: not implemented"""
-        pass
 
     def delete(self) -> bool:
         """Delete all documents from the collection."""
@@ -563,12 +564,12 @@ class MongoDb(VectorDb):
                 success = result.deleted_count >= 0  # Consider any deletion (even 0) as success
                 log_info(f"Deleted {result.deleted_count} documents from collection.")
                 return success
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error deleting documents: {e}")
                 return False
         return True  # Return True if collection doesn't exist (nothing to delete)
 
-    def prepare_doc(self, document: Document, filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def prepare_doc(self, document: Document, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         """Prepare a document for insertion or upsertion into MongoDB."""
         document.embed(embedder=self.embedder)
         if document.embedding is None:
@@ -599,7 +600,7 @@ class MongoDb(VectorDb):
             count = collection.count_documents({})
             log_debug(f"Collection '{self.collection_name}' has {count} documents.")
             return count
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting document count: {e}")
             return 0
 
@@ -612,11 +613,11 @@ class MongoDb(VectorDb):
             exists = result is not None
             log_debug(f"Document {'exists' if exists else 'does not exist'}: {doc_id}")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking document existence asynchronously: {e}")
             return False
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents asynchronously."""
         log_info(f"Inserting {len(documents)} documents asynchronously")
         collection = await self._get_async_collection()
@@ -637,10 +638,10 @@ class MongoDb(VectorDb):
                     await asyncio.sleep(self.wait_after_insert)
             except errors.BulkWriteError as e:
                 logger.warning(f"Bulk write error while inserting documents: {e.details}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error inserting documents asynchronously: {e}")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents asynchronously."""
         log_info(f"Upserting {len(documents)} documents asynchronously")
         collection = await self._get_async_collection()
@@ -654,12 +655,10 @@ class MongoDb(VectorDb):
                     upsert=True,
                 )
                 log_info(f"Upserted document: {doc_data['_id']}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error upserting document '{document.name}' asynchronously: {e}")
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """Search for documents asynchronously."""
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
@@ -747,7 +746,7 @@ class MongoDb(VectorDb):
             exists = self.collection_name in collection_names
             log_debug(f"Collection '{self.collection_name}' existence (async): {exists}")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking collection existence asynchronously: {e}")
             return False
 
@@ -758,6 +757,6 @@ class MongoDb(VectorDb):
             exists = await collection.find_one({"name": name}) is not None
             log_debug(f"Document with name '{name}' {'exists' if exists else 'does not exist'} (async)")
             return exists
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking document name existence asynchronously: {e}")
             return False

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from textwrap import dedent
 from typing import Optional, Union
 
@@ -95,7 +97,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"
 
@@ -163,7 +165,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error recording analysis: {e}")
             return f"Error recording analysis: {e}"
 

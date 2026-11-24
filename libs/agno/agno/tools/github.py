@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -225,9 +226,9 @@ class GithubTools(Toolkit):
         self,
         name: str,
         private: bool = False,
-        description: Optional[str] = None,
+        description: str | None = None,
         auto_init: bool = False,
-        organization: Optional[str] = None,
+        organization: str | None = None,
     ) -> str:
         """Create a new repository on GitHub.
 
@@ -269,7 +270,7 @@ class GithubTools(Toolkit):
                 "description": repo.description,
             }
             return json.dumps(repo_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error creating repository: {e}")
             return json.dumps({"error": str(e)})
 
@@ -297,7 +298,7 @@ class GithubTools(Toolkit):
                 "default_branch": repo.default_branch,
             }
             return json.dumps(repo_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting repository: {e}")
             return json.dumps({"error": str(e)})
 
@@ -315,7 +316,7 @@ class GithubTools(Toolkit):
             repo = self.g.get_repo(repo_name)
             languages = repo.get_languages()
             return json.dumps(languages, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting repository languages: {e}")
             return json.dumps({"error": str(e)})
 
@@ -323,9 +324,9 @@ class GithubTools(Toolkit):
         self,
         repo_name: str,
         state: str = "all",
-        author: Optional[str] = None,
-        base: Optional[str] = None,
-        head: Optional[str] = None,
+        author: str | None = None,
+        base: str | None = None,
+        head: str | None = None,
     ) -> str:
         """Get the count of pull requests for a repository based on query parameters.
 
@@ -355,7 +356,7 @@ class GithubTools(Toolkit):
                 count = pulls.totalCount
 
             return json.dumps({"count": count}, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error counting pull requests: {e}")
             return json.dumps({"error": str(e)})
 
@@ -387,7 +388,7 @@ class GithubTools(Toolkit):
                 "url": pr.html_url,
             }
             return json.dumps(pr_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting pull request: {e}")
             return json.dumps({"error": str(e)})
 
@@ -420,11 +421,11 @@ class GithubTools(Toolkit):
                 }
                 changes.append(file_info)
             return json.dumps(changes, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting pull request changes: {e}")
             return json.dumps({"error": str(e)})
 
-    def create_issue(self, repo_name: str, title: str, body: Optional[str] = None) -> str:
+    def create_issue(self, repo_name: str, title: str, body: str | None = None) -> str:
         """Create an issue in a repository.
 
         Args:
@@ -450,7 +451,7 @@ class GithubTools(Toolkit):
                 "user": issue.user.login,
             }
             return json.dumps(issue_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error creating issue: {e}")
             return json.dumps({"error": str(e)})
 
@@ -483,7 +484,7 @@ class GithubTools(Toolkit):
                 }
                 issue_list.append(issue_info)
             return json.dumps(issue_list, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error listing issues: {e}")
             return json.dumps({"error": str(e)})
 
@@ -586,7 +587,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error reopening issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def assign_issue(self, repo_name: str, issue_number: int, assignees: List[str]) -> str:
+    def assign_issue(self, repo_name: str, issue_number: int, assignees: list[str]) -> str:
         """Assign users to an issue.
 
         Args:
@@ -607,7 +608,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error assigning issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def label_issue(self, repo_name: str, issue_number: int, labels: List[str]) -> str:
+    def label_issue(self, repo_name: str, issue_number: int, labels: list[str]) -> str:
         """Add labels to an issue.
 
         Args:
@@ -665,8 +666,8 @@ class GithubTools(Toolkit):
         self,
         repo_name: str,
         issue_number: int,
-        title: Optional[str] = None,
-        body: Optional[str] = None,
+        title: str | None = None,
+        body: str | None = None,
     ) -> str:
         """Edit the title or body of an issue.
 
@@ -837,7 +838,7 @@ class GithubTools(Toolkit):
             comment_list.sort(key=lambda x: x["created_at"], reverse=True)
 
             return json.dumps(comment_list, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting pull request comments: {e}")
             return json.dumps({"error": str(e)})
 
@@ -882,7 +883,7 @@ class GithubTools(Toolkit):
             }
 
             return json.dumps(comment_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error creating pull request comment: {e}")
             return json.dumps({"error": str(e)})
 
@@ -921,7 +922,7 @@ class GithubTools(Toolkit):
             }
 
             return json.dumps(comment_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error editing pull request comment: {e}")
             return json.dumps({"error": str(e)})
 
@@ -1029,7 +1030,7 @@ class GithubTools(Toolkit):
             }
 
             return json.dumps(pr_info, indent=2)
-        except GithubException as e:
+        except Exception as e:
             logger.error(f"Error getting pull request details: {e}")
             return json.dumps({"error": str(e)})
 
@@ -1090,7 +1091,7 @@ class GithubTools(Toolkit):
                     if not issue.pull_request:
                         open_issues_count += 1
                 repo_info["actual_open_issues"] = open_issues_count
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting actual open issues: {e}")
                 repo_info["actual_open_issues"] = None
 
@@ -1098,7 +1099,7 @@ class GithubTools(Toolkit):
             try:
                 open_prs = repo.get_pulls(state="open")
                 repo_info["open_pr_count"] = int(open_prs.totalCount)
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting open PRs count: {e}")
                 repo_info["open_pr_count"] = None
 
@@ -1127,11 +1128,11 @@ class GithubTools(Toolkit):
                         }
                         open_prs_list.append(pr_data)
                         count += 1
-                    except Exception as e:
+                    except GithubException as e:
                         log_debug(f"Error processing individual PR: {e}")
 
                 repo_info["recent_open_prs"] = open_prs_list
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting recent open PRs: {e}")
                 repo_info["recent_open_prs"] = []
 
@@ -1169,13 +1170,13 @@ class GithubTools(Toolkit):
                     "avg_time_to_merge": (sum(merge_times) / len(merge_times) if merge_times else None),
                 }
                 repo_info["pr_metrics"] = pr_metrics
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error calculating PR metrics: {e}")
                 repo_info["pr_metrics"] = None
 
             # Get contributors
             try:
-                contributors: list[dict] = []
+                contributors: list[dict[str, Any]] = []
                 for contributor in repo.get_contributors():
                     if len(contributors) >= 20:  # Limit to top 20
                         break
@@ -1187,7 +1188,7 @@ class GithubTools(Toolkit):
                         }
                     )
                 repo_info["contributors"] = contributors
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting contributors: {e}")
                 repo_info["contributors"] = []
 
