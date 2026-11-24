@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from time import sleep
-from typing import Optional
 
 import httpx
 

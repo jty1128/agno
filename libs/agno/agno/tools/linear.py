@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional
 
@@ -55,7 +57,7 @@ class LinearTools(Toolkit):
 
             if "errors" in data:
                 logger.error(f"GraphQL Error: {data['errors']}")
-                raise Exception(f"GraphQL Error: {data['errors']}")
+                raise ValueError(f"GraphQL Error: {data['errors']}")
 
             log_info("GraphQL query executed successfully.")
             return data.get("data")
@@ -105,7 +107,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error fetching authenticated user details: {e}")
-            raise
+            raise ValueError(f"Error fetching authenticated user details: {e}") from e
 
     def get_issue_details(self, issue_id: str) -> Optional[str]:
         """
@@ -145,7 +147,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error retrieving issue with ID {issue_id}: {e}")
-            raise
+            raise ValueError(f"Error retrieving issue with ID {issue_id}: {e}") from e
 
     def create_issue(
         self, title: str, description: str, team_id: str, project_id: str, assignee_id: str
@@ -202,7 +204,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error creating issue '{title}' for team ID {team_id}: {e}")
-            raise
+            raise ValueError(f"Error creating issue '{title}' for team ID {team_id}: {e}") from e
 
     def update_issue(self, issue_id: str, title: Optional[str]) -> Optional[str]:
         """
@@ -253,7 +255,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error updating issue ID {issue_id}: {e}")
-            raise
+            raise ValueError(f"Error updating issue ID {issue_id}: {e}") from e
 
     def get_user_assigned_issues(self, user_id: str) -> Optional[str]:
         """
@@ -301,7 +303,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error retrieving issues for user ID {user_id}: {e}")
-            raise
+            raise ValueError(f"Error retrieving issues for user ID {user_id}: {e}") from e
 
     def get_workflow_issues(self, workflow_id: str) -> Optional[str]:
         """
@@ -344,7 +346,7 @@ class LinearTools(Toolkit):
 
         except Exception as e:
             logger.error(f"Error retrieving issues for workflow state ID {workflow_id}: {e}")
-            raise
+            raise ValueError(f"Error retrieving issues for workflow state ID {workflow_id}: {e}") from e
 
     def get_high_priority_issues(self) -> Optional[str]:
         """

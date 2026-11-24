@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -99,8 +101,8 @@ class FinancialDatasetsTools(Toolkit):
             response.raise_for_status()
             return response.text
         except requests.exceptions.RequestException as e:
-            log_error(f"Error making request to {url}: {str(e)}")
-            return f"Error making request to {url}: {str(e)}"
+            log_error(f"Error making request to {url}: {e!s}")
+            return f"Error making request to {url}: {e!s}"
 
     # Financial Statements
     def get_income_statements(self, ticker: str, period: str = "annual", limit: int = 10) -> str:

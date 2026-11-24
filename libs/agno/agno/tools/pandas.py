@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -13,12 +13,12 @@ class PandasTools(Toolkit):
     def __init__(self, **kwargs):
         super().__init__(name="pandas_tools", **kwargs)
 
-        self.dataframes: Dict[str, pd.DataFrame] = {}
+        self.dataframes: dict[str, pd.DataFrame] = {}
         self.register(self.create_pandas_dataframe)
         self.register(self.run_dataframe_operation)
 
     def create_pandas_dataframe(
-        self, dataframe_name: str, create_using_function: str, function_parameters: Dict[str, Any]
+        self, dataframe_name: str, create_using_function: str, function_parameters: dict[str, Any]
     ) -> str:
         """Creates a pandas dataframe named `dataframe_name` by running a function `create_using_function` with the parameters `function_parameters`.
         Returns the created dataframe name as a string if successful, otherwise returns an error message.
@@ -51,11 +51,11 @@ class PandasTools(Toolkit):
             self.dataframes[dataframe_name] = dataframe
             log_debug(f"Created dataframe: {dataframe_name}")
             return dataframe_name
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             logger.error(f"Error creating dataframe: {e}")
             return f"Error creating dataframe: {e}"
 
-    def run_dataframe_operation(self, dataframe_name: str, operation: str, operation_parameters: Dict[str, Any]) -> str:
+    def run_dataframe_operation(self, dataframe_name: str, operation: str, operation_parameters: dict[str, Any]) -> str:
         """Runs an operation `operation` on a dataframe `dataframe_name` with the parameters `operation_parameters`.
         Returns the result of the operation as a string if successful, otherwise returns an error message.
 
@@ -85,8 +85,8 @@ class PandasTools(Toolkit):
                     return result.to_string()
                 except AttributeError:
                     return str(result)
-            except Exception:
+            except TypeError:
                 return "Operation ran successfully"
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             logger.error(f"Error running operation: {e}")
             return f"Error running operation: {e}"

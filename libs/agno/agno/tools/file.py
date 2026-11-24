@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Optional
@@ -43,7 +45,7 @@ class FileTools(Toolkit):
             file_path.write_text(contents)
             log_info(f"Saved: {file_path}")
             return str(file_name)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error saving to file: {e}")
             return f"Error saving to file: {e}"
 
@@ -58,7 +60,7 @@ class FileTools(Toolkit):
             file_path = self.base_dir.joinpath(file_name)
             contents = file_path.read_text()
             return str(contents)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error reading file: {e}")
             return f"Error reading file: {e}"
 
@@ -70,6 +72,6 @@ class FileTools(Toolkit):
         try:
             log_info(f"Reading files in : {self.base_dir}")
             return json.dumps([str(file_path) for file_path in self.base_dir.iterdir()], indent=4)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error reading files: {e}")
             return f"Error reading files: {e}"

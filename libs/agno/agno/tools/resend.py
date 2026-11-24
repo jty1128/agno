@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional
 
@@ -53,6 +55,6 @@ class ResendTools(Toolkit):
 
             resend.Emails.send(params)
             return f"Email sent to {to_email} successfully."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send email {e}")
             return f"Error: {e}"

@@ -13,12 +13,13 @@ def download_image(url: str, output_path: str) -> bool:
     """
     try:
         # Send HTTP GET request to the image URL
-        response = httpx.get(url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()  # Raise an exception for HTTP errors
 
-        # Check if the response contains image content
-        content_type = response.headers.get("Content-Type")
-        if not content_type or not content_type.startswith("image"):
+            # Check if the response contains image content
+            content_type = response.headers.get("Content-Type")
+            if not content_type or not content_type.startswith("image"):
             print(f"URL does not point to an image. Content-Type: {content_type}")
             return False
 
@@ -37,7 +38,7 @@ def download_image(url: str, output_path: str) -> bool:
     except httpx.HTTPError as e:
         print(f"Error downloading the image: {e}")
         return False
-    except IOError as e:
+    except OSError as e:
         print(f"Error saving the image to '{output_path}': {e}")
         return False
 
@@ -48,8 +49,7 @@ def download_video(url: str, output_path: str) -> str:
     response.raise_for_status()
 
     with open(output_path, "wb") as f:
-        for chunk in response.iter_bytes(chunk_size=8192):
-            f.write(chunk)
+        f.writelines(response.iter_bytes(chunk_size=8192))
     return output_path
 
 
@@ -77,7 +77,7 @@ def download_file(url: str, output_path: str) -> None:
                     f.write(chunk)
 
     except httpx.HTTPError as e:
-        raise Exception(f"Failed to download file from {url}: {str(e)}")
+        raise Exception(f"Failed to download file from {url}: {e!s}")
 
 
 def save_base64_data(base64_data: str, output_path: str) -> bool:
@@ -87,8 +87,8 @@ def save_base64_data(base64_data: str, output_path: str) -> bool:
     try:
         # Decode the base64 string into bytes
         decoded_data = base64.b64decode(base64_data)
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred during base64 decoding: {e}")
+    except base64.binascii.Error as e:
+        raise RuntimeError(f"An unexpected error occurred during base64 decoding: {e}") from e
 
     try:
         path = Path(output_path)

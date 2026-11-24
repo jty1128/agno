@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     from packaging import version
@@ -225,7 +227,8 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to check index existence for {name}: {e}")
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -273,10 +276,10 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-        batch_size: Optional[int] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+        batch_size: int | None = None,
         show_progress: bool = False,
     ) -> None:
         """Upsert documents into the index asynchronously with batching."""
@@ -333,7 +336,7 @@ class PineconeDb(VectorDb):
             show_progress=show_progress,
         )
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Pinecone doesn't support insert. Raise an error."""
         raise NotImplementedError("Pinecone does not support insert operations. Use async_upsert instead.")
 
@@ -346,7 +349,7 @@ class PineconeDb(VectorDb):
         """
         return True
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents into the index.
 
         This method is not supported by Pinecone. Use `upsert` instead.
@@ -361,7 +364,7 @@ class PineconeDb(VectorDb):
         """
         raise NotImplementedError("Pinecone does not support insert operations. Use upsert instead.")
 
-    def _hybrid_scale(self, dense: List[float], sparse: Dict[str, Any], alpha: float):
+    def _hybrid_scale(self, dense: list[float], sparse: dict[str, Any], alpha: float):
         """Hybrid vector scaling using a convex combination
         1 is pure semantic search, 0 is pure keyword search
         alpha * dense + (1 - alpha) * sparse
@@ -383,10 +386,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
@@ -449,10 +452,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,19 +465,19 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
-    def delete(self, namespace: Optional[str] = None) -> bool:
+    def delete(self, namespace: str | None = None) -> bool:
         """Clear the index.
 
         Args:
-            namespace (Optional[str], optional): The namespace to clear. Defaults to None.
+            namespace (str | None, optional): The namespace to clear. Defaults to None.
 
         """
         try:
             self.index.delete(delete_all=True, namespace=namespace)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to delete namespace {namespace}: {e}")
             return False
 
     async def async_drop(self) -> None:

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 try:
     import asyncio
 
     from pymilvus import AsyncMilvusClient, MilvusClient  # type: ignore
-except ImportError:
-    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
+except ImportError as e:
+    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.") from e
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -249,7 +251,7 @@ class Milvus(VectorDb):
         """
         return True
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Upsert documents into the database.
 
@@ -276,7 +278,7 @@ class Milvus(VectorDb):
             )
             log_debug(f"Upserted document: {document.name} ({document.meta_data})")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         log_debug(f"Upserting {len(documents)} documents asynchronously")
 
         async def process_document(document):
@@ -303,7 +305,7 @@ class Milvus(VectorDb):
 
         log_debug(f"Upserted {len(documents)} documents asynchronously in parallel")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         """
         Search for documents in the database.
 
@@ -343,8 +345,8 @@ class Milvus(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             logger.error(f"Error getting embedding for Query: {query}")
@@ -391,9 +393,8 @@ class Milvus(VectorDb):
             await self.async_client.drop_collection(self.collection)
 
     def exists(self) -> bool:
-        if self.client:
-            if self.client.has_collection(self.collection):
-                return True
+        if self.client and self.client.has_collection(self.collection):
+            return True
         return False
 
     async def async_exists(self) -> bool:
@@ -414,7 +415,7 @@ class Milvus(VectorDb):
             return True
         return False
 
-    def _build_expr(self, filters: Optional[Dict[str, Any]]) -> str:
+    def _build_expr(self, filters: Optional[dict[str, Any]]) -> str:
         if filters:
             kv_list = []
             for k, v in filters.items():

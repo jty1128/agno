@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Self
+
+if TYPE_CHECKING:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.sse import sse_client
+    from mcp.client.stdio import stdio_client
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -127,7 +134,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> Self:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -139,12 +146,12 @@ class MCPTools(Toolkit):
         # Create a new session using stdio_client or sse_client based on transport
         if self.transport == "sse":
             sse_args = asdict(self.server_params) if self.server_params is not None else {}  # type: ignore
-            if "url" not in sse_args:
+            if "url" not in sse_args and self.url is not None:
                 sse_args["url"] = self.url
             self._context = sse_client(**sse_args)  # type: ignore
+        elif self.server_params is None:
+            raise ValueError("server_params must be provided when using stdio transport.")
         else:
-            if self.server_params is None:
-                raise ValueError("server_params must be provided when using stdio transport.")
             self._context = stdio_client(self.server_params)  # type: ignore
 
         read, write = await self._context.__aenter__()  # type: ignore
@@ -239,15 +246,15 @@ class MultiMCPTools(Toolkit):
 
     def __init__(
         self,
-        commands: Optional[List[str]] = None,
-        urls: Optional[List[str]] = None,
+        commands: list[str] | None = None,
+        urls: list[str] | None = None,
         *,
-        env: Optional[dict[str, str]] = None,
-        server_params_list: Optional[List[Union[SSEClientParams, StdioServerParameters]]] = None,
+        env: dict[str, str] | None = None,
+        server_params_list: list[SSEClientParams | StdioServerParameters] | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -273,10 +280,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[SSEClientParams | StdioServerParameters] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: list[str] | None = commands
+        self.urls: list[str] | None = urls
 
         # Merge provided env with system env
         if env is not None:
@@ -306,7 +313,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> Self:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -333,10 +340,10 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
-    ):
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
 

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 from agno.tools.function import Function
 from agno.utils.log import log_debug, logger
@@ -9,7 +11,7 @@ class Toolkit:
     def __init__(
         self,
         name: str = "toolkit",
-        tools: List[Callable] = [],
+        tools: list[Callable] | None = None,
         instructions: Optional[str] = None,
         add_instructions: bool = False,
         include_tools: Optional[list[str]] = None,
@@ -34,13 +36,15 @@ class Toolkit:
             auto_register (bool): Whether to automatically register all methods in the class.
         """
         self.name: str = name
-        self.tools: List[Callable] = tools
-        self.functions: Dict[str, Function] = OrderedDict()
+        self.tools: list[Callable] = tools if tools is not None else []
+        self.functions: dict[str, Function] = OrderedDict()
         self.instructions: Optional[str] = instructions
         self.add_instructions: bool = add_instructions
 
         self._check_tools_filters(
-            available_tools=[tool.__name__ for tool in tools], include_tools=include_tools, exclude_tools=exclude_tools
+            available_tools=[tool.__name__ for tool in self.tools],
+            include_tools=include_tools,
+            exclude_tools=exclude_tools,
         )
 
         self.include_tools = include_tools
@@ -105,9 +109,9 @@ class Toolkit:
             )
             self.functions[f.name] = f
             log_debug(f"Function: {f.name} registered with {self.name}")
-        except Exception as e:
+        except Exception:
             logger.warning(f"Failed to create Function for: {function.__name__}")
-            raise e
+            raise
 
     def __repr__(self):
         return f"<{self.__class__.__name__} name={self.name} functions={list(self.functions.keys())}>"

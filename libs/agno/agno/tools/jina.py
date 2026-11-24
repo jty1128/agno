@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Dict, Optional
 
 import httpx
 from pydantic import BaseModel, Field, HttpUrl
@@ -53,7 +54,7 @@ class JinaReaderTools(Toolkit):
             content = response.json()
             return self._truncate_content(str(content))
         except Exception as e:
-            error_msg = f"Error reading URL: {str(e)}"
+            error_msg = f"Error reading URL: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -67,7 +68,7 @@ class JinaReaderTools(Toolkit):
             content = response.json()
             return self._truncate_content(str(content))
         except Exception as e:
-            error_msg = f"Error performing search: {str(e)}"
+            error_msg = f"Error performing search: {e!s}"
             logger.error(error_msg)
             return error_msg
 

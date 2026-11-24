@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pymongo import MongoClient, errors
 from pymongo.collection import Collection
@@ -73,7 +73,7 @@ class CosmosMongoDb(MongoDb):
             except errors.ConnectionFailure as e:
                 logger.error(f"Failed to connect to Azure Cosmos DB: {e}")
                 raise ConnectionError(f"Failed to connect to Azure Cosmos DB: {e}")
-            except Exception as e:
+            except errors.PyMongoError as e:
                 logger.error(f"An error occurred while connecting to Azure Cosmos DB: {e}")
                 raise
         return self._client
@@ -136,7 +136,7 @@ class CosmosMongoDb(MongoDb):
 
             log_info(f"Created vector search index '{index_name}' successfully")
 
-        except Exception as e:
+        except errors.PyMongoError as e:
             logger.error(f"Error creating vector search index: {e}")
             raise
 
@@ -164,13 +164,13 @@ class CosmosMongoDb(MongoDb):
             log_debug(f"Vector search index '{index_name}' not found")
             return False
 
-        except Exception as e:
+        except errors.PyMongoError as e:
             logger.error(f"Error checking search index existence: {e}")
             return False
 
     def search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None, min_score: float = 0.0
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None, min_score: float = 0.0
+    ) -> list[Document]:
         """
         Perform vector search using Cosmos DB's IVF vector search capabilities.
         """
@@ -217,14 +217,14 @@ class CosmosMongoDb(MongoDb):
             log_info(f"Search completed. Found {len(docs)} documents.")
             return docs
 
-        except Exception as e:
+        except errors.PyMongoError as e:
             logger.error(f"Error during vector search: {e}")
             return []
 
     def vector_search(self, query: str, limit: int = 5) -> List[Document]:
         return self.search(query, limit=limit)
 
-    def keyword_search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def keyword_search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         try:
             collection = self._get_collection()
 
@@ -257,11 +257,11 @@ class CosmosMongoDb(MongoDb):
             log_info(f"Search completed. Found {len(docs)} documents.")
             return docs
 
-        except Exception as e:
+        except errors.PyMongoError as e:
             logger.error(f"Error during search: {e}")
             return []
 
-    def hybrid_search(self, query: str, limit: int = 5) -> List[Document]:
+    def hybrid_search(self, query: str, limit: int = 5) -> list[Document]:
         """Fallback to regular search for hybrid search."""
         log_info("Hybrid search not implemented in Cosmos DB - using vector search")
         return self.search(query, limit=limit)
@@ -282,13 +282,13 @@ class CosmosMongoDb(MongoDb):
                     log_info(f"Dropping index '{index_name}'")
                     try:
                         collection.drop_index(index_name)
-                    except Exception as e:
+                    except errors.PyMongoError as e:
                         logger.error(f"Error dropping index: {e}")
 
                 # Drop the collection
                 collection.drop()
                 log_info(f"Collection '{self.collection_name}' dropped successfully")
 
-            except Exception as e:
+            except errors.PyMongoError as e:
                 logger.error(f"Error dropping collection: {e}")
                 raise

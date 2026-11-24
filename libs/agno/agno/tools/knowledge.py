@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from textwrap import dedent
-from typing import List, Optional, Union
+from typing import Optional
 
 from agno.agent import Agent
 from agno.document import Document
@@ -82,7 +84,7 @@ class KnowledgeTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"
 
@@ -104,7 +106,7 @@ class KnowledgeTools(Toolkit):
             if len(relevant_docs) == 0:
                 return "No documents found"
             return json.dumps([doc.to_dict() for doc in relevant_docs])
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching knowledge base: {e}")
             return f"Error searching knowledge base: {e}"
 
@@ -136,7 +138,7 @@ class KnowledgeTools(Toolkit):
                 """
             ).strip()
             return formatted_analysis
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error recording analysis: {e}")
             return f"Error recording analysis: {e}"
 

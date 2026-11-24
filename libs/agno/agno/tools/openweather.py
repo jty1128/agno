@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Dict, Optional
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -56,15 +58,15 @@ class OpenWeatherTools(Toolkit):
         if geocoding:
             self.register(self.geocode_location)
 
-    def _make_request(self, url: str, params: Dict) -> Dict:
+    def _make_request(self, url: str, params: dict) -> dict:
         """Make a request to the OpenWeatherMap API.
 
         Args:
             url (str): The API endpoint URL.
-            params (Dict): Query parameters for the request.
+            params (dict): Query parameters for the request.
 
         Returns:
-            Dict: The JSON response from the API.
+            dict: The JSON response from the API.
         """
         try:
             params["appid"] = self.api_key

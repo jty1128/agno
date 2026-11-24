@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 from os import getenv
-from typing import Optional, Union
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -20,7 +21,7 @@ except ImportError:
 class ReplicateTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "minimax/video-01",
         **kwargs,
     ):
@@ -31,7 +32,7 @@ class ReplicateTools(Toolkit):
         self.model = model
         self.register(self.generate_media)
 
-    def generate_media(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def generate_media(self, agent: Agent | Team, prompt: str) -> str:
         """
         Use this function to generate an image or a video using a replicate model.
         Args:

@@ -1,7 +1,8 @@
 import base64
 import mimetypes
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional
 
 from agno.media import Audio, File, Image
 from agno.utils.log import log_error, log_warning
@@ -10,7 +11,7 @@ from agno.utils.log import log_error, log_warning
 mimetypes.add_type("image/webp", ".webp")
 
 
-def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
+def audio_to_message(audio: Sequence[Audio]) -> list[dict[str, Any]]:
     """
     Add audio to a message for the model. By default, we use the OpenAI audio format but other Models
     can override this method to use a different audio format.
@@ -28,8 +29,8 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
 
     audio_messages = []
     for audio_snippet in audio:
-        encoded_string: Optional[str] = None
-        audio_format: Optional[str] = audio_snippet.format
+        encoded_string: str | None = None
+        audio_format: str | None = audio_snippet.format
 
         # The audio is raw data
         if audio_snippet.content:
@@ -54,7 +55,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                                 f"Could not determine audio format from URL path: {parsed_url.path}. Defaulting."
                             )
                             audio_format = "wav"
-                    except Exception as e:
+                    except ValueError as e:
                         log_warning(
                             f"Could not determine audio format from URL: {audio_snippet.url}. Error: {e}. Defaulting."
                         )
@@ -69,7 +70,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                         encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
                     if not audio_format:
                         audio_format = path.suffix.lstrip(".")
-                except Exception as e:
+                except OSError as e:
                     log_error(f"Failed to read audio file {path}: {e}")
                     continue  # Skip this audio snippet if file reading fails
             else:
@@ -101,7 +102,7 @@ def _process_bytes_image(image: bytes) -> Dict[str, Any]:
     return {"type": "image_url", "image_url": {"url": image_url}}
 
 
-def _process_image_path(image_path: Union[Path, str]) -> Dict[str, Any]:
+def _process_image_path(image_path: Path | str) -> dict[str, Any]:
     """Process image ( file path)."""
     # Process local file image
     path = Path(image_path)  # Ensure it's a Path object
@@ -116,15 +117,15 @@ def _process_image_path(image_path: Union[Path, str]) -> Dict[str, Any]:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
             image_url = f"data:{mime_type};base64,{base64_image}"
             return {"type": "image_url", "image_url": {"url": image_url}}
-    except Exception as e:
+    except OSError as e:
         log_error(f"Failed to read image file {path}: {e}")
         raise  # Re-raise the exception after logging
 
 
-def _process_image_url(image_url: str) -> Dict[str, Any]:
+def _process_image_url(image_url: str) -> dict[str, Any]:
     """Process image (base64 or URL)."""
 
-    if image_url.startswith("data:image") or image_url.startswith(("http://", "https://")):
+    if image_url.startswith(("data:image", "http://", "https://")):
         return {"type": "image_url", "image_url": {"url": image_url}}
     else:
         raise ValueError("Image URL must start with 'data:image' or 'http(s)://'.")
@@ -156,10 +157,10 @@ def process_image(image: Image) -> Optional[Dict[str, Any]]:
         return image_payload
 
     except (FileNotFoundError, IsADirectoryError, ValueError) as e:
-        log_error(f"Failed to process image due to invalid input: {str(e)}")
+        log_error(f"Failed to process image due to invalid input: {e!s}")
         return None  # Return None for handled validation errors
     except Exception as e:
-        log_error(f"An unexpected error occurred while processing image: {str(e)}")
+        log_error(f"An unexpected error occurred while processing image: {e!s}")
         # Depending on policy, you might want to return None or re-raise
         return None  # Return None for unexpected errors as well, preventing crashes
 
@@ -189,7 +190,7 @@ def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
             if image_data:
                 image_messages.append(image_data)
         except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+            log_error(f"Failed to process image: {e!s}")
             continue
 
     return image_messages
