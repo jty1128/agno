@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.vectordb.clickhouse.index import HNSW
 
@@ -32,7 +34,7 @@ class Clickhouse(VectorDb):
         asyncclient: Optional[clickhouse_connect.driver.asyncclient.AsyncClient] = None,
         embedder: Optional[Embedder] = None,
         distance: Distance = Distance.cosine,
-        index: Optional[HNSW] = HNSW(),
+        index: Optional[HNSW] = None,
     ):
         # Store connection parameters as instance attributes
         self.host = host
@@ -73,6 +75,8 @@ class Clickhouse(VectorDb):
         self.distance: Distance = distance
 
         # Index for the collection
+        if index is None:
+            index = HNSW()
         self.index: Optional[HNSW] = index
 
     async def _ensure_async_client(self):
@@ -106,7 +110,7 @@ class Clickhouse(VectorDb):
                     parameters=parameters,
                 )
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(e)
             return False
 
@@ -122,7 +126,7 @@ class Clickhouse(VectorDb):
                 parameters=parameters,
             )
             return bool(result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Async error checking if table exists: {e}")
             return False
 
@@ -290,10 +294,10 @@ class Clickhouse(VectorDb):
 
     def insert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
     ) -> None:
-        rows: List[List[Any]] = []
+        rows: list[list[Any]] = []
         for document in documents:
             document.embed(embedder=self.embedder)
             cleaned_content = document.content.replace("\x00", "\ufffd")
@@ -372,8 +376,8 @@ class Clickhouse(VectorDb):
 
     def upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Upsert documents into the database.
@@ -442,7 +446,7 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             logger.error("Table might not exist, creating for future use")
             self.create()
@@ -465,8 +469,8 @@ class Clickhouse(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         """Search for documents asynchronously."""
         async_client = await self._ensure_async_client()
 
@@ -506,7 +510,7 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Async error searching for documents: {e}")
             logger.error("Table might not exist, creating for future use")
             await self.async_create()

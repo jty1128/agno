@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 import uuid
-from typing import Optional, Union
 
 import httpx
 
@@ -67,7 +68,7 @@ class GiphyTools(Toolkit):
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
-        except Exception as e:
+        except httpx.HTTPError as e:
             logger.error(f"An error occurred: {e}")
 
         return "No gifs found"

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.reasoning.step import NextAction, ReasoningStep
@@ -44,7 +46,7 @@ class ReasoningTools(Toolkit):
             self.register(self.analyze)
 
     def think(
-        self, agent: Union[Agent, Team], title: str, thought: str, action: Optional[str] = None, confidence: float = 0.8
+        self, agent: Union[Agent, Team], title: str, thought: str, action: str = None, confidence: float = 0.8
     ) -> str:
         """Use this tool as a scratchpad to reason about the question and work through it step-by-step.
         This tool will help you break down complex problems into logical steps and track the reasoning process.

@@ -1,6 +1,5 @@
 import json
 from os import getenv
-from typing import Dict, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -56,15 +55,15 @@ class OpenWeatherTools(Toolkit):
         if geocoding:
             self.register(self.geocode_location)
 
-    def _make_request(self, url: str, params: Dict) -> Dict:
+    def _make_request(self, url: str, params: dict) -> dict:
         """Make a request to the OpenWeatherMap API.
 
         Args:
             url (str): The API endpoint URL.
-            params (Dict): Query parameters for the request.
+            params (dict): Query parameters for the request.
 
         Returns:
-            Dict: The JSON response from the API.
+            dict: The JSON response from the API.
         """
         try:
             params["appid"] = self.api_key
@@ -99,7 +98,7 @@ class OpenWeatherTools(Toolkit):
                 return json.dumps({"error": f"No location found for '{location}'"})
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError, TypeError) as e:
             logger.error(f"Error geocoding location: {e}")
             return json.dumps({"error": str(e)})
 
@@ -139,7 +138,7 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError, TypeError) as e:
             logger.error(f"Error getting current weather: {e}")
             return json.dumps({"error": str(e)})
 
@@ -186,7 +185,7 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError, TypeError) as e:
             logger.error(f"Error getting forecast: {e}")
             return json.dumps({"error": str(e)})
 
@@ -226,6 +225,6 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError, TypeError) as e:
             logger.error(f"Error getting air pollution data: {e}")
             return json.dumps({"error": str(e)})

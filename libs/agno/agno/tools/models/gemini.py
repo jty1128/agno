@@ -1,7 +1,7 @@
 import base64
 import time
 from os import getenv
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -21,10 +21,10 @@ class GeminiTools(Toolkit):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         vertexai: bool = False,
-        project_id: Optional[str] = None,
-        location: Optional[str] = None,
+        project_id: str | None = None,
+        location: str | None = None,
         image_generation_model: str = "imagen-3.0-generate-002",
         video_generation_model: str = "veo-2.0-generate-001",
         **kwargs,
@@ -56,6 +56,8 @@ class GeminiTools(Toolkit):
         try:
             self.client = Client(**client_params)
             log_debug("Google GenAI Client created successfully.")
+        except ValueError:
+            raise
         except Exception as e:
             log_error(f"Failed to create Google GenAI Client: {e}", exc_info=True)
             raise ValueError(f"Failed to create Google GenAI Client. Error: {e}")
@@ -106,7 +108,7 @@ class GeminiTools(Toolkit):
                 log_debug(f"Successfully generated image {media_id} with model {self.image_model}")
             return "Image generated successfully"
 
-        except Exception as e:
+        except (AttributeError, ValueError, RuntimeError) as e:
             log_error(f"Failed to generate image: Client or method not available ({e})")
             return f"Failed to generate image: Client or method not available ({e})"
 
@@ -160,6 +162,6 @@ class GeminiTools(Toolkit):
                 )
                 log_debug(f"Successfully generated video {media_id} with model {self.video_model}")
             return "Video generated successfully"
-        except Exception as e:
+        except (AttributeError, ValueError, RuntimeError) as e:
             log_error(f"Failed to generate video: {e}")
             return f"Failed to generate video: {e}"

@@ -13,8 +13,8 @@ def merge_dictionaries(a: Dict[str, Any], b: Dict[str, Any]) -> None:
     Returns:
         None: The function modifies the first dictionary in place.
     """
-    for key in b:
-        if key in a and isinstance(a[key], dict) and isinstance(b[key], dict):
-            merge_dictionaries(a[key], b[key])
+    for key, value in b.items():
+        if key in a and isinstance(a[key], dict) and isinstance(value, dict):
+            merge_dictionaries(a[key], value)
         else:
-            a[key] = b[key]
+            a[key] = value

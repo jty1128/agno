@@ -1,5 +1,5 @@
 import json
-from typing import AsyncIterable, Iterable, Union
+from collections.abc import AsyncIterable, Iterable
 
 from pydantic import BaseModel
 
@@ -10,7 +10,7 @@ from agno.utils.timer import Timer
 
 
 def pprint_run_response(
-    run_response: Union[RunResponse, Iterable[RunResponse], TeamRunResponse, Iterable[TeamRunResponse]],
+    run_response: RunResponse | Iterable[RunResponse] | TeamRunResponse | Iterable[TeamRunResponse],
     markdown: bool = False,
     show_time: bool = False,
 ) -> None:
@@ -25,7 +25,7 @@ def pprint_run_response(
 
     # If run_response is a single RunResponse, wrap it in a list to make it iterable
     if isinstance(run_response, RunResponse) or isinstance(run_response, TeamRunResponse):
-        single_response_content: Union[str, JSON, Markdown] = ""
+        single_response_content: str | JSON | Markdown = ""
         if isinstance(run_response.content, str):
             single_response_content = (
                 Markdown(run_response.content) if markdown else run_response.get_content_as_string(indent=4)
@@ -33,13 +33,13 @@ def pprint_run_response(
         elif isinstance(run_response.content, BaseModel):
             try:
                 single_response_content = JSON(run_response.content.model_dump_json(exclude_none=True), indent=2)
-            except Exception as e:
-                logger.warning(f"Failed to convert response to Markdown: {e}")
+            except Exception:
+                logger.warning("Failed to convert response to Markdown")
         else:
             try:
                 single_response_content = JSON(json.dumps(run_response.content), indent=4)
-            except Exception as e:
-                logger.warning(f"Failed to convert response to string: {e}")
+            except Exception:
+                logger.warning("Failed to convert response to string")
 
         table = Table(box=ROUNDED, border_style="blue", show_header=False)
         table.add_row(single_response_content)
@@ -68,7 +68,7 @@ def pprint_run_response(
 
 
 async def apprint_run_response(
-    run_response: Union[RunResponse, AsyncIterable[RunResponse], TeamRunResponse, AsyncIterable[TeamRunResponse]],
+    run_response: RunResponse | AsyncIterable[RunResponse] | TeamRunResponse | AsyncIterable[TeamRunResponse],
     markdown: bool = False,
     show_time: bool = False,
 ) -> None:
@@ -83,7 +83,7 @@ async def apprint_run_response(
 
     # If run_response is a single RunResponse, wrap it in a list to make it iterable
     if isinstance(run_response, RunResponse) or isinstance(run_response, TeamRunResponse):
-        single_response_content: Union[str, JSON, Markdown] = ""
+        single_response_content: str | JSON | Markdown = ""
         if isinstance(run_response.content, str):
             single_response_content = (
                 Markdown(run_response.content) if markdown else run_response.get_content_as_string(indent=4)
@@ -91,13 +91,13 @@ async def apprint_run_response(
         elif isinstance(run_response.content, BaseModel):
             try:
                 single_response_content = JSON(run_response.content.model_dump_json(exclude_none=True), indent=2)
-            except Exception as e:
-                logger.warning(f"Failed to convert response to Markdown: {e}")
+            except Exception:
+                logger.warning("Failed to convert response to Markdown")
         else:
             try:
                 single_response_content = JSON(json.dumps(run_response.content), indent=4)
-            except Exception as e:
-                logger.warning(f"Failed to convert response to string: {e}")
+            except Exception:
+                logger.warning("Failed to convert response to string")
 
         table = Table(box=ROUNDED, border_style="blue", show_header=False)
         table.add_row(single_response_content)

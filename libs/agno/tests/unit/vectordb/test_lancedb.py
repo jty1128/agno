@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from collections.abc import List
 
 import pytest
 
@@ -30,7 +30,7 @@ def lance_db(mock_embedder):
     # Cleanup after test
     try:
         db.drop()
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     if os.path.exists(TEST_PATH):

@@ -1,5 +1,4 @@
 from os import getenv
-from typing import Optional
 
 import requests
 
@@ -55,7 +54,7 @@ class LinearTools(Toolkit):
 
             if "errors" in data:
                 logger.error(f"GraphQL Error: {data['errors']}")
-                raise Exception(f"GraphQL Error: {data['errors']}")
+                raise ValueError(f"GraphQL Error: {data['errors']}")
 
             log_info("GraphQL query executed successfully.")
             return data.get("data")
@@ -64,8 +63,8 @@ class LinearTools(Toolkit):
             logger.error(f"Request error: {e}")
             raise
 
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+        except Exception:
+            logger.error("Unexpected error")
             raise
 
     def get_user_details(self) -> Optional[str]:
@@ -204,7 +203,7 @@ class LinearTools(Toolkit):
             logger.error(f"Error creating issue '{title}' for team ID {team_id}: {e}")
             raise
 
-    def update_issue(self, issue_id: str, title: Optional[str]) -> Optional[str]:
+    def update_issue(self, issue_id: str, title: str | None) -> str | None:
         """
         Update the title or state of a specific issue by issue ID.
 
@@ -251,11 +250,11 @@ class LinearTools(Toolkit):
                 logger.error(f"Failed to update issue ID {issue_id}. Success flag was false.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error updating issue ID {issue_id}: {e}")
+        except Exception:
+            logger.error(f"Error updating issue ID {issue_id}")
             raise
 
-    def get_user_assigned_issues(self, user_id: str) -> Optional[str]:
+    def get_user_assigned_issues(self, user_id: str) -> str | None:
         """
         Retrieve issues assigned to a specific user by user ID.
 
@@ -299,11 +298,11 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve user or issues.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error retrieving issues for user ID {user_id}: {e}")
+        except Exception:
+            logger.error(f"Error retrieving issues for user ID {user_id}")
             raise
 
-    def get_workflow_issues(self, workflow_id: str) -> Optional[str]:
+    def get_workflow_issues(self, workflow_id: str) -> str | None:
         """
         Retrieve issues within a specific workflow state by workflow ID.
 
@@ -342,11 +341,11 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve issues for the specified workflow state.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error retrieving issues for workflow state ID {workflow_id}: {e}")
+        except Exception:
+            logger.error(f"Error retrieving issues for workflow state ID {workflow_id}")
             raise
 
-    def get_high_priority_issues(self) -> Optional[str]:
+    def get_high_priority_issues(self) -> str | None:
         """
         Retrieve issues with a high priority (priority <= 2).
 
@@ -383,6 +382,6 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve high-priority issues.")
                 return None
 
-        except Exception as e:
-            logger.error(f"Error retrieving high-priority issues: {e}")
+        except Exception:
+            logger.error("Error retrieving high-priority issues")
             raise

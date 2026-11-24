@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -65,8 +67,8 @@ class DuckDbTools(Toolkit):
                 if self.init_commands is not None:
                     for command in self.init_commands:
                         self._connection.sql(command)
-            except Exception as e:
-                logger.exception(e)
+            except Exception:
+                logger.exception("Failed to run duckdb init commands")
                 logger.warning("Failed to run duckdb init commands")
 
         return self._connection
@@ -147,8 +149,8 @@ class DuckDbTools(Toolkit):
             return str(e)
         except duckdb.Error as e:
             return str(e)
-        except Exception as e:
-            return str(e)
+        except Exception:
+            return "An unexpected error occurred"
 
     def summarize_table(self, table: str) -> str:
         """Function to compute a number of aggregates over a table.

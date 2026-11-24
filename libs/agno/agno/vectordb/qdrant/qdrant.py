@@ -2,7 +2,7 @@ from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -35,7 +35,7 @@ class Qdrant(VectorDb):
         host: Optional[str] = None,
         path: Optional[str] = None,
         reranker: Optional[Reranker] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         # Collection attributes
         self.collection: str = collection
