@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -101,8 +102,8 @@ class YouTubeTools(Toolkit):
                     "thumbnail_url": video_data.get("thumbnail_url"),
                 }
                 return json.dumps(clean_data, indent=4)
-        except Exception as e:
-            return f"Error getting video data: {e}"
+        except Exception:
+            return "Error getting video data"
 
     def get_youtube_video_captions(self, url: str) -> str:
         """Use this function to get captions from a YouTube video.
@@ -125,7 +126,7 @@ class YouTubeTools(Toolkit):
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -135,8 +136,8 @@ class YouTubeTools(Toolkit):
             if captions:
                 return " ".join(line["text"] for line in captions)
             return "No captions found for video"
-        except Exception as e:
-            return f"Error getting captions for video: {e}"
+        except Exception:
+            return "Error getting captions for video"
 
     def get_video_timestamps(self, url: str) -> str:
         """Generate timestamps for a YouTube video based on captions.
@@ -158,7 +159,7 @@ class YouTubeTools(Toolkit):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -171,5 +172,5 @@ class YouTubeTools(Toolkit):
                 minutes, seconds = divmod(start, 60)
                 timestamps.append(f"{minutes}:{seconds:02d} - {line['text']}")
             return "\n".join(timestamps)
-        except Exception as e:
-            return f"Error generating timestamps: {e}"
+        except Exception:
+            return "Error generating timestamps"

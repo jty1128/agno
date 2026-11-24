@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger

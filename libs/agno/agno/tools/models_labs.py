@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -33,7 +35,7 @@ MODELS_LAB_FETCH_URLS = {
 class ModelsLabTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         wait_for_completion: bool = False,
         add_to_eta: int = 15,
         max_wait_time: int = 60,
@@ -56,9 +58,9 @@ class ModelsLabTools(Toolkit):
 
         self.register(self.generate_media)
 
-    def _create_payload(self, prompt: str) -> Dict[str, Any]:
+    def _create_payload(self, prompt: str) -> dict[str, Any]:
         """Create payload based on file type."""
-        base_payload: Dict[str, Any] = {
+        base_payload: dict[str, Any] = {
             "key": self.api_key,
             "prompt": prompt,
             "webhook": None,
@@ -86,7 +88,7 @@ class ModelsLabTools(Toolkit):
         return base_payload
 
     def _add_media_artifact(
-        self, agent: Union[Agent, Team], media_id: str, media_url: str, eta: Optional[str] = None
+        self, agent: Union[Agent, Team], media_id: str, media_url: str, eta: str | None = None
     ) -> None:
         """Add appropriate media artifact based on file type."""
         if self.file_type == FileType.MP4:
@@ -164,7 +166,7 @@ class ModelsLabTools(Toolkit):
             error_msg = f"Network error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
-        except Exception as e:
-            error_msg = f"Unexpected error while generating {self.file_type.value}: {e}"
+        except Exception:
+            error_msg = f"Unexpected error while generating {self.file_type.value}"
             logger.error(error_msg)
             return f"Error: {error_msg}"

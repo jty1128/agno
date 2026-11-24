@@ -1,5 +1,6 @@
 import json
-from typing import AsyncIterable, Iterable, Union
+from collections.abc import AsyncIterable, Iterable
+from typing import Union
 
 from pydantic import BaseModel
 
@@ -33,12 +34,12 @@ def pprint_run_response(
         elif isinstance(run_response.content, BaseModel):
             try:
                 single_response_content = JSON(run_response.content.model_dump_json(exclude_none=True), indent=2)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to convert response to Markdown: {e}")
         else:
             try:
                 single_response_content = JSON(json.dumps(run_response.content), indent=4)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to convert response to string: {e}")
 
         table = Table(box=ROUNDED, border_style="blue", show_header=False)
@@ -91,12 +92,12 @@ async def apprint_run_response(
         elif isinstance(run_response.content, BaseModel):
             try:
                 single_response_content = JSON(run_response.content.model_dump_json(exclude_none=True), indent=2)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to convert response to Markdown: {e}")
         else:
             try:
                 single_response_content = JSON(json.dumps(run_response.content), indent=4)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to convert response to string: {e}")
 
         table = Table(box=ROUNDED, border_style="blue", show_header=False)

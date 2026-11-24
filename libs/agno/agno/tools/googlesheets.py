@@ -48,7 +48,7 @@ import json
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, ClassVar, Optional
 
 from agno.tools import Toolkit
 
@@ -79,7 +79,7 @@ def authenticate(func):
 
 class GoogleSheetsTools(Toolkit):
     # Default scopes for Google Sheets API access
-    DEFAULT_SCOPES = {
+    DEFAULT_SCOPES: ClassVar[dict[str, str]] = {
         "read": "https://www.googleapis.com/auth/spreadsheets.readonly",
         "write": "https://www.googleapis.com/auth/spreadsheets",
     }
@@ -88,7 +88,7 @@ class GoogleSheetsTools(Toolkit):
 
     def __init__(
         self,
-        scopes: Optional[List[str]] = None,
+        scopes: Optional[list[str]] = None,
         spreadsheet_id: Optional[str] = None,
         spreadsheet_range: Optional[str] = None,
         creds: Optional[Credentials] = None,
@@ -103,7 +103,7 @@ class GoogleSheetsTools(Toolkit):
         """Initialize GoogleSheetsTools with the specified configuration.
 
         Args:
-            scopes (Optional[List[str]]): Custom OAuth scopes. If None, determined by operations.
+            scopes (Optional[list[str]]): Custom OAuth scopes. If None, determined by operations.
             spreadsheet_id (Optional[str]): ID of the target spreadsheet.
             spreadsheet_range (Optional[str]): Range within the spreadsheet.
             creds (Optional[Credentials]): Pre-existing credentials.
@@ -215,8 +215,8 @@ class GoogleSheetsTools(Toolkit):
             result = self.service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()  # type: ignore
             return json.dumps(result.get("values", []))
 
-        except Exception as e:
-            return f"Error reading Google Sheet: {e}"
+        except Exception:
+            return f"Error reading Google Sheet: {sheet_id}"
 
     @authenticate
     def create_sheet(self, title: str) -> str:
@@ -240,12 +240,12 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Spreadsheet created: https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
 
-        except Exception as e:
-            return f"Error creating Google Sheet: {e}"
+        except Exception:
+            return f"Error creating Google Sheet: {title}"
 
     @authenticate
     def update_sheet(
-        self, data: List[List[Any]], spreadsheet_id: Optional[str] = None, range_name: Optional[str] = None
+        self, data: list[list[Any]], spreadsheet_id: Optional[str] = None, range_name: Optional[str] = None
     ) -> str:
         """Updates a Google Sheet with the provided data.
 
@@ -277,8 +277,8 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Sheet updated successfully: {spreadsheet_id}"
 
-        except Exception as e:
-            return f"Error updating Google Sheet: {e}"
+        except Exception:
+            return f"Error updating Google Sheet: {spreadsheet_id}"
 
     @authenticate
     def create_duplicate_sheet(
@@ -346,5 +346,5 @@ class GoogleSheetsTools(Toolkit):
                     ).execute()
 
             return f"Spreadsheet duplicated successfully: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
-        except Exception as e:
-            return f"Error duplicating spreadsheet via Drive API: {e}"
+        except Exception:
+            return f"Error duplicating spreadsheet via Drive API: {source_id}"

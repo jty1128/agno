@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -52,7 +53,7 @@ def test_basic_parameters_tool_parsing():
 
 
 def test_optional_parameters_tool_parsing():
-    def get_forecast(city: str, days: Optional[int] = None) -> str:
+    def get_forecast(city: str, days: int | None = None) -> str:
         """
         Get the weather forecast for a city
 
@@ -77,9 +78,7 @@ def test_optional_parameters_tool_parsing():
 
 
 def test_union_type_parameters_tool_parsing():
-    def generate_weather_string(
-        degrees: Union[int, float], city: str = "New York", condition: Optional[str] = None
-    ) -> str:
+    def generate_weather_string(degrees: float, city: str = "New York", condition: Optional[str] = None) -> str:
         """
         Generate a weather string for any city
 
@@ -105,7 +104,7 @@ def test_union_type_parameters_tool_parsing():
 
 
 def test_python312_union_syntax_tool_parsing():
-    def get_weather_data(temperature: int | float, location: str = "San Francisco", unit: str | None = None) -> str:
+    def get_weather_data(temperature: float, location: str = "San Francisco", unit: str | None = None) -> str:
         """
         Get weather data for a location
 
@@ -134,7 +133,7 @@ def test_pydantic_model_parameters_tool_parsing():
     class City(BaseModel):
         name: str
         country: str
-        population: Optional[int] = None
+        population: int | None = None
 
     def get_weather_for_city(city: City) -> str:
         """
@@ -161,7 +160,7 @@ def test_pydantic_model_parameters_tool_parsing():
 
 def test_complex_nested_parameters_tool_parsing():
     def travel_recommendation(
-        destination: str, preferences: Dict[str, Any], budget_range: List[float], include_weather: bool = True
+        destination: str, preferences: dict[str, Any], budget_range: list[float], include_weather: bool = True
     ) -> str:
         """
         Get travel recommendations for a destination
@@ -216,7 +215,7 @@ def test_multiple_functions_tool_parsing():
 
 
 def test_list_with_generics_tool_parsing():
-    def get_city_weather_forecast(cities: List[str], days: int = 3) -> str:
+    def get_city_weather_forecast(cities: list[str], days: int = 3) -> str:
         """
         Get weather forecast for multiple cities
 

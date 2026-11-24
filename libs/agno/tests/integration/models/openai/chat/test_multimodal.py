@@ -3,6 +3,8 @@ from typing import Any
 import requests
 
 from agno.agent.agent import Agent
+from __future__ import annotations
+
 from agno.media import Audio, Image
 from agno.models.openai.chat import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools

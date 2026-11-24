@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Dict, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -26,7 +27,7 @@ class OpenWeatherTools(Toolkit):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         units: str = "metric",
         current_weather: bool = True,
         forecast: bool = True,
@@ -56,15 +57,15 @@ class OpenWeatherTools(Toolkit):
         if geocoding:
             self.register(self.geocode_location)
 
-    def _make_request(self, url: str, params: Dict) -> Dict:
+    def _make_request(self, url: str, params: dict) -> dict:
         """Make a request to the OpenWeatherMap API.
 
         Args:
             url (str): The API endpoint URL.
-            params (Dict): Query parameters for the request.
+            params (dict): Query parameters for the request.
 
         Returns:
-            Dict: The JSON response from the API.
+            dict: The JSON response from the API.
         """
         try:
             params["appid"] = self.api_key
@@ -101,7 +102,7 @@ class OpenWeatherTools(Toolkit):
             return json.dumps(result, indent=2)
         except Exception as e:
             logger.error(f"Error geocoding location: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore
 
     def get_current_weather(self, location: str) -> str:
         """Get current weather data for a location.
@@ -141,7 +142,7 @@ class OpenWeatherTools(Toolkit):
             return json.dumps(result, indent=2)
         except Exception as e:
             logger.error(f"Error getting current weather: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore
 
     def get_forecast(self, location: str, days: int = 5) -> str:
         """Get weather forecast for a location.
@@ -188,7 +189,7 @@ class OpenWeatherTools(Toolkit):
             return json.dumps(result, indent=2)
         except Exception as e:
             logger.error(f"Error getting forecast: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore
 
     def get_air_pollution(self, location: str) -> str:
         """Get current air pollution data for a location.
@@ -228,4 +229,4 @@ class OpenWeatherTools(Toolkit):
             return json.dumps(result, indent=2)
         except Exception as e:
             logger.error(f"Error getting air pollution data: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore

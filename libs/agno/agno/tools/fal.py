@@ -2,6 +2,8 @@
 pip install fal-client
 """
 
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional, Union
 from uuid import uuid4
@@ -120,6 +122,6 @@ class FalTools(Toolkit):
 
             return f"Image generated successfully at {url}"
 
-        except Exception as e:
-            logger.error(f"Failed to generate image: {e}")
-            return f"Error: {e}"
+        except Exception:
+            logger.error("Failed to generate image")
+            return "Error: Failed to generate image"

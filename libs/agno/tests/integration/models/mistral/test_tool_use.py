@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from agno.agent import Agent, RunResponse  # noqa
+from agno.agent import Agent, RunResponse
 from agno.models.mistral import MistralChat
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.exa import ExaTools
@@ -149,7 +149,7 @@ def test_multiple_tool_calls():
     assert response.content is not None
 
 
-@pytest.mark.skip("Mistral struggles with custom tool calls")
+@pytest.mark.skip(reason="Mistral struggles with custom tool calls")
 def test_tool_call_custom_tool_no_parameters():
     def get_the_weather_in_tokyo():
         """
@@ -174,7 +174,7 @@ def test_tool_call_custom_tool_no_parameters():
     assert "70" in response.content
 
 
-@pytest.mark.skip("Mistral struggles with custom tool calls")
+@pytest.mark.skip(reason="Mistral struggles with custom tool calls")
 def test_tool_call_custom_tool_optional_parameters():
     def get_the_weather(city: Optional[str] = None):
         """

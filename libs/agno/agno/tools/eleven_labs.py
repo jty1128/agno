@@ -1,8 +1,9 @@
 from base64 import b64encode
+from collections.abc import Iterator
 from io import BytesIO
 from os import getenv, path
 from pathlib import Path
-from typing import Iterator, Literal, Optional, Union
+from typing import Literal, Optional
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -83,9 +84,9 @@ class ElevenLabsTools(Toolkit):
 
             return str(response)
 
-        except Exception as e:
-            logger.error(f"Failed to fetch voices: {e}")
-            return f"Error: {e}"
+        except Exception:
+            logger.error("Failed to fetch voices")
+            return "Error: Failed to fetch voices"
 
     def _process_audio(self, audio_generator: Iterator[bytes]) -> str:
         # Step 1: Write audio data to BytesIO
@@ -119,9 +120,7 @@ class ElevenLabsTools(Toolkit):
 
         return base64_audio
 
-    def generate_sound_effect(
-        self, agent: Union[Agent, Team], prompt: str, duration_seconds: Optional[float] = None
-    ) -> str:
+    def generate_sound_effect(self, agent: Agent | Team, prompt: str, duration_seconds: float | None = None) -> str:
         """
         Use this function to generate sound effect audio from a text prompt.
 
@@ -149,11 +148,11 @@ class ElevenLabsTools(Toolkit):
 
             return "Audio generated successfully"
 
-        except Exception as e:
-            logger.error(f"Failed to generate audio: {e}")
-            return f"Error: {e}"
+        except Exception:
+            logger.error("Failed to generate audio")
+            return "Error: Failed to generate audio"
 
-    def text_to_speech(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def text_to_speech(self, agent: Agent | Team, prompt: str) -> str:
         """
         Use this function to convert text to speech audio.
 
@@ -183,6 +182,6 @@ class ElevenLabsTools(Toolkit):
 
             return "Audio generated successfully"
 
-        except Exception as e:
-            logger.error(f"Failed to generate audio: {e}")
-            return f"Error: {e}"
+        except Exception:
+            logger.error("Failed to generate audio")
+            return "Error: Failed to generate audio"

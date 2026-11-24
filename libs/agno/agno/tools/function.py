@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, get_type_hints
+from typing import Any, TypeVar, get_type_hints
 
 from docstring_parser import parse
 from pydantic import BaseModel, Field, validate_call
@@ -89,7 +92,7 @@ class Function(BaseModel):
         return self.model_dump(exclude_none=True, include={"name", "description", "parameters", "strict"})
 
     @classmethod
-    def from_callable(cls, c: Callable, strict: bool = False) -> "Function":
+    def from_callable(cls, c: Callable, strict: bool = False) -> Function:
         from inspect import getdoc, isasyncgenfunction, signature
 
         from agno.utils.json_schema import get_json_schema
@@ -147,8 +150,8 @@ class Function(BaseModel):
                 ]
 
             # log_debug(f"JSON schema for {function_name}: {parameters}")
-        except Exception as e:
-            log_warning(f"Could not parse args for {function_name}: {e}", exc_info=True)
+        except Exception:
+            log_warning(f"Could not parse args for {function_name}", exc_info=True)
 
         # Don't wrap async generator with validate_call
         if isasyncgenfunction(c):
@@ -248,8 +251,8 @@ class Function(BaseModel):
                     ]
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
-            log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
+        except Exception:
+            log_warning(f"Could not parse args for {self.name}", exc_info=True)
 
         self.description = self.description or get_entrypoint_docstring(self.entrypoint)
         if not params_set_by_user:
@@ -259,21 +262,21 @@ class Function(BaseModel):
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
                 self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
-            log_warning(f"Failed to add validate decorator to entrypoint: {e}")
+        except Exception:
+            log_warning("Failed to add validate decorator to entrypoint")
 
     def process_schema_for_strict(self):
         self.parameters["additionalProperties"] = False
         self.parameters["required"] = [name for name in self.parameters["properties"] if name not in ["agent", "team"]]
 
-    def get_type_name(self, t: Type[T]):
+    def get_type_name(self, t: type[T]):
         name = str(t)
         if "list" in name or "dict" in name:
             return name
         else:
             return t.__name__
 
-    def get_definition_for_prompt_dict(self) -> Optional[Dict[str, Any]]:
+    def get_definition_for_prompt_dict(self) -> dict[str, Any] | None:
         """Returns a function definition that can be used in a prompt."""
 
         if self.entrypoint is None:
@@ -293,7 +296,7 @@ class Function(BaseModel):
         }
         return function_info
 
-    def get_definition_for_prompt(self) -> Optional[str]:
+    def get_definition_for_prompt(self) -> str | None:
         """Returns a function definition that can be used in a prompt."""
         import json
 
@@ -302,7 +305,7 @@ class Function(BaseModel):
             return json.dumps(function_info, indent=2)
         return None
 
-    def _get_cache_key(self, entrypoint_args: Dict[str, Any], call_args: Optional[Dict[str, Any]] = None) -> str:
+    def _get_cache_key(self, entrypoint_args: dict[str, Any], call_args: dict[str, Any] | None = None) -> str:
         """Generate a cache key based on function name and arguments."""
         from hashlib import md5
 
@@ -328,7 +331,7 @@ class Function(BaseModel):
         func_cache_dir.mkdir(parents=True, exist_ok=True)
         return str(func_cache_dir / f"{cache_key}.json")
 
-    def _get_cached_result(self, cache_file: str) -> Optional[Any]:
+    def _get_cached_result(self, cache_file: str) -> Any | None:
         """Retrieve cached result if valid."""
         import json
         from pathlib import Path
@@ -350,8 +353,8 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
-            log_error(f"Error reading cache: {e}")
+        except Exception:
+            log_error("Error reading cache")
 
         return None
 
@@ -363,8 +366,8 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
-            log_error(f"Error writing cache: {e}")
+        except Exception:
+            log_error("Error writing cache")
 
 
 class FunctionCall(BaseModel):
@@ -373,14 +376,14 @@ class FunctionCall(BaseModel):
     # The function to be called.
     function: Function
     # The arguments to call the function with.
-    arguments: Optional[Dict[str, Any]] = None
+    arguments: dict[str, Any] | None = None
     # The result of the function call.
-    result: Optional[Any] = None
+    result: Any | None = None
     # The ID of the function call.
-    call_id: Optional[str] = None
+    call_id: str | None = None
 
     # Error while parsing arguments or running the function.
-    error: Optional[str] = None
+    error: str | None = None
 
     def get_call_str(self) -> str:
         """Returns a string representation of the function call."""
@@ -429,9 +432,9 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
-                log_warning(f"Error in pre-hook callback: {e}")
-                log_exception(e)
+            except Exception:
+                log_warning("Error in pre-hook callback")
+                log_exception()
 
     def _handle_post_hook(self):
         """Handles the post-hook for the function call."""
@@ -454,9 +457,9 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
-                log_warning(f"Error in post-hook callback: {e}")
-                log_exception(e)
+            except Exception:
+                log_warning("Error in post-hook callback")
+                log_exception()
 
     def _build_entrypoint_args(self) -> Dict[str, Any]:
         """Builds the arguments for the entrypoint."""

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Optional, Union
 
 from agno.agent import Agent
 from agno.team.team import Team
@@ -39,7 +40,7 @@ class ThinkingTools(Toolkit):
             # Register the think tool
             self.register(self.think)
 
-    def think(self, agent: Union[Agent, Team], thought: str) -> str:
+    def think(self, agent: Agent | Team, thought: str) -> str:
         """Use the tool to think about something.
         It will not obtain new information or take any actions, but just append the thought to the log and return the result.
         Use it when complex reasoning or some cache memory or a scratchpad is needed.
@@ -65,6 +66,6 @@ class ThinkingTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
-            logger.error(f"Error recording thought: {e}")
-            return f"Error recording thought: {e}"
+        except Exception:
+            logger.exception("Error recording thought")
+            return "Error recording thought"

@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -14,7 +14,7 @@ try:
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.sse import sse_client
     from mcp.client.stdio import stdio_client
-except (ImportError, ModuleNotFoundError):
+except ImportError:
     raise ImportError("`mcp` not installed. Please install using `pip install mcp`")
 
 
@@ -221,8 +221,8 @@ class MCPTools(Toolkit):
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
-            logger.error(f"Failed to get MCP tools: {e}")
+        except Exception:
+            logger.error("Failed to get MCP tools")
             raise
 
 
@@ -239,15 +239,15 @@ class MultiMCPTools(Toolkit):
 
     def __init__(
         self,
-        commands: Optional[List[str]] = None,
-        urls: Optional[List[str]] = None,
+        commands: list[str] | None = None,
+        urls: list[str] | None = None,
         *,
-        env: Optional[dict[str, str]] = None,
-        server_params_list: Optional[List[Union[SSEClientParams, StdioServerParameters]]] = None,
+        env: dict[str, str] | None = None,
+        server_params_list: list[SSEClientParams | StdioServerParameters] | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -273,10 +273,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[SSEClientParams | StdioServerParameters] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: list[str] | None = commands
+        self.urls: list[str] | None = urls
 
         # Merge provided env with system env
         if env is not None:
@@ -333,9 +333,9 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ):
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
@@ -382,6 +382,6 @@ class MultiMCPTools(Toolkit):
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
-            logger.error(f"Failed to get MCP tools: {e}")
+        except Exception:
+            logger.error("Failed to get MCP tools")
             raise

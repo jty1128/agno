@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from textwrap import dedent
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from agno.agent import Agent
 from agno.document import Document
@@ -82,9 +84,9 @@ class KnowledgeTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
-            logger.error(f"Error recording thought: {e}")
-            return f"Error recording thought: {e}"
+        except Exception:
+            logger.error("Error recording thought")
+            return "Error recording thought"
 
     def search(self, agent: Union[Agent, Team], query: str) -> str:
         """Use this tool to search the knowledge base for relevant information.
@@ -100,13 +102,13 @@ class KnowledgeTools(Toolkit):
             log_debug(f"Searching knowledge base: {query}")
 
             # Get the relevant documents from the knowledge base
-            relevant_docs: List[Document] = self.knowledge.search(query=query)
+            relevant_docs: list[Document] = self.knowledge.search(query=query)
             if len(relevant_docs) == 0:
                 return "No documents found"
             return json.dumps([doc.to_dict() for doc in relevant_docs])
-        except Exception as e:
-            logger.error(f"Error searching knowledge base: {e}")
-            return f"Error searching knowledge base: {e}"
+        except Exception:
+            logger.error("Error searching knowledge base")
+            return "Error searching knowledge base"
 
     def analyze(self, agent: Union[Agent, Team], analysis: str) -> str:
         """Use this tool to evaluate whether the returned documents are correct and sufficient.
@@ -136,9 +138,9 @@ class KnowledgeTools(Toolkit):
                 """
             ).strip()
             return formatted_analysis
-        except Exception as e:
-            logger.error(f"Error recording analysis: {e}")
-            return f"Error recording analysis: {e}"
+        except Exception:
+            logger.error("Error recording analysis")
+            return "Error recording analysis"
 
     DEFAULT_INSTRUCTIONS = dedent("""\
         You have access to the Think, Search, and Analyze tools that will help you search your knowledge for relevant information. Use these tools as frequently as needed to find the most relevant information.
