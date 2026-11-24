@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import asyncio
@@ -132,15 +134,16 @@ class Milvus(VectorDb):
         Args:
             document (Document): Document to validate
         """
-        if self.client:
-            cleaned_content = document.content.replace("\x00", "\ufffd")
-            doc_id = md5(cleaned_content.encode()).hexdigest()
-            collection_points = self.client.get(
-                collection_name=self.collection,
-                ids=[doc_id],
-            )
-            return len(collection_points) > 0
-        return False
+        if not self.client:
+            return False
+
+        cleaned_content = document.content.replace("\x00", "\ufffd")
+        doc_id = md5(cleaned_content.encode()).hexdigest()
+        collection_points = self.client.get(
+            collection_name=self.collection,
+            ids=[doc_id],
+        )
+        return len(collection_points) > 0
 
     async def async_doc_exists(self, document: Document) -> bool:
         """
@@ -165,26 +168,28 @@ class Milvus(VectorDb):
         Returns:
             bool: True if a document with the given name exists, False otherwise.
         """
-        if self.client:
-            expr = f"name == '{name}'"
-            scroll_result = self.client.query(
-                collection_name=self.collection,
-                filter=expr,
-                limit=1,
-            )
-            return len(scroll_result[0]) > 0
-        return False
+        if not self.client:
+            return False
+
+        expr = f"name == '{name}'"
+        scroll_result = self.client.query(
+            collection_name=self.collection,
+            filter=expr,
+            limit=1,
+        )
+        return len(scroll_result[0]) > 0
 
     def id_exists(self, id: str) -> bool:
-        if self.client:
-            collection_points = self.client.get(
-                collection_name=self.collection,
-                ids=[id],
-            )
-            return len(collection_points) > 0
-        return False
+        if not self.client:
+            return False
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+        collection_points = self.client.get(
+            collection_name=self.collection,
+            ids=[id],
+        )
+        return len(collection_points) > 0
+
+    def insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Insert documents into the database.
 
@@ -212,7 +217,7 @@ class Milvus(VectorDb):
             )
             log_debug(f"Inserted document: {document.name} ({document.meta_data})")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Insert documents asynchronously with controlled concurrency."""
         log_debug(f"Inserting {len(documents)} documents asynchronously")
 
@@ -249,7 +254,7 @@ class Milvus(VectorDb):
         """
         return True
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Upsert documents into the database.
 
@@ -276,7 +281,7 @@ class Milvus(VectorDb):
             )
             log_debug(f"Upserted document: {document.name} ({document.meta_data})")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         log_debug(f"Upserting {len(documents)} documents asynchronously")
 
         async def process_document(document):
@@ -303,7 +308,7 @@ class Milvus(VectorDb):
 
         log_debug(f"Upserted {len(documents)} documents asynchronously in parallel")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         """
         Search for documents in the database.
 
@@ -343,8 +348,8 @@ class Milvus(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             logger.error(f"Error getting embedding for Query: {query}")
@@ -391,9 +396,8 @@ class Milvus(VectorDb):
             await self.async_client.drop_collection(self.collection)
 
     def exists(self) -> bool:
-        if self.client:
-            if self.client.has_collection(self.collection):
-                return True
+        if self.client and self.client.has_collection(self.collection):
+            return True
         return False
 
     async def async_exists(self) -> bool:
@@ -414,7 +418,7 @@ class Milvus(VectorDb):
             return True
         return False
 
-    def _build_expr(self, filters: Optional[Dict[str, Any]]) -> str:
+    def _build_expr(self, filters: Optional[dict[str, Any]]) -> str:
         if filters:
             kv_list = []
             for k, v in filters.items():

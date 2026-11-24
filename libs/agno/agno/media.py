@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, field_validator, model_validator
 
@@ -253,7 +253,7 @@ class Image(BaseModel):
 
         return data
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         import base64
         import zlib
 
@@ -301,7 +301,7 @@ class File(BaseModel):
         return v
 
     @classmethod
-    def valid_mime_types(cls) -> List[str]:
+    def valid_mime_types(cls) -> list[str]:
         return [
             "application/pdf",
             "application/x-javascript",
@@ -318,7 +318,7 @@ class File(BaseModel):
         ]
 
     @property
-    def file_url_content(self) -> Optional[Tuple[bytes, str]]:
+    def file_url_content(self) -> Optional[tuple[bytes, str]]:
         import httpx
 
         if self.url:

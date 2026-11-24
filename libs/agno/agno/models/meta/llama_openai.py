@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from os import getenv
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import httpx
 
 try:
     from openai import AsyncOpenAI as AsyncOpenAIClient
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     raise ImportError("`openai` not installed. Please install using `pip install openai`")
 
 from agno.models.meta.llama import Message
@@ -49,12 +51,12 @@ class LlamaOpenAI(OpenAILike):
     supports_json_schema_outputs: bool = True
 
     @property
-    def request_kwargs(self) -> Dict[str, Any]:
+    def request_kwargs(self) -> dict[str, Any]:
         """
         Returns keyword arguments for API requests.
 
         Returns:
-            Dict[str, Any]: A dictionary of keyword arguments for API requests.
+            dict[str, Any]: A dictionary of keyword arguments for API requests.
         """
         # Define base request parameters
         base_params = {
@@ -92,7 +94,7 @@ class LlamaOpenAI(OpenAILike):
 
         return request_params
 
-    def _format_message(self, message: Message) -> Dict[str, Any]:
+    def _format_message(self, message: Message) -> dict[str, Any]:
         """
         Format a message into the format expected by Llama API.
 
@@ -100,7 +102,7 @@ class LlamaOpenAI(OpenAILike):
             message (Message): The message to format.
 
         Returns:
-            Dict[str, Any]: The formatted message.
+            dict[str, Any]: The formatted message.
         """
         return format_message(message, openai_like=True)
 

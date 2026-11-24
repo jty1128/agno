@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from agno.utils.log import log_debug, logger
 
 
-def read_pyproject_agno(pyproject_file: Path) -> Optional[Dict]:
+def read_pyproject_agno(pyproject_file: Path) -> Optional[dict]:
     log_debug(f"Reading {pyproject_file}")
     try:
         import tomli
@@ -13,6 +15,6 @@ def read_pyproject_agno(pyproject_file: Path) -> Optional[Dict]:
         agno_conf = pyproject_dict.get("tool", {}).get("agno", None)
         if agno_conf is not None and isinstance(agno_conf, dict):
             return agno_conf
-    except Exception as e:
+    except (ImportError, tomli.TOMLDecodeError, OSError, ValueError) as e:
         logger.error(f"Could not read {pyproject_file}: {e}")
     return None

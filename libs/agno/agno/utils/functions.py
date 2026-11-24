@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
 from agno.tools.function import Function, FunctionCall
 from agno.utils.log import log_debug, log_error
@@ -9,15 +11,15 @@ T = TypeVar("T")
 
 def get_function_call(
     name: str,
-    arguments: Optional[str] = None,
-    call_id: Optional[str] = None,
-    functions: Optional[Dict[str, Function]] = None,
-) -> Optional[FunctionCall]:
+    arguments: str | None = None,
+    call_id: str | None = None,
+    functions: dict[str, Function] | None = None,
+) -> FunctionCall | None:
     log_debug(f"Getting function {name}")
     if functions is None:
         return None
 
-    function_to_call: Optional[Function] = None
+    function_to_call: Function | None = None
     if name in functions:
         function_to_call = functions[name]
     if function_to_call is None:
@@ -37,7 +39,7 @@ def get_function_call(
                 if "False" in arguments:
                     arguments = arguments.replace("False", "false")
             _arguments = json.loads(arguments)
-        except Exception as e:
+        except json.JSONDecodeError as e:
             log_error(f"Unable to decode function arguments:\n{arguments}\nError: {e}")
             function_call.error = (
                 f"Error while decoding function arguments: {e}\n\n"
@@ -51,7 +53,7 @@ def get_function_call(
             return function_call
 
         try:
-            clean_arguments: Dict[str, Any] = {}
+            clean_arguments: dict[str, Any] = {}
             for k, v in _arguments.items():
                 if isinstance(v, str):
                     _v = v.strip().lower()
@@ -67,14 +69,14 @@ def get_function_call(
                     clean_arguments[k] = v
 
             function_call.arguments = clean_arguments
-        except Exception as e:
+        except ValueError as e:
             log_error(f"Unable to parsing function arguments:\n{arguments}\nError: {e}")
             function_call.error = f"Error while parsing function arguments: {e}\n\n Please fix and retry."
             return function_call
     return function_call
 
 
-def cache_result(enable_cache: bool = True, cache_dir: Optional[str] = None, cache_ttl: int = 3600):
+def cache_result(enable_cache: bool = True, cache_dir: str | None = None, cache_ttl: int = 3600):
     """
     Decorator factory that creates a file-based caching decorator for function results.
 
@@ -148,7 +150,7 @@ def cache_result(enable_cache: bool = True, cache_dir: Optional[str] = None, cac
 
                     # Remove expired entry
                     os.remove(cache_file)
-                except Exception as e:
+                except (OSError, json.JSONDecodeError) as e:
                     log_error(f"Error reading cache: {e}")
                     # Continue with function execution if cache read fails
 
@@ -158,7 +160,7 @@ def cache_result(enable_cache: bool = True, cache_dir: Optional[str] = None, cac
             try:
                 with open(cache_file, "w") as f:
                     json.dump({"timestamp": time.time(), "result": result}, f)
-            except Exception as e:
+            except (OSError, TypeError) as e:
                 log_error(f"Error writing cache: {e}")
                 # Continue even if cache write fails
 

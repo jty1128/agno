@@ -1,8 +1,10 @@
 """Discord integration tools for interacting with Discord channels and servers."""
 
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -13,7 +15,7 @@ from agno.utils.log import logger
 class DiscordTools(Toolkit):
     def __init__(
         self,
-        bot_token: Optional[str] = None,
+        bot_token: str | None = None,
         enable_messaging: bool = True,
         enable_history: bool = True,
         enable_channel_management: bool = True,
@@ -45,7 +47,7 @@ class DiscordTools(Toolkit):
         if enable_message_management:
             self.register(self.delete_message)
 
-    def _make_request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _make_request(self, method: str, endpoint: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Make a request to Discord API."""
         url = f"{self.base_url}{endpoint}"
         response = requests.request(method, url, headers=self.headers, json=data)
@@ -67,9 +69,9 @@ class DiscordTools(Toolkit):
             data = {"content": message}
             self._make_request("POST", f"/channels/{channel_id}/messages", data)
             return f"Message sent successfully to channel {channel_id}"
-        except Exception as e:
+        except requests.HTTPError as e:
             logger.error(f"Error sending message: {e}")
-            return f"Error sending message: {str(e)}"
+            return f"Error sending message: {e!s}"
 
     def get_channel_info(self, channel_id: int) -> str:
         """
@@ -84,9 +86,9 @@ class DiscordTools(Toolkit):
         try:
             response = self._make_request("GET", f"/channels/{channel_id}")
             return json.dumps(response, indent=2)
-        except Exception as e:
+        except requests.HTTPError as e:
             logger.error(f"Error getting channel info: {e}")
-            return f"Error getting channel info: {str(e)}"
+            return f"Error getting channel info: {e!s}"
 
     def list_channels(self, guild_id: int) -> str:
         """
@@ -101,9 +103,9 @@ class DiscordTools(Toolkit):
         try:
             response = self._make_request("GET", f"/guilds/{guild_id}/channels")
             return json.dumps(response, indent=2)
-        except Exception as e:
+        except requests.HTTPError as e:
             logger.error(f"Error listing channels: {e}")
-            return f"Error listing channels: {str(e)}"
+            return f"Error listing channels: {e!s}"
 
     def get_channel_messages(self, channel_id: int, limit: int = 100) -> str:
         """
@@ -119,9 +121,9 @@ class DiscordTools(Toolkit):
         try:
             response = self._make_request("GET", f"/channels/{channel_id}/messages?limit={limit}")
             return json.dumps(response, indent=2)
-        except Exception as e:
+        except requests.HTTPError as e:
             logger.error(f"Error getting messages: {e}")
-            return f"Error getting messages: {str(e)}"
+            return f"Error getting messages: {e!s}"
 
     def delete_message(self, channel_id: int, message_id: int) -> str:
         """
@@ -137,9 +139,9 @@ class DiscordTools(Toolkit):
         try:
             self._make_request("DELETE", f"/channels/{channel_id}/messages/{message_id}")
             return f"Message {message_id} deleted successfully from channel {channel_id}"
-        except Exception as e:
+        except requests.HTTPError as e:
             logger.error(f"Error deleting message: {e}")
-            return f"Error deleting message: {str(e)}"
+            return f"Error deleting message: {e!s}"
 
     @staticmethod
     def get_tool_name() -> str:

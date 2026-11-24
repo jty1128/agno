@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -119,9 +121,9 @@ class TwilioTools(Toolkit):
             return f"Message sent successfully. SID: {message.sid}"
         except TwilioRestException as e:
             logger.error(f"Failed to send SMS to {to}: {e}")
-            return f"Error sending message: {str(e)}"
+            return f"Error sending message: {e!s}"
 
-    def get_call_details(self, call_sid: str) -> Dict[str, Any]:
+    def get_call_details(self, call_sid: str) -> dict[str, Any]:
         """
         Get details about a specific call.
 
@@ -141,14 +143,14 @@ class TwilioTools(Toolkit):
                 "duration": call.duration,
                 "direction": call.direction,
                 "price": call.price,
-                "start_time": str(call.start_time),
-                "end_time": str(call.end_time),
+                "start_time": f"{call.start_time!s}",
+                "end_time": f"{call.end_time!s}",
             }
         except TwilioRestException as e:
             logger.error(f"Failed to fetch call details for SID {call_sid}: {e}")
             return {"error": str(e)}
 
-    def list_messages(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def list_messages(self, limit: int = 20) -> list[dict[str, Any]]:
         """
         List recent SMS messages.
 
@@ -168,7 +170,7 @@ class TwilioTools(Toolkit):
                         "from": message.from_,
                         "body": message.body,
                         "status": message.status,
-                        "date_sent": str(message.date_sent),
+                        "date_sent": f"{message.date_sent!s}",
                     }
                 )
             log_info(f"Retrieved {len(messages)} messages")

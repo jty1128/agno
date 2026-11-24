@@ -1,7 +1,7 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from os import getenv
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from pydantic import BaseModel
@@ -275,7 +275,7 @@ class Llama(Model):
             raise ModelProviderError(message=str(e), model_name=self.name, model_id=self.id) from e
 
     @staticmethod
-    def parse_tool_calls(tool_calls_data: List[EventDeltaToolCallDeltaFunction]) -> List[Dict[str, Any]]:
+    def parse_tool_calls(tool_calls_data: list[EventDeltaToolCallDeltaFunction]) -> list[dict[str, Any]]:
         """
         Parse the tool calls from the Llama API.
 
@@ -285,11 +285,11 @@ class Llama(Model):
         Returns:
             List[Dict[str, Any]]: The parsed tool calls.
         """
-        tool_calls: List[Dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
 
-        _tool_call_id: Optional[str] = None
-        _function_name_parts: List[str] = []
-        _function_arguments_parts: List[str] = []
+        _tool_call_id: str | None = None
+        _function_name_parts: list[str] = []
+        _function_arguments_parts: list[str] = []
 
         def _create_tool_call():
             nonlocal _tool_call_id
@@ -352,7 +352,7 @@ class Llama(Model):
                 parsed_object = response_message.content  # type: ignore
                 if parsed_object is not None:
                     model_response.parsed = parsed_object
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Error retrieving structured outputs: {e}")
 
         # Add role
@@ -385,7 +385,7 @@ class Llama(Model):
                         }
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error processing tool calls: {e}")
 
         # Add metrics from the metrics list
@@ -403,8 +403,8 @@ class Llama(Model):
                     value = int(metric.value)
                     usage_data[key] = value
 
-                if usage_data:
-                    model_response.response_usage = usage_data
+            if usage_data:
+                model_response.response_usage = usage_data
 
         return model_response
 

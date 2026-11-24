@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -9,7 +10,7 @@ from agno.utils.log import log_debug, log_info, logger
 class FileTools(Toolkit):
     def __init__(
         self,
-        base_dir: Optional[Path] = None,
+        base_dir: Path | None = None,
         save_files: bool = True,
         read_files: bool = True,
         list_files: bool = True,
@@ -43,7 +44,7 @@ class FileTools(Toolkit):
             file_path.write_text(contents)
             log_info(f"Saved: {file_path}")
             return str(file_name)
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Error saving to file: {e}")
             return f"Error saving to file: {e}"
 
@@ -58,7 +59,7 @@ class FileTools(Toolkit):
             file_path = self.base_dir.joinpath(file_name)
             contents = file_path.read_text()
             return str(contents)
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Error reading file: {e}")
             return f"Error reading file: {e}"
 
@@ -70,6 +71,6 @@ class FileTools(Toolkit):
         try:
             log_info(f"Reading files in : {self.base_dir}")
             return json.dumps([str(file_path) for file_path in self.base_dir.iterdir()], indent=4)
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Error reading files: {e}")
             return f"Error reading files: {e}"

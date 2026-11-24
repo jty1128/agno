@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional, Union
 from uuid import uuid4
@@ -58,7 +60,7 @@ class DesiVocalTools(Toolkit):
                 )
 
             return str(responses)
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"Failed to get voices: {e}")
             return f"Error: {e}"
 
@@ -93,6 +95,6 @@ class DesiVocalTools(Toolkit):
             agent.add_audio(AudioArtifact(id=str(uuid4()), url=audio_url))
 
             return audio_url
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"Failed to generate audio: {e}")
             return f"Error: {e}"

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, get_type_hints
+from typing import Any, TypeVar, get_type_hints
 
 from docstring_parser import parse
 from pydantic import BaseModel, Field, validate_call
@@ -39,21 +41,21 @@ class Function(BaseModel):
     # Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
     name: str
     # A description of what the function does, used by the model to choose when and how to call the function.
-    description: Optional[str] = None
+    description: str | None = None
     # The parameters the functions accepts, described as a JSON Schema object.
     # To describe a function that accepts no parameters, provide the value {"type": "object", "properties": {}}.
-    parameters: Dict[str, Any] = Field(
+    parameters: dict[str, Any] = Field(
         default_factory=lambda: {"type": "object", "properties": {}, "required": []},
         description="JSON Schema object describing function parameters",
     )
-    strict: Optional[bool] = None
+    strict: bool | None = None
 
-    instructions: Optional[str] = None
+    instructions: str | None = None
     # If True, add instructions to the Agent's system message
     add_instructions: bool = True
 
     # The function to be called.
-    entrypoint: Optional[Callable] = None
+    entrypoint: Callable | None = None
     # If True, the entrypoint processing is skipped and the Function is used as is.
     skip_entrypoint_processing: bool = False
     # If True, the arguments are sanitized before being passed to the function.
@@ -65,31 +67,31 @@ class Function(BaseModel):
     # Hook that runs before the function is executed.
     # If defined, can accept the FunctionCall instance as a parameter.
     # Deprecated: Use tool_hooks instead.
-    pre_hook: Optional[Callable] = None
+    pre_hook: Callable | None = None
     # Hook that runs after the function is executed, regardless of success/failure.
     # If defined, can accept the FunctionCall instance as a parameter.
     # Deprecated: Use tool_hooks instead.
-    post_hook: Optional[Callable] = None
+    post_hook: Callable | None = None
 
     # A list of hooks to run around tool calls.
-    tool_hooks: Optional[List[Callable]] = None
+    tool_hooks: list[Callable] | None = None
 
     # Caching configuration
     cache_results: bool = False
-    cache_dir: Optional[str] = None
+    cache_dir: str | None = None
     cache_ttl: int = 3600
 
     # --*-- FOR INTERNAL USE ONLY --*--
     # The agent that the function is associated with
-    _agent: Optional[Any] = None
+    _agent: Any | None = None
     # The team that the function is associated with
-    _team: Optional[Any] = None
+    _team: Any | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.model_dump(exclude_none=True, include={"name", "description", "parameters", "strict"})
 
     @classmethod
-    def from_callable(cls, c: Callable, strict: bool = False) -> "Function":
+    def from_callable(cls, c: Callable, strict: bool = False) -> Function:
         from inspect import getdoc, isasyncgenfunction, signature
 
         from agno.utils.json_schema import get_json_schema
@@ -115,7 +117,7 @@ class Function(BaseModel):
             }
 
             # Parse docstring for parameters
-            param_descriptions: Dict[str, Any] = {}
+            param_descriptions: dict[str, Any] = {}
             if docstring := getdoc(c):
                 parsed_doc = parse(docstring)
                 param_docs = parsed_doc.params
@@ -147,14 +149,14 @@ class Function(BaseModel):
                 ]
 
             # log_debug(f"JSON schema for {function_name}: {parameters}")
-        except Exception as e:
+        except ValueError as e:
             log_warning(f"Could not parse args for {function_name}: {e}", exc_info=True)
 
         # Don't wrap async generator with validate_call
         if isasyncgenfunction(c):
             entrypoint = c
         else:
-            entrypoint = validate_call(c, config=dict(arbitrary_types_allowed=True))  # type: ignore
+            entrypoint = validate_call(c, config={"arbitrary_types_allowed": True})  # type: ignore
         return cls(
             name=function_name,
             description=get_entrypoint_docstring(entrypoint=c),
@@ -248,7 +250,7 @@ class Function(BaseModel):
                     ]
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
+        except ValueError as e:
             log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
 
         self.description = self.description or get_entrypoint_docstring(self.entrypoint)
@@ -258,22 +260,22 @@ class Function(BaseModel):
         try:
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
-                self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
+                self.entrypoint = validate_call(self.entrypoint, config={"arbitrary_types_allowed": True})  # type: ignore
+        except ValueError as e:
             log_warning(f"Failed to add validate decorator to entrypoint: {e}")
 
     def process_schema_for_strict(self):
         self.parameters["additionalProperties"] = False
         self.parameters["required"] = [name for name in self.parameters["properties"] if name not in ["agent", "team"]]
 
-    def get_type_name(self, t: Type[T]):
+    def get_type_name(self, t: type[T]):
         name = str(t)
         if "list" in name or "dict" in name:
             return name
         else:
             return t.__name__
 
-    def get_definition_for_prompt_dict(self) -> Optional[Dict[str, Any]]:
+    def get_definition_for_prompt_dict(self) -> dict[str, Any] | None:
         """Returns a function definition that can be used in a prompt."""
 
         if self.entrypoint is None:
@@ -293,7 +295,7 @@ class Function(BaseModel):
         }
         return function_info
 
-    def get_definition_for_prompt(self) -> Optional[str]:
+    def get_definition_for_prompt(self) -> str | None:
         """Returns a function definition that can be used in a prompt."""
         import json
 
@@ -302,7 +304,7 @@ class Function(BaseModel):
             return json.dumps(function_info, indent=2)
         return None
 
-    def _get_cache_key(self, entrypoint_args: Dict[str, Any], call_args: Optional[Dict[str, Any]] = None) -> str:
+    def _get_cache_key(self, entrypoint_args: dict[str, Any], call_args: dict[str, Any] | None = None) -> str:
         """Generate a cache key based on function name and arguments."""
         from hashlib import md5
 
@@ -328,7 +330,7 @@ class Function(BaseModel):
         func_cache_dir.mkdir(parents=True, exist_ok=True)
         return str(func_cache_dir / f"{cache_key}.json")
 
-    def _get_cached_result(self, cache_file: str) -> Optional[Any]:
+    def _get_cached_result(self, cache_file: str) -> Any | None:
         """Retrieve cached result if valid."""
         import json
         from pathlib import Path
@@ -350,7 +352,7 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
+        except (ValueError, OSError) as e:
             log_error(f"Error reading cache: {e}")
 
         return None
@@ -363,7 +365,7 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
+        except OSError as e:
             log_error(f"Error writing cache: {e}")
 
 
@@ -373,14 +375,14 @@ class FunctionCall(BaseModel):
     # The function to be called.
     function: Function
     # The arguments to call the function with.
-    arguments: Optional[Dict[str, Any]] = None
+    arguments: dict[str, Any] | None = None
     # The result of the function call.
-    result: Optional[Any] = None
+    result: Any | None = None
     # The ID of the function call.
-    call_id: Optional[str] = None
+    call_id: str | None = None
 
     # Error while parsing arguments or running the function.
-    error: Optional[str] = None
+    error: str | None = None
 
     def get_call_str(self) -> str:
         """Returns a string representation of the function call."""
@@ -432,6 +434,7 @@ class FunctionCall(BaseModel):
             except Exception as e:
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
+                raise
 
     def _handle_post_hook(self):
         """Handles the post-hook for the function call."""
@@ -457,8 +460,9 @@ class FunctionCall(BaseModel):
             except Exception as e:
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
+                raise
 
-    def _build_entrypoint_args(self) -> Dict[str, Any]:
+    def _build_entrypoint_args(self) -> dict[str, Any]:
         """Builds the arguments for the entrypoint."""
         from inspect import signature
 
@@ -474,7 +478,7 @@ class FunctionCall(BaseModel):
             entrypoint_args["fc"] = self
         return entrypoint_args
 
-    def _build_nested_execution_chain(self, entrypoint_args: Dict[str, Any]):
+    def _build_nested_execution_chain(self, entrypoint_args: dict[str, Any]):
         """Build a nested chain of hook executions with the entrypoint at the center.
 
         This creates a chain where each hook wraps the next one, with the function call
@@ -580,7 +584,7 @@ class FunctionCall(BaseModel):
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
-            return function_call_success
+            raise
 
         # Execute post-hook if it exists
         self._handle_post_hook()
@@ -612,6 +616,7 @@ class FunctionCall(BaseModel):
             except Exception as e:
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
+                raise
 
     async def _handle_post_hook_async(self):
         """Handles the async post-hook for the function call."""
@@ -638,8 +643,9 @@ class FunctionCall(BaseModel):
             except Exception as e:
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
+                raise
 
-    async def _build_nested_execution_chain_async(self, entrypoint_args: Dict[str, Any]):
+    async def _build_nested_execution_chain_async(self, entrypoint_args: dict[str, Any]):
         """Build a nested chain of async hook executions with the entrypoint at the center.
 
         Similar to _build_nested_execution_chain but for async execution.
@@ -767,7 +773,7 @@ class FunctionCall(BaseModel):
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
-            return function_call_success
+            raise
 
         # Execute post-hook if it exists
         if iscoroutinefunction(self.function.post_hook):

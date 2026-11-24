@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Optional
@@ -69,7 +71,7 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error searching for the query {query}: {e}"
 
     def search_youtube(self, query: str) -> str:
@@ -108,5 +110,5 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error searching for the query {query}: {e}"
