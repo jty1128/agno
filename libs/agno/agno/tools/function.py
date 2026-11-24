@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, get_type_hints
+from typing import Any, Callable, Optional, TypeVar, get_type_hints
 
 from docstring_parser import parse
 from pydantic import BaseModel, Field, validate_call
@@ -89,7 +91,7 @@ class Function(BaseModel):
         return self.model_dump(exclude_none=True, include={"name", "description", "parameters", "strict"})
 
     @classmethod
-    def from_callable(cls, c: Callable, strict: bool = False) -> "Function":
+    def from_callable(cls, c: Callable, strict: bool = False) -> Function:
         from inspect import getdoc, isasyncgenfunction, signature
 
         from agno.utils.json_schema import get_json_schema
@@ -115,7 +117,7 @@ class Function(BaseModel):
             }
 
             # Parse docstring for parameters
-            param_descriptions: Dict[str, Any] = {}
+            param_descriptions: dict[str, Any] = {}
             if docstring := getdoc(c):
                 parsed_doc = parse(docstring)
                 param_docs = parsed_doc.params
@@ -147,14 +149,14 @@ class Function(BaseModel):
                 ]
 
             # log_debug(f"JSON schema for {function_name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {function_name}: {e}", exc_info=True)
 
         # Don't wrap async generator with validate_call
         if isasyncgenfunction(c):
             entrypoint = c
         else:
-            entrypoint = validate_call(c, config=dict(arbitrary_types_allowed=True))  # type: ignore
+            entrypoint = validate_call(c, config={"arbitrary_types_allowed": True})  # type: ignore
         return cls(
             name=function_name,
             description=get_entrypoint_docstring(entrypoint=c),
@@ -248,7 +250,7 @@ class Function(BaseModel):
                     ]
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
 
         self.description = self.description or get_entrypoint_docstring(self.entrypoint)
@@ -258,22 +260,22 @@ class Function(BaseModel):
         try:
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
-                self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
+                self.entrypoint = validate_call(self.entrypoint, config={"arbitrary_types_allowed": True})  # type: ignore
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to add validate decorator to entrypoint: {e}")
 
     def process_schema_for_strict(self):
         self.parameters["additionalProperties"] = False
         self.parameters["required"] = [name for name in self.parameters["properties"] if name not in ["agent", "team"]]
 
-    def get_type_name(self, t: Type[T]):
+    def get_type_name(self, t: type[T]):
         name = str(t)
         if "list" in name or "dict" in name:
             return name
         else:
             return t.__name__
 
-    def get_definition_for_prompt_dict(self) -> Optional[Dict[str, Any]]:
+    def get_definition_for_prompt_dict(self) -> Optional[dict[str, Any]]:
         """Returns a function definition that can be used in a prompt."""
 
         if self.entrypoint is None:
@@ -302,7 +304,7 @@ class Function(BaseModel):
             return json.dumps(function_info, indent=2)
         return None
 
-    def _get_cache_key(self, entrypoint_args: Dict[str, Any], call_args: Optional[Dict[str, Any]] = None) -> str:
+    def _get_cache_key(self, entrypoint_args: dict[str, Any], call_args: Optional[dict[str, Any]] = None) -> str:
         """Generate a cache key based on function name and arguments."""
         from hashlib import md5
 
@@ -350,7 +352,7 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error reading cache: {e}")
 
         return None
@@ -363,7 +365,7 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error writing cache: {e}")
 
 
@@ -373,7 +375,7 @@ class FunctionCall(BaseModel):
     # The function to be called.
     function: Function
     # The arguments to call the function with.
-    arguments: Optional[Dict[str, Any]] = None
+    arguments: Optional[dict[str, Any]] = None
     # The result of the function call.
     result: Optional[Any] = None
     # The ID of the function call.
@@ -393,7 +395,7 @@ class FunctionCall(BaseModel):
         if self.arguments is None:
             return f"{self.function.name}()"
 
-        trimmed_arguments = {}
+        trimmed_arguments: dict[str, Any] = {}
         for k, v in self.arguments.items():
             if isinstance(v, str) and len(str(v)) > max_arg_len:
                 trimmed_arguments[k] = "..."
@@ -414,7 +416,7 @@ class FunctionCall(BaseModel):
             try:
                 from inspect import signature
 
-                pre_hook_args = {}
+                pre_hook_args: dict[str, Any] = {}
                 # Check if the pre-hook has and agent argument
                 if "agent" in signature(self.function.pre_hook).parameters:
                     pre_hook_args["agent"] = self.function._agent
@@ -429,7 +431,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -439,7 +441,7 @@ class FunctionCall(BaseModel):
             try:
                 from inspect import signature
 
-                post_hook_args = {}
+                post_hook_args: dict[str, Any] = {}
                 # Check if the post-hook has and agent argument
                 if "agent" in signature(self.function.post_hook).parameters:
                     post_hook_args["agent"] = self.function._agent
@@ -454,15 +456,15 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
-    def _build_entrypoint_args(self) -> Dict[str, Any]:
+    def _build_entrypoint_args(self) -> dict[str, Any]:
         """Builds the arguments for the entrypoint."""
         from inspect import signature
 
-        entrypoint_args = {}
+        entrypoint_args: dict[str, Any] = {}
         # Check if the entrypoint has an agent argument
         if "agent" in signature(self.function.entrypoint).parameters:  # type: ignore
             entrypoint_args["agent"] = self.function._agent
@@ -474,7 +476,7 @@ class FunctionCall(BaseModel):
             entrypoint_args["fc"] = self
         return entrypoint_args
 
-    def _build_nested_execution_chain(self, entrypoint_args: Dict[str, Any]):
+    def _build_nested_execution_chain(self, entrypoint_args: dict[str, Any]):
         """Build a nested chain of hook executions with the entrypoint at the center.
 
         This creates a chain where each hook wraps the next one, with the function call
@@ -485,9 +487,7 @@ class FunctionCall(BaseModel):
 
         def execute_entrypoint(name, func, args):
             """Execute the entrypoint function."""
-            arguments = entrypoint_args.copy()
-            if self.arguments is not None:
-                arguments.update(self.arguments)
+            arguments = {**entrypoint_args, **(self.arguments or {})}
             return self.function.entrypoint(**arguments)  # type: ignore
 
         # If no hooks, just return the entrypoint execution function
@@ -554,9 +554,7 @@ class FunctionCall(BaseModel):
                 execution_chain = self._build_nested_execution_chain(entrypoint_args=entrypoint_args)
                 result = execution_chain(self.function.name, self.function.entrypoint, self.arguments or {})
             else:
-                arguments = entrypoint_args
-                if self.arguments is not None:
-                    arguments.update(self.arguments)
+                arguments = {**entrypoint_args, **(self.arguments or {})}
                 result = self.function.entrypoint(**arguments)
 
             # Handle generator case
@@ -576,7 +574,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
@@ -609,7 +607,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -635,7 +633,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
@@ -763,7 +761,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)

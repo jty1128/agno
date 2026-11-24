@@ -16,7 +16,7 @@ except ImportError:
     raise ImportError(
         "Google client library for Python not found , install it using `pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib`"
     )
-from typing import List, Optional
+from typing import Optional
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -91,7 +91,7 @@ class GoogleCalendarTools(Toolkit):
         self.register(self.create_event)
 
     @authenticated
-    def list_events(self, limit: int = 10, date_from: str = datetime.date.today().isoformat()) -> str:
+    def list_events(self, limit: int = 10, date_from: Optional[str] = None) -> str:
         """
         List events from the user's primary calendar.
 
@@ -136,7 +136,7 @@ class GoogleCalendarTools(Toolkit):
         description: Optional[str] = None,
         location: Optional[str] = None,
         timezone: Optional[str] = None,
-        attendees: List[str] = [],
+        attendees: Optional[list[str]] = None,
         send_updates: Optional[str] = "all",
     ) -> str:
         """

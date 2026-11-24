@@ -1,7 +1,8 @@
 import base64
 import mimetypes
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Union
 
 from agno.media import Audio, File, Image
 from agno.utils.log import log_error, log_warning
@@ -54,7 +55,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                                 f"Could not determine audio format from URL path: {parsed_url.path}. Defaulting."
                             )
                             audio_format = "wav"
-                    except Exception as e:
+                    except ValueError as e:
                         log_warning(
                             f"Could not determine audio format from URL: {audio_snippet.url}. Error: {e}. Defaulting."
                         )
@@ -69,7 +70,7 @@ def audio_to_message(audio: Sequence[Audio]) -> List[Dict[str, Any]]:
                         encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
                     if not audio_format:
                         audio_format = path.suffix.lstrip(".")
-                except Exception as e:
+                except OSError as e:
                     log_error(f"Failed to read audio file {path}: {e}")
                     continue  # Skip this audio snippet if file reading fails
             else:
@@ -97,7 +98,7 @@ def _process_bytes_image(image: bytes) -> Dict[str, Any]:
     """Process bytes image data."""
     base64_image = base64.b64encode(image).decode("utf-8")
     # Assuming JPEG if type not specified, could attempt detection
-    image_url = f"data:image/jpeg;base64,{base64_image}"
+    image_url = f"data:image/jpeg;base64,{base64_image!s}"
     return {"type": "image_url", "image_url": {"url": image_url}}
 
 
@@ -114,9 +115,9 @@ def _process_image_path(image_path: Union[Path, str]) -> Dict[str, Any]:
     try:
         with open(path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
-            image_url = f"data:{mime_type};base64,{base64_image}"
+            image_url = f"data:{mime_type};base64,{base64_image!s}"
             return {"type": "image_url", "image_url": {"url": image_url}}
-    except Exception as e:
+    except OSError as e:
         log_error(f"Failed to read image file {path}: {e}")
         raise  # Re-raise the exception after logging
 
@@ -156,10 +157,10 @@ def process_image(image: Image) -> Optional[Dict[str, Any]]:
         return image_payload
 
     except (FileNotFoundError, IsADirectoryError, ValueError) as e:
-        log_error(f"Failed to process image due to invalid input: {str(e)}")
+        log_error(f"Failed to process image due to invalid input: {e!s}")
         return None  # Return None for handled validation errors
     except Exception as e:
-        log_error(f"An unexpected error occurred while processing image: {str(e)}")
+        log_error(f"An unexpected error occurred while processing image: {e!s}")
         # Depending on policy, you might want to return None or re-raise
         return None  # Return None for unexpected errors as well, preventing crashes
 
@@ -189,7 +190,7 @@ def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
             if image_data:
                 image_messages.append(image_data)
         except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+            log_error(f"Failed to process image: {e!s}")
             continue
 
     return image_messages
@@ -199,10 +200,6 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
     """
     Add a document url, base64 encoded content or OpenAI file to a message.
     """
-    import base64
-    import mimetypes
-    from pathlib import Path
-
     # Case 1: Document is a URL
     if file.url is not None:
         from urllib.parse import urlparse
@@ -215,7 +212,7 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
         name = Path(urlparse(file.url).path).name or "file"
         _mime = mime_type or file.mime_type or mimetypes.guess_type(name)[0] or "application/pdf"
         _encoded = base64.b64encode(content_bytes).decode("utf-8")
-        _data_url = f"data:{_mime};base64,{_encoded}"
+        _data_url = f"data:{_mime};base64,{_encoded!s}"
         return {"type": "file", "file": {"filename": name, "file_data": _data_url}}
 
     # Case 2: Document is a local file path
@@ -228,7 +225,7 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
 
         _mime = file.mime_type or mimetypes.guess_type(path.name)[0] or "application/pdf"
         _encoded = base64.b64encode(data).decode("utf-8")
-        _data_url = f"data:{_mime};base64,{_encoded}"
+        _data_url = f"data:{_mime};base64,{_encoded!s}"
         return {"type": "file", "file": {"filename": path.name, "file_data": _data_url}}
 
     # Case 3: Document is bytes content
@@ -236,7 +233,7 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
         name = getattr(file, "filename", "file")
         _mime = file.mime_type or mimetypes.guess_type(name)[0] or "application/pdf"
         _encoded = base64.b64encode(file.content).decode("utf-8")
-        _data_url = f"data:{_mime};base64,{_encoded}"
+        _data_url = f"data:{_mime};base64,{_encoded!s}"
         return {"type": "file", "file": {"filename": name, "file_data": _data_url}}
 
     return None
