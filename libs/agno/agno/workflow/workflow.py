@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -161,12 +160,8 @@ class Workflow:
         self.update_agent_session_ids()
 
         log_debug(f"Workflow Run Start: {self.run_id}", center=True)
-        try:
-            self._subclass_run = cast(Callable, self._subclass_run)
-            result = self._subclass_run(**kwargs)
-        except Exception as e:
-            logger.error(f"Workflow.run() failed: {e}")
-            raise e
+        self._subclass_run = cast(Callable, self._subclass_run)
+        result = self._subclass_run(**kwargs)
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -445,37 +440,31 @@ class Workflow:
                     self.audio.extend([AudioArtifact.model_validate(aud) for aud in audio_from_db])
 
         # Read extra_data from the database
-        if session.extra_data is not None:
-            # If extra_data is set in the workflow, update the database extra_data with the workflow's extra_data
-            if self.extra_data is not None:
-                # Updates workflow_session.extra_data in place
-                merge_dictionaries(session.extra_data, self.extra_data)
+        if session.extra_data is not None and self.extra_data is not None:
+            # Updates workflow_session.extra_data in place
+            merge_dictionaries(session.extra_data, self.extra_data)
             # Update the current extra_data with the extra_data from the database which is updated in place
             self.extra_data = session.extra_data
 
-        if session.memory is not None:
-            if self.memory is None:
-                self.memory = Memory()
+        if session.memory is not None and self.memory is None:
+            self.memory = Memory()
 
-            if isinstance(self.memory, Memory):
-                try:
-                    if self.memory.runs is None:
-                        self.memory.runs = {}
-                    self.memory.runs[session.session_id] = []
-                    for run in session.memory["runs"]:
-                        run_session_id = run["session_id"]
-                        self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
-                    log_warning(f"Failed to load runs from memory: {e}")
-            else:
-                try:
-                    if "runs" in session.memory:
-                        try:
-                            self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
-                            logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
-                    logger.warning(f"Failed to load WorkflowMemory: {e}")
+        if session.memory is not None and isinstance(self.memory, Memory):
+            try:
+                if self.memory.runs is None:
+                    self.memory.runs = {}
+                self.memory.runs[session.session_id] = []
+                for run in session.memory["runs"]:
+                    run_session_id = run["session_id"]
+                    self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
+            except (TypeError, KeyError, ValueError) as e:
+                log_warning(f"Failed to load runs from memory: {e}")
+        elif session.memory is not None:
+            try:
+                if "runs" in session.memory:
+                    self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
+            except (TypeError, ValueError) as e:
+                logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
@@ -510,9 +499,13 @@ class Workflow:
         """
         # If a workflow_session is already loaded, return the session_id from the workflow_session
         #   if the session_id matches the session_id from the workflow_session
-        if self.workflow_session is not None and not force:
-            if self.session_id is not None and self.workflow_session.session_id == self.session_id:
-                return self.workflow_session.session_id
+        if (
+            self.workflow_session is not None
+            and not force
+            and self.session_id is not None
+            and self.workflow_session.session_id == self.session_id
+        ):
+            return self.workflow_session.session_id
 
         # Load an existing session or create a new session
         if self.storage is not None:
@@ -530,7 +523,6 @@ class Workflow:
                     raise Exception("Failed to create new WorkflowSession in storage")
                 log_debug(f"-*- Created WorkflowSession: {self.workflow_session.session_id}")
                 self.log_workflow_session()
-        return self.session_id
 
     def new_session(self) -> None:
         """Create a new Workflow session
@@ -618,11 +610,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -630,11 +622,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 

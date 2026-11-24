@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional, Union, get_args, get_origin
+from __future__ import annotations
+
+from typing import Any, Union, get_args, get_origin
 
 from agno.utils.log import logger
 
@@ -61,7 +63,7 @@ def get_json_schema_for_arg(t: Any) -> Optional[Dict[str, Any]]:
                     schema = get_json_schema_for_arg(arg)
                     if schema:
                         types.append(schema)
-                except Exception:
+                except TypeError:
                     continue
             return {"anyOf": types} if types else None
 
@@ -119,7 +121,7 @@ def get_json_schema(
             else:
                 logger.warning(f"Could not parse argument {k} of type {v}")
         except Exception as e:
-            logger.error(f"Error processing argument {k}: {str(e)}")
+            logger.error(f"Error processing argument {k}: {e!s}")
             continue
 
     return json_schema

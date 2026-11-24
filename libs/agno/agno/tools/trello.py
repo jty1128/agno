@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Optional
@@ -40,6 +42,7 @@ class TrelloTools(Toolkit):
         except Exception as e:
             logger.error(f"Error initializing Trello client: {e}")
             self.client = None
+            return
 
         if create_card:
             self.register(self.create_card)

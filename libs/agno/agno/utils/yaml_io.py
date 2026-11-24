@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, Optional
 
 from agno.utils.log import log_debug, logger
 
 
-def read_yaml_file(file_path: Optional[Path]) -> Optional[Dict[str, Any]]:
+def read_yaml_file(file_path: Path | None) -> dict[str, Any] | None:
     if file_path is not None and file_path.exists() and file_path.is_file():
         import yaml
 

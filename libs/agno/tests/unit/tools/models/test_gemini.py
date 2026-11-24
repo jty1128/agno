@@ -75,38 +75,40 @@ def test_gemini_tools_init_with_env_var():
     """Test initialization with API key from environment variable."""
     env_api_key = "test_api_key_env"
 
-    with patch("agno.tools.models.gemini.getenv", return_value=env_api_key) as mock_getenv:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_instance = MagicMock()
-            mock_client_cls.return_value = mock_client_instance
+    with patch("agno.tools.models.gemini.getenv", return_value=env_api_key) as mock_getenv, patch(
+        "agno.tools.models.gemini.Client"
+    ) as mock_client_cls:
+        mock_client_instance = MagicMock()
+        mock_client_cls.return_value = mock_client_instance
 
-            gemini_tools = GeminiTools()
+        gemini_tools = GeminiTools()
 
-            assert gemini_tools.api_key == env_api_key
-            mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
-            mock_client_cls.assert_called_once_with(api_key=env_api_key)
-            assert gemini_tools.client == mock_client_instance
+        assert gemini_tools.api_key == env_api_key
+        mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
+        mock_client_cls.assert_called_once_with(api_key=env_api_key)
+        assert gemini_tools.client == mock_client_instance
 
 
 def test_gemini_tools_init_no_api_key():
     """Test initialization raises ValueError when no API key is found."""
-    with patch("agno.tools.models.gemini.getenv", return_value=None) as mock_getenv:
-        with pytest.raises(ValueError, match="GOOGLE_API_KEY not set"):
-            GeminiTools()
+    with patch("agno.tools.models.gemini.getenv", return_value=None) as mock_getenv, pytest.raises(
+        ValueError, match="GOOGLE_API_KEY not set"
+    ):
+        GeminiTools()
 
-        mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
+    mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
 
 
 def test_gemini_tools_init_client_creation_fails():
     """Test initialization raises ValueError if Client creation fails."""
-    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_cls.side_effect = Exception("Client creation failed")
+    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _, patch(
+        "agno.tools.models.gemini.Client"
+    ) as mock_client_cls, pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
+        mock_client_cls.side_effect = Exception("Client creation failed")
 
-            with pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
-                GeminiTools()
+        GeminiTools()
 
-            mock_client_cls.assert_called_once_with(api_key="fake_key")
+    mock_client_cls.assert_called_once_with(api_key="fake_key")
 
 
 # Test generate_image method
@@ -122,7 +124,7 @@ def test_generate_image_success(mock_gemini_tools, mock_agent, mock_successful_r
         result = mock_gemini_tools.generate_image(mock_agent, prompt)
 
         expected_media_id = "12345678-1234-5678-1234-567812345678"
-        assert result == f"Image generated successfully"
+        assert result == "Image generated successfully"
         mock_gemini_tools.client.models.generate_images.assert_called_once_with(model=image_model, prompt=prompt)
 
         # Verify agent.add_image was called with the correct ImageArtifact
@@ -208,7 +210,7 @@ def test_generate_video_success(mock_gemini_tools, mock_agent, mock_video_operat
     with patch("agno.tools.models.gemini.uuid4", return_value=UUID("87654321-4321-8765-4321-876543214321")):
         result = mock_gemini_tools.generate_video(mock_agent, prompt)
         expected_id = "87654321-4321-8765-4321-876543214321"
-        assert result == f"Video generated successfully" 
+        assert result == "Video generated successfully"
         assert mock_gemini_tools.client.models.generate_videos.called
         call_args = mock_gemini_tools.client.models.generate_videos.call_args
         assert call_args.kwargs["model"] == mock_gemini_tools.video_model

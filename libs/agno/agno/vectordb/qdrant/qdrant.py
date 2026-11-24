@@ -1,8 +1,8 @@
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -218,7 +218,7 @@ class Qdrant(VectorDb):
             return len(scroll_result[0]) > 0
         return False
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, batch_size: int = 10) -> None:
+    def insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None, batch_size: int = 10) -> None:
         """
         Insert documents into the database.
 
@@ -250,7 +250,7 @@ class Qdrant(VectorDb):
             self.client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upsert {len(points)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Insert documents asynchronously."""
         log_debug(f"Inserting {len(documents)} documents asynchronously")
 
@@ -279,7 +279,7 @@ class Qdrant(VectorDb):
             await self.async_client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upserted {len(points)} documents asynchronously")
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Upsert documents into the database.
 
@@ -290,12 +290,12 @@ class Qdrant(VectorDb):
         log_debug("Redirecting the request to insert")
         self.insert(documents)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Upsert documents asynchronously."""
         log_debug("Redirecting the async request to async_insert")
         await self.async_insert(documents)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         """
         Search for documents in the database.
 
@@ -318,7 +318,7 @@ class Qdrant(VectorDb):
         )
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results:
             if result.payload is None:
                 continue
@@ -339,8 +339,8 @@ class Qdrant(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         """Search for documents asynchronously."""
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
@@ -390,7 +390,7 @@ class Qdrant(VectorDb):
     def exists(self) -> bool:
         if self.client:
             collections_response: models.CollectionsResponse = self.client.get_collections()
-            collections: List[models.CollectionDescription] = collections_response.collections
+            collections: list[models.CollectionDescription] = collections_response.collections
             for collection in collections:
                 if collection.name == self.collection:
                     # collection.status == models.CollectionStatus.GREEN
@@ -400,7 +400,7 @@ class Qdrant(VectorDb):
     async def async_exists(self) -> bool:
         """Check if the collection exists asynchronously."""
         collections_response = await self.async_client.get_collections()
-        collections: List[models.CollectionDescription] = collections_response.collections
+        collections: list[models.CollectionDescription] = collections_response.collections
         for collection in collections:
             if collection.name == self.collection:
                 return True

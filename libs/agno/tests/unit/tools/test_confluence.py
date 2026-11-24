@@ -4,7 +4,6 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
-from atlassian import Confluence
 
 from agno.tools.confluence import ConfluenceTools
 
@@ -13,7 +12,7 @@ from agno.tools.confluence import ConfluenceTools
 def mock_confluence():
     """Create a mock Confluence client."""
     with patch("agno.tools.confluence.Confluence") as mock_confluence_class:
-        mock_client = MagicMock(spec=Confluence)
+        mock_client = MagicMock()
         mock_confluence_class.return_value = mock_client
         yield mock_client
 
@@ -30,8 +29,8 @@ def confluence_tools(mock_confluence):
         },
     ):
         tools = ConfluenceTools()
-        tools.confluence = mock_confluence
-        return tools
+    tools.confluence = mock_confluence
+    return tools
 
 
 # Initialization Tests
@@ -46,9 +45,9 @@ def test_init_with_environment_variables():
         },
     ):
         tools = ConfluenceTools()
-        assert tools.url == "https://example.atlassian.net"
-        assert tools.username == "test_user"
-        assert tools.password == "test_api_key"
+    assert tools.url == "https://example.atlassian.net"
+    assert tools.username == "test_user"
+    assert tools.password == "test_api_key"
 
 
 def test_init_with_constructor_parameters():
@@ -65,9 +64,8 @@ def test_init_with_constructor_parameters():
 
 def test_init_with_missing_credentials():
     """Test initialization with missing credentials."""
-    with patch.dict("os.environ", {}, clear=True):
-        with pytest.raises(ValueError):
-            ConfluenceTools()
+    with patch.dict("os.environ", {}, clear=True), pytest.raises(ValueError):
+        ConfluenceTools()
 
 
 # Space Tests

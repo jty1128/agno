@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 
 def merge_dictionaries(a: Dict[str, Any], b: Dict[str, Any]) -> None:

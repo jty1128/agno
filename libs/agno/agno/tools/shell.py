@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
