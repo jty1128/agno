@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -14,8 +16,8 @@ try:
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.sse import sse_client
     from mcp.client.stdio import stdio_client
-except (ImportError, ModuleNotFoundError):
-    raise ImportError("`mcp` not installed. Please install using `pip install mcp`")
+except ModuleNotFoundError as e:
+    raise ImportError("`mcp` not installed. Please install using `pip install mcp`") from e
 
 
 @dataclass
@@ -76,13 +78,12 @@ class MCPTools(Toolkit):
         self.include_tools = include_tools
         self.exclude_tools = exclude_tools
 
-        if session is None and server_params is None:
-            if transport == "sse" and url is None:
-                raise ValueError("One of 'url' or 'server_params' parameters must be provided when using SSE transport")
-            if transport == "stdio" and command is None:
-                raise ValueError(
-                    "One of 'command' or 'server_params' parameters must be provided when using stdio transport"
-                )
+        if session is None and server_params is None and transport == "sse" and url is None:
+            raise ValueError("One of 'url' or 'server_params' parameters must be provided when using SSE transport")
+        if session is None and server_params is None and transport == "stdio" and command is None:
+            raise ValueError(
+                "One of 'command' or 'server_params' parameters must be provided when using stdio transport"
+            )
 
         # Ensure the received server_params are valid for the given transport
         if server_params is not None:
@@ -127,7 +128,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> MCPTools:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -216,13 +217,13 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
-                    logger.error(f"Failed to register tool {tool.name}: {e}")
+                except Exception:
+                    logger.error(f"Failed to register tool {tool.name}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
-            logger.error(f"Failed to get MCP tools: {e}")
+        except Exception:
+            logger.error("Failed to get MCP tools")
             raise
 
 
@@ -273,10 +274,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: Optional[list[str]] = commands
+        self.urls: Optional[list[str]] = urls
 
         # Merge provided env with system env
         if env is not None:
@@ -306,7 +307,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> MultiMCPTools:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -333,9 +334,9 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ):
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
@@ -377,11 +378,11 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
-                    logger.error(f"Failed to register tool {tool.name}: {e}")
+                except Exception:
+                    logger.error(f"Failed to register tool {tool.name}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to get MCP tools: {e}")
             raise

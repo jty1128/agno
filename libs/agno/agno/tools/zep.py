@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from os import getenv
 from textwrap import dedent
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_error, log_warning
@@ -111,7 +112,7 @@ class ZepTools(Toolkit):
             self._initialized = True
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to initialize ZepTools: {e}")
             self.zep_client = None
             self._initialized = False
@@ -147,7 +148,7 @@ class ZepTools(Toolkit):
                 ignore_roles=ignore_roles_list,
             )
             return f"Message from '{role}' added successfully to session {self.session_id}."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = f"Failed to add message to Zep session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error adding message: {e}"
@@ -186,7 +187,7 @@ class ZepTools(Toolkit):
                 log_warning(warning_msg)
                 return warning_msg
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to get Zep memory for session {self.session_id}: {e}")
             return f"Error getting memory for session {self.session_id}"
 
@@ -221,7 +222,7 @@ class ZepTools(Toolkit):
                 if response.message is not None
             ]
             log_debug(f"Memory search found {len(results)} relevant messages.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to search Zep graph memory for user {self.user_id}: {e}")
 
         if results is not None and results != []:
@@ -407,7 +408,7 @@ class ZepAsyncTools(Toolkit):
                 log_warning(warning_msg)
                 return warning_msg
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = f"Failed to get Zep memory for session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error getting memory: {e}"

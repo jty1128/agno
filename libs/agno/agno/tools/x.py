@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 from typing import Optional
@@ -64,7 +66,7 @@ class XTools(Toolkit):
             A JSON-formatted string containing the response from X API (Twitter API) with the created post details,
             or an error message if the post creation fails.
         """
-        log_debug(f"Attempting to create post with text: {text}")
+        log_debug(f"Attempting to create post with text: {text!s}")
         try:
             response = self.client.create_tweet(text=text)
             post_id = response.data["id"]
@@ -74,7 +76,7 @@ class XTools(Toolkit):
             result = {"message": "Post successfully created!", "url": post_url}
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
-            logger.error(f"Error creating post: {e}")
+            logger.error(f"Error creating post: {e!s}")
             return json.dumps({"error": str(e)})
 
     def reply_to_post(self, post_id: str, text: str) -> str:
@@ -89,7 +91,7 @@ class XTools(Toolkit):
             A JSON-formatted string containing the response from Twitter API with the reply post details,
             or an error message if the reply fails.
         """
-        log_debug(f"Attempting to reply to {post_id} with text {text}")
+        log_debug(f"Attempting to reply to {post_id!s} with text {text!s}")
         try:
             response = self.client.create_tweet(text=text, in_reply_to_tweet_id=post_id)
             reply_id = response.data["id"]
@@ -98,7 +100,7 @@ class XTools(Toolkit):
             result = {"message": "Reply successfully posted!", "url": reply_url}
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
-            logger.error(f"Error replying to post: {e}")
+            logger.error(f"Error replying to post: {e!s}")
             return json.dumps({"error": str(e)})
 
     def send_dm(self, recipient: str, text: str) -> str:
@@ -145,7 +147,7 @@ class XTools(Toolkit):
             return json.dumps({"error": error_message}, indent=2)
         except Exception as e:
             logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+            return json.dumps({"error": f"An unexpected error occurred: {e!s}"}, indent=2)
 
     def get_my_info(self) -> str:
         """
@@ -171,7 +173,7 @@ class XTools(Toolkit):
             }
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
-            logger.error(f"Error fetching user info: {e}")
+            logger.error(f"Error fetching user info: {e!s}")
             return json.dumps({"error": str(e)})
 
     def get_user_info(self, username: str) -> str:
@@ -186,7 +188,7 @@ class XTools(Toolkit):
             including id, name, username, description, and follower/following counts,
             or an error message if fetching the information fails.
         """
-        log_debug(f"Fetching information about user {username}")
+        log_debug(f"Fetching information about user {username!s}")
         try:
             user = self.client.get_user(username=username, user_fields=["description", "public_metrics"])
             user_info = user.data.data
@@ -201,7 +203,7 @@ class XTools(Toolkit):
             }
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
-            logger.error(f"Error fetching user info: {e}")
+            logger.error(f"Error fetching user info: {e!s}")
             return json.dumps({"error": str(e)})
 
     def get_home_timeline(self, max_results: int = 10) -> str:
@@ -216,7 +218,7 @@ class XTools(Toolkit):
             including tweet id, text, creation time, and author id,
             or an error message if fetching the timeline fails.
         """
-        log_debug(f"Fetching home timeline, max results: {max_results}")
+        log_debug(f"Fetching home timeline, max results: {max_results!s}")
         try:
             tweets = self.client.get_home_timeline(
                 max_results=max_results, tweet_fields=["created_at", "public_metrics"]
@@ -231,9 +233,9 @@ class XTools(Toolkit):
                         "author_id": tweet.author_id,
                     }
                 )
-            log_info(f"Successfully fetched {len(timeline)} tweets")
+            log_info(f"Successfully fetched {len(timeline)!s} tweets")
             result = {"home_timeline": timeline}
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
-            logger.error(f"Error fetching home timeline: {e}")
+            logger.error(f"Error fetching home timeline: {e!s}")
             return json.dumps({"error": str(e)})

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from packaging import version
@@ -225,7 +227,8 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except Exception as e:
+            log_debug(f"Index does not exist or error describing index: {e}")
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -273,8 +276,8 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
         namespace: Optional[str] = None,
         batch_size: Optional[int] = None,
         show_progress: bool = False,
@@ -333,7 +336,7 @@ class PineconeDb(VectorDb):
             show_progress=show_progress,
         )
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Pinecone doesn't support insert. Raise an error."""
         raise NotImplementedError("Pinecone does not support insert operations. Use async_upsert instead.")
 
@@ -346,14 +349,14 @@ class PineconeDb(VectorDb):
         """
         return True
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Insert documents into the index.
 
         This method is not supported by Pinecone. Use `upsert` instead.
 
         Args:
-            documents (List[Document]): The documents to insert.
-            filters (Optional[Dict[str, Any]], optional): The filters for the insert. Defaults to None.
+            documents (list[Document]): The documents to insert.
+            filters (Optional[dict[str, Any]], optional): The filters for the insert. Defaults to None.
 
         Raises:
             NotImplementedError: This method is not supported by Pinecone.
@@ -361,7 +364,7 @@ class PineconeDb(VectorDb):
         """
         raise NotImplementedError("Pinecone does not support insert operations. Use upsert instead.")
 
-    def _hybrid_scale(self, dense: List[float], sparse: Dict[str, Any], alpha: float):
+    def _hybrid_scale(self, dense: list[float], sparse: dict[str, Any], alpha: float):
         """Hybrid vector scaling using a convex combination
         1 is pure semantic search, 0 is pure keyword search
         alpha * dense + (1 - alpha) * sparse
@@ -383,22 +386,22 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
             query (str): The query to search for.
             limit (int, optional): The maximum number of results to return. Defaults to 5.
-            filters (Optional[Dict[str, Union[str, float, int, bool, List, dict]]], optional): The filter for the search. Defaults to None.
+            filters (Optional[dict[str, Union[str, float, int, bool, list, dict]]], optional): The filter for the search. Defaults to None.
             namespace (Optional[str], optional): The namespace to search in. Defaults to None.
             include_values (Optional[bool], optional): Whether to include values in the search results. Defaults to None.
             include_metadata (Optional[bool], optional): Whether to include metadata in the search results. Defaults to None.
 
         Returns:
-            List[Document]: The list of matching documents.
+            list[Document]: The list of matching documents.
 
         """
         dense_embedding = self.embedder.get_embedding(query)
@@ -449,10 +452,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,7 +465,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.
@@ -474,7 +476,8 @@ class PineconeDb(VectorDb):
         try:
             self.index.delete(delete_all=True, namespace=namespace)
             return True
-        except Exception:
+        except Exception as e:
+            log_debug(f"Error clearing index: {e}")
             return False
 
     async def async_drop(self) -> None:

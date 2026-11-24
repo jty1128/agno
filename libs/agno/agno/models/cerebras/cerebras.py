@@ -1,8 +1,8 @@
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from os import getenv
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -23,8 +23,10 @@ try:
         ChatCompletionResponseChoiceMessage,
     )
     from cerebras.cloud.sdk.types.completion import CompletionResponse
-except (ImportError, ModuleNotFoundError):
-    raise ImportError("`cerebras-cloud-sdk` not installed. Please install using `pip install cerebras-cloud-sdk`")
+except ImportError as e:
+    raise ImportError(
+        "`cerebras-cloud-sdk` not installed. Please install using `pip install cerebras-cloud-sdk`"
+    ) from e
 
 
 @dataclass
@@ -50,7 +52,7 @@ class Cerebras(Model):
     extra_headers: Optional[Any] = None
     extra_query: Optional[Any] = None
     extra_body: Optional[Any] = None
-    request_params: Optional[Dict[str, Any]] = None
+    request_params: Optional[dict[str, Any]] = None
 
     # Client parameters
     api_key: Optional[str] = None
@@ -60,13 +62,13 @@ class Cerebras(Model):
     default_headers: Optional[Any] = None
     default_query: Optional[Any] = None
     http_client: Optional[httpx.Client] = None
-    client_params: Optional[Dict[str, Any]] = None
+    client_params: Optional[dict[str, Any]] = None
 
     # Cerebras clients
     client: Optional[CerebrasClient] = None
     async_client: Optional[AsyncCerebrasClient] = None
 
-    def _get_client_params(self) -> Dict[str, Any]:
+    def _get_client_params(self) -> dict[str, Any]:
         # Fetch API key from env if not already set
         if not self.api_key:
             self.api_key = getenv("CEREBRAS_API_KEY")
@@ -101,7 +103,7 @@ class Cerebras(Model):
         if self.client:
             return self.client
 
-        client_params: Dict[str, Any] = self._get_client_params()
+        client_params: dict[str, Any] = self._get_client_params()
         if self.http_client is not None:
             client_params["http_client"] = self.http_client
         self.client = CerebrasClient(**client_params)
@@ -117,7 +119,7 @@ class Cerebras(Model):
         if self.async_client:
             return self.async_client
 
-        client_params: Dict[str, Any] = self._get_client_params()
+        client_params: dict[str, Any] = self._get_client_params()
         if self.http_client:
             client_params["http_client"] = self.http_client
         else:
@@ -129,12 +131,12 @@ class Cerebras(Model):
         return self.async_client
 
     @property
-    def request_kwargs(self) -> Dict[str, Any]:
+    def request_kwargs(self) -> dict[str, Any]:
         """
         Returns keyword arguments for API requests.
 
         Returns:
-            Dict[str, Any]: A dictionary of keyword arguments for API requests.
+            dict[str, Any]: A dictionary of keyword arguments for API requests.
         """
         # Define base request parameters
         base_params = {
@@ -189,12 +191,12 @@ class Cerebras(Model):
 
         return request_params
 
-    def invoke(self, messages: List[Message]) -> CompletionResponse:
+    def invoke(self, messages: list[Message]) -> CompletionResponse:
         """
         Send a chat completion request to the Cerebras API.
 
         Args:
-            messages (List[Message]): A list of messages to send to the model.
+            messages (list[Message]): A list of messages to send to the model.
 
         Returns:
             CompletionResponse: The chat completion response from the API.
@@ -205,12 +207,12 @@ class Cerebras(Model):
             **self.request_kwargs,
         )
 
-    async def ainvoke(self, messages: List[Message]) -> CompletionResponse:
+    async def ainvoke(self, messages: list[Message]) -> CompletionResponse:
         """
         Sends an asynchronous chat completion request to the Cerebras API.
 
         Args:
-            messages (List[Message]): A list of messages to send to the model.
+            messages (list[Message]): A list of messages to send to the model.
 
         Returns:
             ChatCompletion: The chat completion response from the API.
@@ -221,12 +223,12 @@ class Cerebras(Model):
             **self.request_kwargs,
         )
 
-    def invoke_stream(self, messages: List[Message]) -> Iterator[ChatChunkResponse]:
+    def invoke_stream(self, messages: list[Message]) -> Iterator[ChatChunkResponse]:
         """
         Send a streaming chat completion request to the Cerebras API.
 
         Args:
-            messages (List[Message]): A list of messages to send to the model.
+            messages (list[Message]): A list of messages to send to the model.
 
         Returns:
             Iterator[ChatChunkResponse]: An iterator of chat completion chunks.
@@ -238,12 +240,12 @@ class Cerebras(Model):
             **self.request_kwargs,
         )  # type: ignore
 
-    async def ainvoke_stream(self, messages: List[Message]) -> AsyncIterator[ChatChunkResponse]:
+    async def ainvoke_stream(self, messages: list[Message]) -> AsyncIterator[ChatChunkResponse]:
         """
         Sends an asynchronous streaming chat completion request to the Cerebras API.
 
         Args:
-            messages (List[Message]): A list of messages to send to the model.
+            messages (list[Message]): A list of messages to send to the model.
 
         Returns:
             AsyncIterator[ChatChunkResponse]: An asynchronous iterator of chat completion chunks.
@@ -257,7 +259,7 @@ class Cerebras(Model):
         async for chunk in async_stream:  # type: ignore
             yield chunk  # type: ignore
 
-    def _format_message(self, message: Message) -> Dict[str, Any]:
+    def _format_message(self, message: Message) -> dict[str, Any]:
         """
         Format a message into the format expected by the Cerebras API.
 
@@ -265,10 +267,10 @@ class Cerebras(Model):
             message (Message): The message to format.
 
         Returns:
-            Dict[str, Any]: The formatted message.
+            dict[str, Any]: The formatted message.
         """
         # Basic message content
-        message_dict: Dict[str, Any] = {
+        message_dict: dict[str, Any] = {
             "role": message.role,
             "content": message.content if message.content is not None else "",
         }
@@ -345,7 +347,7 @@ class Cerebras(Model):
                     }
                     for tool_call in message.tool_calls
                 ]
-            except Exception as e:
+            except AttributeError as e:
                 log_warning(f"Error processing tool calls: {e}")
 
         # Add usage metrics

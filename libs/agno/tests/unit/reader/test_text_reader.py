@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -10,7 +9,6 @@ from agno.document.base import Document
 from agno.document.reader.text_reader import TextReader
 
 
-@pytest.fixture
 def test_read_text_file_path(tmp_path):
     # Create a temporary text file
     text_path = tmp_path / "test.txt"
@@ -152,7 +150,7 @@ async def test_async_read_text_file_path(tmp_path):
     # Create a temporary text file
     text_path = tmp_path / "test.txt"
     test_data = "Hello, world!"
-    text_path.write_text(test_data)
+    await asyncio.to_thread(text_path.write_text, test_data)
 
     reader = TextReader()
     documents = await reader.async_read(text_path)
@@ -165,7 +163,7 @@ async def test_async_read_text_file_path(tmp_path):
 @pytest.mark.asyncio
 async def test_async_read_text_bytesio():
     test_data = "Hello, world!"
-    text_bytes = BytesIO(test_data.encode())
+    text_bytes = await asyncio.to_thread(BytesIO, test_data.encode())
     text_bytes.name = "test.txt"
 
     reader = TextReader()
@@ -179,7 +177,7 @@ async def test_async_read_text_bytesio():
 @pytest.mark.asyncio
 async def test_async_chunking():
     test_data = "Hello, world!"
-    text_bytes = BytesIO(test_data.encode())
+    text_bytes = await asyncio.to_thread(BytesIO, test_data.encode())
     text_bytes.name = "test.txt"
 
     reader = TextReader()
@@ -218,7 +216,7 @@ async def test_async_unsupported_file_type():
 @pytest.mark.asyncio
 async def test_async_empty_text_file(tmp_path):
     text_path = tmp_path / "empty.txt"
-    text_path.write_text("")
+    await asyncio.to_thread(text_path.write_text, "")
 
     reader = TextReader()
     documents = await reader.async_read(text_path)
@@ -231,7 +229,7 @@ async def test_async_empty_text_file(tmp_path):
 async def test_async_unicode_content(tmp_path):
     test_data = "Hello, 世界!"
     text_path = tmp_path / "unicode.txt"
-    text_path.write_text(test_data)
+    await asyncio.to_thread(text_path.write_text, test_data)
 
     reader = TextReader()
     documents = await reader.async_read(text_path)

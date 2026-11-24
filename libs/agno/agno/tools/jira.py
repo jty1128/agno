@@ -72,7 +72,7 @@ class JiraTools(Toolkit):
             return json.dumps(issue_details)
         except Exception as e:
             logger.error(f"Error retrieving issue {issue_key}: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore
 
     def create_issue(self, project_key: str, summary: str, description: str, issuetype: str = "Task") -> str:
         """
@@ -97,7 +97,7 @@ class JiraTools(Toolkit):
             return json.dumps({"key": new_issue.key, "url": issue_url})
         except Exception as e:
             logger.error(f"Error creating issue in project {project_key}: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore
 
     def search_issues(self, jql_str: str, max_results: int = 50) -> str:
         """
@@ -123,7 +123,7 @@ class JiraTools(Toolkit):
             return json.dumps(results)
         except Exception as e:
             logger.error(f"Error searching issues with JQL '{jql_str}': {e}")
-            return json.dumps([{"error": str(e)}])
+            return json.dumps([{"error": str(e)}])  # type: ignore
 
     def add_comment(self, issue_key: str, comment: str) -> str:
         """
@@ -139,4 +139,4 @@ class JiraTools(Toolkit):
             return json.dumps({"status": "success", "issue_key": issue_key})
         except Exception as e:
             logger.error(f"Error adding comment to issue {issue_key}: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e)})  # type: ignore

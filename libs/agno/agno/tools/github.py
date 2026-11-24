@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -1090,7 +1091,7 @@ class GithubTools(Toolkit):
                     if not issue.pull_request:
                         open_issues_count += 1
                 repo_info["actual_open_issues"] = open_issues_count
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting actual open issues: {e}")
                 repo_info["actual_open_issues"] = None
 
@@ -1098,7 +1099,7 @@ class GithubTools(Toolkit):
             try:
                 open_prs = repo.get_pulls(state="open")
                 repo_info["open_pr_count"] = int(open_prs.totalCount)
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting open PRs count: {e}")
                 repo_info["open_pr_count"] = None
 
@@ -1141,12 +1142,10 @@ class GithubTools(Toolkit):
                 all_prs_list = []
                 all_prs = repo.get_pulls(state="all", sort="created", direction="desc")
 
-                pr_count = 0
-                for pr in all_prs:
+                for pr_count, pr in enumerate(all_prs):
                     if pr_count >= 100:  # Limit to 100 PRs
                         break
                     all_prs_list.append(pr)
-                    pr_count += 1
 
                 # Calculate basic metrics
                 merged_prs = []
@@ -1169,7 +1168,7 @@ class GithubTools(Toolkit):
                     "avg_time_to_merge": (sum(merge_times) / len(merge_times) if merge_times else None),
                 }
                 repo_info["pr_metrics"] = pr_metrics
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error calculating PR metrics: {e}")
                 repo_info["pr_metrics"] = None
 
@@ -1362,9 +1361,6 @@ class GithubTools(Toolkit):
             try:
                 decoded_content = file_content.decoded_content.decode("utf-8")
             except UnicodeDecodeError:
-                decoded_content = "Binary file (content not displayed)"
-            except Exception as e:
-                log_debug(f"Error decoding file content: {e}")
                 decoded_content = "Binary file (content not displayed)"
 
             # Make sure we don't try to display binary content

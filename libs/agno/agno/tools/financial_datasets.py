@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -99,8 +101,8 @@ class FinancialDatasetsTools(Toolkit):
             response.raise_for_status()
             return response.text
         except requests.exceptions.RequestException as e:
-            log_error(f"Error making request to {url}: {str(e)}")
-            return f"Error making request to {url}: {str(e)}"
+            log_error(f"Error making request to {url}: {e!s}")
+            return f"Error making request to {url}: {e!s}"
 
     # Financial Statements
     def get_income_statements(self, ticker: str, period: str = "annual", limit: int = 10) -> str:
@@ -277,7 +279,7 @@ class FinancialDatasetsTools(Toolkit):
         params = {"query": query, "limit": limit}
         return self._make_request("search", params)
 
-    def get_sec_filings(self, ticker: str, form_type: Optional[str] = None, limit: int = 50) -> str:
+    def get_sec_filings(self, ticker: str, form_type: str | None = None, limit: int = 50) -> str:
         """
         Get SEC filings for a ticker.
 
@@ -289,7 +291,7 @@ class FinancialDatasetsTools(Toolkit):
         Returns:
             Dictionary containing SEC filings
         """
-        params: Dict[str, Any] = {"ticker": ticker, "limit": limit}
+        params: dict[str, Any] = {"ticker": ticker, "limit": limit}
         if form_type:
             params["form_type"] = form_type
         return self._make_request("sec-filings", params)

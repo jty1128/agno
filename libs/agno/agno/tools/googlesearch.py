@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug
@@ -10,7 +12,7 @@ except ImportError:
     raise ImportError("`googlesearch-python` not installed. Please install using `pip install googlesearch-python`")
 
 try:
-    from pycountry import pycountry
+    import pycountry
 except ImportError:
     raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`")
 
