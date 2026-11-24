@@ -5,7 +5,7 @@ try:
 except ImportError:
     raise ImportError("`spider-client` not installed. Please install using `pip install spider-client`")
 
-from typing import Optional
+from __future__ import annotations
 
 from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_info, logger

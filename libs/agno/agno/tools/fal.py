@@ -2,6 +2,8 @@
 pip install fal-client
 """
 
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional, Union
 from uuid import uuid4
@@ -84,7 +86,7 @@ class FalTools(Toolkit):
                 return f"Unsupported type in result: {result}"
 
             return f"{media_type.capitalize()} generated successfully at {url}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to run model: {e}")
             return f"Error: {e}"
 
@@ -120,6 +122,6 @@ class FalTools(Toolkit):
 
             return f"Image generated successfully at {url}"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate image: {e}")
             return f"Error: {e}"

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from textwrap import dedent
-from typing import List, Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.document import Document
@@ -100,7 +102,7 @@ class KnowledgeTools(Toolkit):
             log_debug(f"Searching knowledge base: {query}")
 
             # Get the relevant documents from the knowledge base
-            relevant_docs: List[Document] = self.knowledge.search(query=query)
+            relevant_docs: list[Document] = self.knowledge.search(query=query)
             if len(relevant_docs) == 0:
                 return "No documents found"
             return json.dumps([doc.to_dict() for doc in relevant_docs])

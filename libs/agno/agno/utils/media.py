@@ -37,7 +37,7 @@ def download_image(url: str, output_path: str) -> bool:
     except httpx.HTTPError as e:
         print(f"Error downloading the image: {e}")
         return False
-    except IOError as e:
+    except OSError as e:
         print(f"Error saving the image to '{output_path}': {e}")
         return False
 
@@ -48,8 +48,7 @@ def download_video(url: str, output_path: str) -> str:
     response.raise_for_status()
 
     with open(output_path, "wb") as f:
-        for chunk in response.iter_bytes(chunk_size=8192):
-            f.write(chunk)
+        f.writelines(response.iter_bytes(chunk_size=8192))
     return output_path
 
 
@@ -77,7 +76,7 @@ def download_file(url: str, output_path: str) -> None:
                     f.write(chunk)
 
     except httpx.HTTPError as e:
-        raise Exception(f"Failed to download file from {url}: {str(e)}")
+        raise Exception(f"Failed to download file from {url}: {e!s}")
 
 
 def save_base64_data(base64_data: str, output_path: str) -> bool:
@@ -87,8 +86,8 @@ def save_base64_data(base64_data: str, output_path: str) -> bool:
     try:
         # Decode the base64 string into bytes
         decoded_data = base64.b64decode(base64_data)
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred during base64 decoding: {e}")
+    except binascii.Error as e:
+        raise ValueError(f"An unexpected error occurred during base64 decoding: {e}")
 
     try:
         path = Path(output_path)
@@ -100,5 +99,5 @@ def save_base64_data(base64_data: str, output_path: str) -> bool:
 
         print(f"Data successfully saved to '{path}'.")
         return True
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred while saving data to '{output_path}': {e}")
+    except OSError as e:
+        raise OSError(f"An unexpected error occurred while saving data to '{output_path}': {e}")

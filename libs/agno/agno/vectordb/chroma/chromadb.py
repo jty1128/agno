@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -109,7 +111,7 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Document does not exist: {e}")
         return False
 
@@ -126,10 +128,10 @@ class ChromaDb(VectorDb):
         if self.client:
             try:
                 collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                for collection_item in collections:  # type: ignore
+                    if name in collection_item:
                         return True
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Document with given name does not exist: {e}")
         return False
 
@@ -263,7 +265,7 @@ class ChromaDb(VectorDb):
                         embedding=embeddings[idx],  # type: ignore
                     )
                 )
-        except Exception as e:
+        except (ValueError, IndexError, KeyError) as e:
             logger.error(f"Error building search results: {e}")
 
         if self.reranker:
@@ -292,7 +294,7 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except ValueError as e:
             log_debug(f"Collection does not exist: {e}")
         return False
 
@@ -306,7 +308,7 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Error getting count: {e}")
         return 0
 

@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -85,17 +85,14 @@ class MCPTools(Toolkit):
                 )
 
         # Ensure the received server_params are valid for the given transport
-        if server_params is not None:
-            if transport == "sse":
-                if not isinstance(server_params, SSEClientParams):
-                    raise ValueError(
-                        "If using the SSE transport, server_params must be an instance of SSEClientParams."
-                    )
-            elif transport == "stdio":
-                if not isinstance(server_params, StdioServerParameters):
-                    raise ValueError(
-                        "If using the stdio transport, server_params must be an instance of StdioServerParameters."
-                    )
+        if server_params is not None and transport == "sse":
+            if not isinstance(server_params, SSEClientParams):
+                raise ValueError("If using the SSE transport, server_params must be an instance of SSEClientParams.")
+        elif server_params is not None and transport == "stdio":
+            if not isinstance(server_params, StdioServerParameters):
+                raise ValueError(
+                    "If using the stdio transport, server_params must be an instance of StdioServerParameters."
+                )
 
         self.timeout_seconds = timeout_seconds
         self.session: Optional[ClientSession] = session
@@ -216,7 +213,7 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
@@ -273,10 +270,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: Optional[list[str]] = commands
+        self.urls: Optional[list[str]] = urls
 
         # Merge provided env with system env
         if env is not None:

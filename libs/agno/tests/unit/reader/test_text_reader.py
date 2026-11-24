@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -298,6 +297,7 @@ async def test_async_invalid_encoding(tmp_path):
         reader = TextReader()
         documents = await reader.async_read(text_path)
         assert len(documents) == 0
+
     finally:
         if text_path.exists():
             text_path.unlink()
@@ -319,7 +319,7 @@ async def test_async_parallel_chunking():
     ]
 
     # Create a mock async chunk processor
-    async def mock_async_chunk_processor(document: Document) -> List[Document]:
+    async def mock_async_chunk_processor(document: Document) -> list[Document]:
         await asyncio.sleep(0.1)  # Simulate async work
         return reader.chunk_document(document)
 

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,11 +48,11 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise ValueError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
@@ -80,8 +81,8 @@ class WorkspaceConfig(BaseModel):
                         if self.ws_schema is not None and self._workspace_settings is not None:
                             self._workspace_settings.ws_schema = self.ws_schema
                             logger.debug("Added WorkspaceSchema to WorkspaceSettings")
-        except Exception:
-            logger.warning(f"Error in {ws_settings_file}")
+        except Exception as e:
+            logger.warning(f"Error in {ws_settings_file}: {e}")
             raise
         return self._workspace_settings
 
@@ -177,8 +178,8 @@ class WorkspaceConfig(BaseModel):
                                 logger.debug(f"Skipping {obj_name}: disabled")
                                 continue
                             workspace_objects[obj_name] = obj
-                except Exception:
-                    logger.warning(f"Error in {resource_file}")
+                except Exception as e:
+                    logger.warning(f"Error in {resource_file}: {e}")
                     raise
             logger.debug(f"workspace_objects: {workspace_objects}")
         logger.debug("**--> WorkspaceConfig loaded")
@@ -219,7 +220,7 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
+        infra_resources_list: list[InfraResources] = []
         for resource_name, resource in filtered_infra_objects_by_env.items():
             # If the resource is an InfraResources object, add it to the list
             if isinstance(resource, InfraResources):
@@ -262,7 +263,7 @@ class WorkspaceConfig(BaseModel):
         logger.debug(f"**--> Reading Infra resources from {resource_file}")
 
         # Get all infra resources from the file
-        infra_objects: Dict[str, InfraBase] = {}
+        infra_objects: dict[str, InfraBase] = {}
         try:
             # Get all python objects from the file
             python_objects = get_python_objects_from_module(resource_file)
@@ -274,12 +275,12 @@ class WorkspaceConfig(BaseModel):
                         logger.debug(f"Skipping {obj_name}: disabled")
                         continue
                     infra_objects[obj_name] = obj
-        except Exception:
-            logger.error(f"Error reading: {resource_file}")
+        except Exception as e:
+            logger.error(f"Error reading: {resource_file}: {e}")
             raise
 
         # Filter resources by infra
-        filtered_infra_objects_by_infra_type: Dict[str, InfraBase] = {}
+        filtered_infra_objects_by_infra_type: dict[str, InfraBase] = {}
         logger.debug(f"Filtering resources for env: {env} | infra: {infra} | order: {order}")
         if infra is None:
             filtered_infra_objects_by_infra_type = infra_objects
@@ -289,7 +290,7 @@ class WorkspaceConfig(BaseModel):
                     filtered_infra_objects_by_infra_type[resource_name] = resource
 
         # Filter resources by env
-        filtered_infra_objects_by_env: Dict[str, InfraBase] = {}
+        filtered_infra_objects_by_env: dict[str, InfraBase] = {}
         if env is None:
             filtered_infra_objects_by_env = filtered_infra_objects_by_infra_type
         else:

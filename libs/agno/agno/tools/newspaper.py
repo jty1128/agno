@@ -36,5 +36,5 @@ class NewspaperTools(Toolkit):
             article.download()
             article.parse()
             return article.text
-        except Exception as e:
+        except (ImportError, ValueError, AttributeError) as e:
             return f"Error getting article text from {url}: {e}"
