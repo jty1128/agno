@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -10,7 +12,7 @@ from agno.utils.log import log_error
 class FinancialDatasetsTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         enable_financial_statements: bool = True,
         enable_company_info: bool = True,
         enable_market_data: bool = True,
@@ -37,7 +39,7 @@ class FinancialDatasetsTools(Toolkit):
         """
         super().__init__(name="financial_datasets_tools", **kwargs)
 
-        self.api_key: Optional[str] = api_key or getenv("FINANCIAL_DATASETS_API_KEY")
+        self.api_key: str | None = api_key or getenv("FINANCIAL_DATASETS_API_KEY")
         if not self.api_key:
             log_error(
                 "FINANCIAL_DATASETS_API_KEY not set. Please set the FINANCIAL_DATASETS_API_KEY environment variable."
@@ -76,7 +78,7 @@ class FinancialDatasetsTools(Toolkit):
         if enable_search:
             self.register(self.search_tickers)
 
-    def _make_request(self, endpoint: str, params: Dict[str, Any]) -> str:
+    def _make_request(self, endpoint: str, params: dict[str, Any]) -> str:
         """
         Makes a request to the Financial Datasets API.
 
@@ -99,8 +101,8 @@ class FinancialDatasetsTools(Toolkit):
             response.raise_for_status()
             return response.text
         except requests.exceptions.RequestException as e:
-            log_error(f"Error making request to {url}: {str(e)}")
-            return f"Error making request to {url}: {str(e)}"
+            log_error(f"Error making request to {url}: {e!s}")
+            return f"Error making request to {url}: {e!s}"
 
     # Financial Statements
     def get_income_statements(self, ticker: str, period: str = "annual", limit: int = 10) -> str:
@@ -113,7 +115,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of statements to return
 
         Returns:
-            Dictionary containing income statements
+            JSON string containing income statements
         """
         params = {"ticker": ticker, "period": period, "limit": limit}
         return self._make_request("financials/income-statements", params)
@@ -128,7 +130,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of statements to return
 
         Returns:
-            Dictionary containing balance sheets
+            JSON string containing balance sheets
         """
         params = {"ticker": ticker, "period": period, "limit": limit}
         return self._make_request("financials/balance-sheets", params)
@@ -143,7 +145,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of statements to return
 
         Returns:
-            Dictionary containing cash flow statements
+            JSON string containing cash flow statements
         """
         params = {"ticker": ticker, "period": period, "limit": limit}
         return self._make_request("financials/cash-flow-statements", params)
@@ -158,7 +160,7 @@ class FinancialDatasetsTools(Toolkit):
             ticker: Stock ticker symbol
 
         Returns:
-            Dictionary containing company information
+            JSON string containing company information
         """
         params = {"ticker": ticker}
         return self._make_request("company", params)
@@ -173,7 +175,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of price points to return
 
         Returns:
-            Dictionary containing crypto prices
+            JSON string containing crypto prices
         """
         params = {"symbol": symbol, "interval": interval, "limit": limit}
         return self._make_request("crypto/prices", params)
@@ -187,7 +189,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of earnings reports to return
 
         Returns:
-            Dictionary containing earnings data
+            JSON string containing earnings data
         """
         params = {"ticker": ticker, "limit": limit}
         return self._make_request("earnings", params)
@@ -200,7 +202,7 @@ class FinancialDatasetsTools(Toolkit):
             ticker: Stock ticker symbol
 
         Returns:
-            Dictionary containing financial metrics
+            JSON string containing financial metrics
         """
         params = {"ticker": ticker}
         return self._make_request("financials/metrics", params)
@@ -214,7 +216,7 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of trades to return
 
         Returns:
-            Dictionary containing insider trades
+            JSON string containing insider trades
         """
         params = {"ticker": ticker, "limit": limit}
         return self._make_request("insider-trades", params)
@@ -227,12 +229,12 @@ class FinancialDatasetsTools(Toolkit):
             ticker: Stock ticker symbol
 
         Returns:
-            Dictionary containing institutional ownership data
+            JSON string containing institutional ownership data
         """
         params = {"ticker": ticker}
         return self._make_request("institutional-ownership", params)
 
-    def get_news(self, ticker: Optional[str] = None, limit: int = 50) -> str:
+    def get_news(self, ticker: str | None = None, limit: int = 50) -> str:
         """
         Get market news, optionally filtered by ticker.
 
@@ -241,9 +243,9 @@ class FinancialDatasetsTools(Toolkit):
             limit: Number of news items to return
 
         Returns:
-            Dictionary containing news items
+            JSON string containing news items
         """
-        params: Dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if ticker:
             params["ticker"] = ticker
         return self._make_request("news", params)

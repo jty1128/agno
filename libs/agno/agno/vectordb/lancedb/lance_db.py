@@ -1,12 +1,6 @@
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
-
-try:
-    import lancedb
-    import pyarrow as pa
-except ImportError:
-    raise ImportError("`lancedb` not installed. Please install using `pip install lancedb`")
+from typing import Any, Optional
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -15,6 +9,12 @@ from agno.utils.log import log_debug, log_info, logger
 from agno.vectordb.base import VectorDb
 from agno.vectordb.distance import Distance
 from agno.vectordb.search import SearchType
+
+try:
+    import lancedb
+    import pyarrow as pa
+except ImportError:
+    raise ImportError("`lancedb` not installed. Please install using `pip install lancedb`")
 
 
 class LanceDb(VectorDb):
@@ -101,7 +101,7 @@ class LanceDb(VectorDb):
                 self.table = table
                 self.table_name = self.table.name
                 self._vector_col = self.table.schema.names[0]
-                self._id = self.tbl.schema.names[1]  # type: ignore
+                self._id = self.table.schema.names[1]  # type: ignore
             else:
                 if not table_name:
                     raise ValueError("Either table or table_name should be provided.")
@@ -122,7 +122,7 @@ class LanceDb(VectorDb):
                 import tantivy  # noqa: F401
             except ImportError:
                 raise ImportError(
-                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."  # noqa: E501
+                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."
                 )
 
         log_debug(f"Initialized LanceDb with table: '{self.table_name}'")

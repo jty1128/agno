@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import functools
 import runpy
 from pathlib import Path
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def warn() -> None:
     logger.warning("PythonTools can run arbitrary code, please provide human supervision.")
 
@@ -85,7 +86,7 @@ class PythonTools(Toolkit):
                 log_debug(f"Variable {variable_to_return} value: {variable_value}")
                 return str(variable_value)
             else:
-                return f"successfully ran {str(file_path)}"
+                return f"successfully ran {file_path!s}"
         except Exception as e:
             logger.error(f"Error saving and running code: {e}")
             return f"Error saving and running code: {e}"
@@ -112,7 +113,7 @@ class PythonTools(Toolkit):
                 log_debug(f"Variable {variable_to_return} value: {variable_value}")
                 return str(variable_value)
             else:
-                return f"successfully ran {str(file_path)}"
+                return f"successfully ran {file_path!s}"
         except Exception as e:
             logger.error(f"Error running file: {e}")
             return f"Error running file: {e}"
@@ -128,9 +129,9 @@ class PythonTools(Toolkit):
             file_path = self.base_dir.joinpath(file_name)
             contents = file_path.read_text(encoding="utf-8")
             return str(contents)
-        except Exception as e:
-            logger.error(f"Error reading file: {e}")
-            return f"Error reading file: {e}"
+        except Exception:
+            logger.exception("Error reading file")
+            return "Error reading file"
 
     def list_files(self) -> str:
         """Returns a list of files in the base directory
@@ -141,11 +142,11 @@ class PythonTools(Toolkit):
             log_info(f"Reading files in : {self.base_dir}")
             files = [str(file_path.name) for file_path in self.base_dir.iterdir()]
             return ", ".join(files)
-        except Exception as e:
-            logger.error(f"Error reading files: {e}")
-            return f"Error reading files: {e}"
+        except Exception:
+            logger.exception("Error reading files")
+            return "Error reading files"
 
-    def run_python_code(self, code: str, variable_to_return: Optional[str] = None) -> str:
+    def run_python_code(self, code: str, variable_to_return: str | None = None) -> str:
         """This function to runs Python code in the current environment.
         If successful, returns the value of `variable_to_return` if provided otherwise returns a success message.
         If failed, returns an error message.
@@ -160,7 +161,7 @@ class PythonTools(Toolkit):
             warn()
 
             log_debug(f"Running code:\n\n{code}\n\n")
-            exec(code, self.safe_globals, self.safe_locals)
+            exec(compile(code, "<string>", "exec"), self.safe_globals, self.safe_locals)  # noqa: S102
 
             if variable_to_return:
                 variable_value = self.safe_locals.get(variable_to_return)
@@ -170,9 +171,9 @@ class PythonTools(Toolkit):
                 return str(variable_value)
             else:
                 return "successfully ran python code"
-        except Exception as e:
-            logger.error(f"Error running python code: {e}")
-            return f"Error running python code: {e}"
+        except Exception:
+            logger.exception("Error running python code")
+            return "Error running python code"
 
     def pip_install_package(self, package_name: str) -> str:
         """This function installs a package using pip in the current environment.
@@ -191,9 +192,9 @@ class PythonTools(Toolkit):
 
             subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
             return f"successfully installed package {package_name}"
-        except Exception as e:
-            logger.error(f"Error installing package {package_name}: {e}")
-            return f"Error installing package {package_name}: {e}"
+        except Exception:
+            logger.exception(f"Error installing package {package_name}")
+            return f"Error installing package {package_name}"
 
     def uv_pip_install_package(self, package_name: str) -> str:
         """This function installs a package using uv and pip in the current environment.
@@ -212,6 +213,6 @@ class PythonTools(Toolkit):
 
             subprocess.check_call([sys.executable, "-m", "uv", "pip", "install", package_name])
             return f"successfully installed package {package_name}"
-        except Exception as e:
-            logger.error(f"Error installing package {package_name}: {e}")
-            return f"Error installing package {package_name}: {e}"
+        except Exception:
+            logger.exception(f"Error installing package {package_name}")
+            return f"Error installing package {package_name}"

@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -166,7 +165,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -416,66 +415,59 @@ class Workflow:
                     session_state_from_db is not None
                     and isinstance(session_state_from_db, dict)
                     and len(session_state_from_db) > 0
+                    and len(self.session_state) > 0
                 ):
-                    # If the session_state is already set, merge the session_state from the database with the current session_state
-                    if len(self.session_state) > 0:
-                        # This updates session_state_from_db
-                        merge_dictionaries(session_state_from_db, self.session_state)
+                    # This updates session_state_from_db
+                    merge_dictionaries(session_state_from_db, self.session_state)
                     # Update the current session_state
                     self.session_state = session_state_from_db
 
             # Get images, videos, and audios from the database
             if "images" in session.session_data:
                 images_from_db = session.session_data.get("images")
-                if images_from_db is not None and isinstance(images_from_db, list):
-                    if self.images is None:
-                        self.images = []
+                if images_from_db is not None and isinstance(images_from_db, list) and self.images is None:
+                    self.images = []
                     self.images.extend([ImageArtifact.model_validate(img) for img in images_from_db])
             if "videos" in session.session_data:
                 videos_from_db = session.session_data.get("videos")
-                if videos_from_db is not None and isinstance(videos_from_db, list):
-                    if self.videos is None:
-                        self.videos = []
+                if videos_from_db is not None and isinstance(videos_from_db, list) and self.videos is None:
+                    self.videos = []
                     self.videos.extend([VideoArtifact.model_validate(vid) for vid in videos_from_db])
             if "audio" in session.session_data:
                 audio_from_db = session.session_data.get("audio")
-                if audio_from_db is not None and isinstance(audio_from_db, list):
-                    if self.audio is None:
-                        self.audio = []
+                if audio_from_db is not None and isinstance(audio_from_db, list) and self.audio is None:
+                    self.audio = []
                     self.audio.extend([AudioArtifact.model_validate(aud) for aud in audio_from_db])
 
         # Read extra_data from the database
-        if session.extra_data is not None:
-            # If extra_data is set in the workflow, update the database extra_data with the workflow's extra_data
-            if self.extra_data is not None:
-                # Updates workflow_session.extra_data in place
-                merge_dictionaries(session.extra_data, self.extra_data)
+        if session.extra_data is not None and self.extra_data is not None:
+            # Updates workflow_session.extra_data in place
+            merge_dictionaries(session.extra_data, self.extra_data)
             # Update the current extra_data with the extra_data from the database which is updated in place
             self.extra_data = session.extra_data
 
-        if session.memory is not None:
-            if self.memory is None:
-                self.memory = Memory()
+        if session.memory is not None and self.memory is None:
+            self.memory = Memory()
 
-            if isinstance(self.memory, Memory):
-                try:
-                    if self.memory.runs is None:
-                        self.memory.runs = {}
-                    self.memory.runs[session.session_id] = []
-                    for run in session.memory["runs"]:
-                        run_session_id = run["session_id"]
-                        self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
-                    log_warning(f"Failed to load runs from memory: {e}")
-            else:
-                try:
-                    if "runs" in session.memory:
-                        try:
-                            self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
-                            logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
-                    logger.warning(f"Failed to load WorkflowMemory: {e}")
+        if session.memory is not None and isinstance(self.memory, Memory):
+            try:
+                if self.memory.runs is None:
+                    self.memory.runs = {}
+                self.memory.runs[session.session_id] = []
+                for run in session.memory["runs"]:
+                    run_session_id = run["session_id"]
+                    self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
+            except Exception as e:
+                log_warning(f"Failed to load runs from memory: {e}")
+        elif session.memory is not None:
+            try:
+                if "runs" in session.memory:
+                    try:
+                        self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
+                    except Exception as e:
+                        logger.warning(f"Failed to load runs from memory: {e}")
+            except Exception as e:
+                logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
@@ -510,9 +502,13 @@ class Workflow:
         """
         # If a workflow_session is already loaded, return the session_id from the workflow_session
         #   if the session_id matches the session_id from the workflow_session
-        if self.workflow_session is not None and not force:
-            if self.session_id is not None and self.workflow_session.session_id == self.session_id:
-                return self.workflow_session.session_id
+        if (
+            self.workflow_session is not None
+            and not force
+            and self.session_id is not None
+            and self.workflow_session.session_id == self.session_id
+        ):
+            return self.workflow_session.session_id
 
         # Load an existing session or create a new session
         if self.storage is not None:
@@ -527,7 +523,7 @@ class Workflow:
                 # and populate self.workflow_session with the new session
                 self.write_to_storage()
                 if self.workflow_session is None:
-                    raise Exception("Failed to create new WorkflowSession in storage")
+                    raise RuntimeError("Failed to create new WorkflowSession in storage")
                 log_debug(f"-*- Created WorkflowSession: {self.workflow_session.session_id}")
                 self.log_workflow_session()
         return self.session_id

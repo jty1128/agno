@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import urllib.parse
-from typing import List, Optional
+from typing import Optional
 
 import httpx
 
@@ -12,7 +14,7 @@ class Searxng(Toolkit):
     def __init__(
         self,
         host: str,
-        engines: List[str] = [],
+        engines: list[str] = [],
         fixed_max_results: Optional[int] = None,
         images: bool = False,
         it: bool = False,
@@ -26,7 +28,7 @@ class Searxng(Toolkit):
         super().__init__(name="searxng", **kwargs)
 
         self.host = host
-        self.engines = engines
+        self.engines = engines if engines is not None else []
         self.fixed_max_results = fixed_max_results
 
         self.register(self.search)
@@ -157,5 +159,5 @@ class Searxng(Toolkit):
             results = self.fixed_max_results or max_results
             resp["results"] = resp["results"][:results]
             return json.dumps(resp)
-        except Exception as e:
+        except (httpx.HTTPError, ValueError) as e:
             return f"Error fetching results from searxng: {e}"

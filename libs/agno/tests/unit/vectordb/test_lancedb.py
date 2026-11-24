@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from contextlib import suppress
 
 import pytest
 
@@ -28,10 +28,8 @@ def lance_db(mock_embedder):
     yield db
 
     # Cleanup after test
-    try:
+    with suppress(Exception):
         db.drop()
-    except Exception:
-        pass
 
     if os.path.exists(TEST_PATH):
         shutil.rmtree(TEST_PATH)

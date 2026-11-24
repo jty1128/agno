@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -186,7 +187,9 @@ class GithubTools(Toolkit):
 
             # Get the specified page of results
             repo_list = []
-            for repo in repositories.get_page(page - 1):
+            for i, repo in enumerate(repositories.get_page(page - 1)):
+                if i >= per_page:
+                    break
                 repo_info = {
                     "full_name": repo.full_name,
                     "description": repo.description,
@@ -196,9 +199,6 @@ class GithubTools(Toolkit):
                     "language": repo.language,
                 }
                 repo_list.append(repo_info)
-
-                if len(repo_list) >= per_page:
-                    break
 
             return json.dumps(repo_list, indent=2)
 
@@ -586,7 +586,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error reopening issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def assign_issue(self, repo_name: str, issue_number: int, assignees: List[str]) -> str:
+    def assign_issue(self, repo_name: str, issue_number: int, assignees: list[str]) -> str:
         """Assign users to an issue.
 
         Args:
@@ -607,7 +607,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error assigning issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def label_issue(self, repo_name: str, issue_number: int, labels: List[str]) -> str:
+    def label_issue(self, repo_name: str, issue_number: int, labels: list[str]) -> str:
         """Add labels to an issue.
 
         Args:
@@ -665,8 +665,8 @@ class GithubTools(Toolkit):
         self,
         repo_name: str,
         issue_number: int,
-        title: Optional[str] = None,
-        body: Optional[str] = None,
+        title: str | None = None,
+        body: str | None = None,
     ) -> str:
         """Edit the title or body of an issue.
 
@@ -1090,7 +1090,7 @@ class GithubTools(Toolkit):
                     if not issue.pull_request:
                         open_issues_count += 1
                 repo_info["actual_open_issues"] = open_issues_count
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting actual open issues: {e}")
                 repo_info["actual_open_issues"] = None
 
@@ -1098,7 +1098,7 @@ class GithubTools(Toolkit):
             try:
                 open_prs = repo.get_pulls(state="open")
                 repo_info["open_pr_count"] = int(open_prs.totalCount)
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting open PRs count: {e}")
                 repo_info["open_pr_count"] = None
 
@@ -1108,8 +1108,7 @@ class GithubTools(Toolkit):
                 open_prs = repo.get_pulls(state="open")
 
                 # Use a simple for loop approach instead of trying to slice first
-                count = 0
-                for pr in open_prs:
+                for count, pr in enumerate(open_prs):
                     if count >= 10:
                         break
                     try:
@@ -1126,12 +1125,11 @@ class GithubTools(Toolkit):
                             "comment_count": int(pr.comments),
                         }
                         open_prs_list.append(pr_data)
-                        count += 1
-                    except Exception as e:
+                    except GithubException as e:
                         log_debug(f"Error processing individual PR: {e}")
 
                 repo_info["recent_open_prs"] = open_prs_list
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting recent open PRs: {e}")
                 repo_info["recent_open_prs"] = []
 
@@ -1141,12 +1139,10 @@ class GithubTools(Toolkit):
                 all_prs_list = []
                 all_prs = repo.get_pulls(state="all", sort="created", direction="desc")
 
-                pr_count = 0
-                for pr in all_prs:
+                for pr_count, pr in enumerate(all_prs):
                     if pr_count >= 100:  # Limit to 100 PRs
                         break
                     all_prs_list.append(pr)
-                    pr_count += 1
 
                 # Calculate basic metrics
                 merged_prs = []
@@ -1169,7 +1165,7 @@ class GithubTools(Toolkit):
                     "avg_time_to_merge": (sum(merge_times) / len(merge_times) if merge_times else None),
                 }
                 repo_info["pr_metrics"] = pr_metrics
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error calculating PR metrics: {e}")
                 repo_info["pr_metrics"] = None
 
@@ -1187,7 +1183,7 @@ class GithubTools(Toolkit):
                         }
                     )
                 repo_info["contributors"] = contributors
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting contributors: {e}")
                 repo_info["contributors"] = []
 
@@ -1254,8 +1250,8 @@ class GithubTools(Toolkit):
         self,
         repo_name: str,
         pr_number: int,
-        reviewers: List[str],
-        team_reviewers: Optional[List[str]] = None,
+        reviewers: list[str],
+        team_reviewers: list[str] | None = None,
     ) -> str:
         """Create a review request for a pull request.
 
@@ -1292,7 +1288,7 @@ class GithubTools(Toolkit):
         path: str,
         content: str,
         message: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Create a new file in a repository.
 
@@ -1333,7 +1329,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error creating file: {e}")
             return json.dumps({"error": str(e)})
 
-    def get_file_content(self, repo_name: str, path: str, ref: Optional[str] = None) -> str:
+    def get_file_content(self, repo_name: str, path: str, ref: str | None = None) -> str:
         """Get the content of a file in a repository.
 
         Args:
@@ -1363,7 +1359,7 @@ class GithubTools(Toolkit):
                 decoded_content = file_content.decoded_content.decode("utf-8")
             except UnicodeDecodeError:
                 decoded_content = "Binary file (content not displayed)"
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error decoding file content: {e}")
                 decoded_content = "Binary file (content not displayed)"
 
@@ -1396,7 +1392,7 @@ class GithubTools(Toolkit):
         content: str,
         message: str,
         sha: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Update an existing file in a repository.
 
@@ -1450,7 +1446,7 @@ class GithubTools(Toolkit):
         path: str,
         message: str,
         sha: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> str:
         """Delete a file from a repository.
 
@@ -1486,7 +1482,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error deleting file: {e}")
             return json.dumps({"error": str(e)})
 
-    def get_directory_content(self, repo_name: str, path: str, ref: Optional[str] = None) -> str:
+    def get_directory_content(self, repo_name: str, path: str, ref: str | None = None) -> str:
         """Get the contents of a directory in a repository.
 
         Args:
@@ -1551,7 +1547,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error getting branch contents: {e}")
             return json.dumps({"error": str(e)})
 
-    def create_branch(self, repo_name: str, branch_name: str, source_branch: Optional[str] = None) -> str:
+    def create_branch(self, repo_name: str, branch_name: str, source_branch: str | None = None) -> str:
         """Create a new branch in a repository.
 
         Args:
@@ -1625,9 +1621,9 @@ class GithubTools(Toolkit):
     def search_code(
         self,
         query: str,
-        language: Optional[str] = None,
-        repo: Optional[str] = None,
-        user: Optional[str] = None,
+        language: str | None = None,
+        repo: str | None = None,
+        user: str | None = None,
         path: Optional[str] = None,
         filename: Optional[str] = None,
     ) -> str:
@@ -1695,9 +1691,9 @@ class GithubTools(Toolkit):
     def search_issues_and_prs(
         self,
         query: str,
-        state: Optional[str] = None,
-        type_filter: Optional[str] = None,
-        repo: Optional[str] = None,
+        state: str | None = None,
+        type_filter: str | None = None,
+        repo: str | None = None,
         user: Optional[str] = None,
         label: Optional[str] = None,
         sort: str = "created",
@@ -1770,6 +1766,8 @@ class GithubTools(Toolkit):
 
                     if len(results) >= per_page:
                         break
+
+            # Return search results
             except IndexError:
                 # Page is out of range
                 pass

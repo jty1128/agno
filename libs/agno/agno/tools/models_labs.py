@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -120,7 +122,7 @@ class ModelsLabTools(Toolkit):
 
         return False
 
-    def generate_media(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def generate_media(self, agent: Agent | Team, prompt: str) -> str:
         """Generate media (video, image, or audio) given a prompt."""
         if not self.api_key:
             return "Please set the MODELS_LAB_API_KEY"
@@ -164,7 +166,7 @@ class ModelsLabTools(Toolkit):
             error_msg = f"Network error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
-        except Exception as e:
+        except (ValueError, KeyError, TypeError) as e:
             error_msg = f"Unexpected error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"

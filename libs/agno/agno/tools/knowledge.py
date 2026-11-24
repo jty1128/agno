@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from textwrap import dedent
-from typing import List, Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.document import Document

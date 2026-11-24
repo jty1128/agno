@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -23,7 +25,7 @@ class SSEClientParams:
     """Parameters for SSE client connection."""
 
     url: str
-    headers: Optional[Dict[str, Any]] = None
+    headers: Optional[dict[str, Any]] = None
     timeout: Optional[float] = None
     sse_read_timeout: Optional[float] = None
 
@@ -127,7 +129,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> MCPTools:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -216,7 +218,7 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
@@ -239,11 +241,11 @@ class MultiMCPTools(Toolkit):
 
     def __init__(
         self,
-        commands: Optional[List[str]] = None,
-        urls: Optional[List[str]] = None,
+        commands: Optional[list[str]] = None,
+        urls: Optional[list[str]] = None,
         *,
         env: Optional[dict[str, str]] = None,
-        server_params_list: Optional[List[Union[SSEClientParams, StdioServerParameters]]] = None,
+        server_params_list: Optional[list[Union[SSEClientParams, StdioServerParameters]]] = None,
         timeout_seconds: int = 5,
         client=None,
         include_tools: Optional[list[str]] = None,
@@ -273,10 +275,10 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
+        self.server_params_list: list[Union[SSEClientParams, StdioServerParameters]] = server_params_list or []
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: Optional[list[str]] = commands
+        self.urls: Optional[list[str]] = urls
 
         # Merge provided env with system env
         if env is not None:
@@ -306,7 +308,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> MultiMCPTools:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -333,9 +335,9 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
     ):
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
@@ -377,7 +379,7 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")

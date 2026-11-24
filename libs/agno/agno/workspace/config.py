@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,11 +49,11 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise TypeError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
@@ -77,7 +79,7 @@ class WorkspaceConfig(BaseModel):
                 if isinstance(obj, WorkspaceSettings):
                     if self.validate_workspace_settings(obj):
                         self._workspace_settings = obj
-                        if self.ws_schema is not None and self._workspace_settings is not None:
+                        if self.ws_schema is not None:
                             self._workspace_settings.ws_schema = self.ws_schema
                             logger.debug("Added WorkspaceSchema to WorkspaceSettings")
         except Exception:
@@ -168,7 +170,7 @@ class WorkspaceConfig(BaseModel):
                             logger.debug(f"Found: {obj.__class__.__module__}: {obj_name}")
                             if self.validate_workspace_settings(obj):
                                 self._workspace_settings = obj
-                                if self.ws_schema is not None and self._workspace_settings is not None:
+                                if self.ws_schema is not None:
                                     self._workspace_settings.ws_schema = self.ws_schema
                                     logger.debug("Added WorkspaceSchema to WorkspaceSettings")
                         elif isinstance(obj, InfraResources):
@@ -305,13 +307,12 @@ class WorkspaceConfig(BaseModel):
                 ws_name=temporary_ws_config.ws_root_path.stem,
             )
         # Update the resources with the workspace settings
-        if temporary_ws_config._workspace_settings is not None:
-            for resource_name, resource in filtered_infra_objects_by_env.items():
-                logger.debug(f"Setting workspace settings for {resource.__class__.__name__}")
-                resource.set_workspace_settings(temporary_ws_config._workspace_settings)
+        for resource_name, resource in filtered_infra_objects_by_env.items():
+            logger.debug(f"Setting workspace settings for {resource.__class__.__name__}")
+            resource.set_workspace_settings(temporary_ws_config._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
+        infra_resources_list: list[InfraResources] = []
         for resource_name, resource in filtered_infra_objects_by_env.items():
             # If the resource is an InfraResources object, add it to the list
             if isinstance(resource, InfraResources):

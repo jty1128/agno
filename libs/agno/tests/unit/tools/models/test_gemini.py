@@ -75,12 +75,11 @@ def test_gemini_tools_init_with_env_var():
     """Test initialization with API key from environment variable."""
     env_api_key = "test_api_key_env"
 
-    with patch("agno.tools.models.gemini.getenv", return_value=env_api_key) as mock_getenv:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_instance = MagicMock()
-            mock_client_cls.return_value = mock_client_instance
+    with patch("agno.tools.models.gemini.getenv", return_value=env_api_key) as mock_getenv, patch("agno.tools.models.gemini.Client") as mock_client_cls:
+        mock_client_instance = MagicMock()
+        mock_client_cls.return_value = mock_client_instance
 
-            gemini_tools = GeminiTools()
+        gemini_tools = GeminiTools()
 
             assert gemini_tools.api_key == env_api_key
             mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
@@ -90,23 +89,20 @@ def test_gemini_tools_init_with_env_var():
 
 def test_gemini_tools_init_no_api_key():
     """Test initialization raises ValueError when no API key is found."""
-    with patch("agno.tools.models.gemini.getenv", return_value=None) as mock_getenv:
-        with pytest.raises(ValueError, match="GOOGLE_API_KEY not set"):
-            GeminiTools()
+    with patch("agno.tools.models.gemini.getenv", return_value=None) as mock_getenv, pytest.raises(ValueError, match="GOOGLE_API_KEY not set"):
+        GeminiTools()
 
-        mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
+    mock_getenv.assert_called_once_with("GOOGLE_API_KEY")
 
 
 def test_gemini_tools_init_client_creation_fails():
     """Test initialization raises ValueError if Client creation fails."""
-    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_cls.side_effect = Exception("Client creation failed")
+    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _, patch("agno.tools.models.gemini.Client") as mock_client_cls, pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
+        mock_client_cls.side_effect = Exception("Client creation failed")
 
-            with pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
-                GeminiTools()
+        GeminiTools()
 
-            mock_client_cls.assert_called_once_with(api_key="fake_key")
+    mock_client_cls.assert_called_once_with(api_key="fake_key")
 
 
 # Test generate_image method
