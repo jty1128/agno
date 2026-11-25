@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from base64 import b64encode
+from collections.abc import Iterator
 from io import BytesIO
 from os import getenv, path
 from pathlib import Path
-from typing import Iterator, Literal, Optional, Union
+from typing import Literal, Optional, Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -83,7 +86,7 @@ class ElevenLabsTools(Toolkit):
 
             return str(response)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to fetch voices: {e}")
             return f"Error: {e}"
 
@@ -149,7 +152,7 @@ class ElevenLabsTools(Toolkit):
 
             return "Audio generated successfully"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate audio: {e}")
             return f"Error: {e}"
 
@@ -183,6 +186,6 @@ class ElevenLabsTools(Toolkit):
 
             return "Audio generated successfully"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate audio: {e}")
             return f"Error: {e}"

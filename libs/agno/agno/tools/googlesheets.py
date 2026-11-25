@@ -44,6 +44,8 @@ Note: The first time you run the application, it will open a browser window for 
 A token.json file will be created to store the authentication credentials for future use.
 """
 
+from __future__ import annotations
+
 import json
 from functools import wraps
 from os import getenv
@@ -79,10 +81,10 @@ def authenticate(func):
 
 class GoogleSheetsTools(Toolkit):
     # Default scopes for Google Sheets API access
-    DEFAULT_SCOPES = {
-        "read": "https://www.googleapis.com/auth/spreadsheets.readonly",
-        "write": "https://www.googleapis.com/auth/spreadsheets",
-    }
+    DEFAULT_SCOPES = (
+        ("read", "https://www.googleapis.com/auth/spreadsheets.readonly"),
+        ("write", "https://www.googleapis.com/auth/spreadsheets"),
+    )
 
     service: Optional[Resource]
 
@@ -126,23 +128,23 @@ class GoogleSheetsTools(Toolkit):
         if scopes is None:
             self.scopes = []
             if read:
-                self.scopes.append(self.DEFAULT_SCOPES["read"])
+                self.scopes.append(self.DEFAULT_SCOPES["read"][1])
             if create or update or duplicate:
-                self.scopes.append(self.DEFAULT_SCOPES["write"])
+                self.scopes.append(self.DEFAULT_SCOPES["write"][1])
             # Remove duplicates while preserving order
             self.scopes = list(dict.fromkeys(self.scopes))
         else:
             self.scopes = scopes
             # Validate that required scopes are present for requested operations
-            if (create or update or duplicate) and self.DEFAULT_SCOPES["write"] not in self.scopes:
-                raise ValueError(f"The scope {self.DEFAULT_SCOPES['write']} is required for write operations")
+            if (create or update or duplicate) and self.DEFAULT_SCOPES["write"][1] not in self.scopes:
+                raise ValueError(f"The scope {self.DEFAULT_SCOPES['write'][1]} is required for write operations")
             if (
                 read
-                and self.DEFAULT_SCOPES["read"] not in self.scopes
-                and self.DEFAULT_SCOPES["write"] not in self.scopes
+                and self.DEFAULT_SCOPES["read"][1] not in self.scopes
+                and self.DEFAULT_SCOPES["write"][1] not in self.scopes
             ):
                 raise ValueError(
-                    f"Either {self.DEFAULT_SCOPES['read']} or {self.DEFAULT_SCOPES['write']} is required for read operations"
+                    f"Either {self.DEFAULT_SCOPES['read'][1]} or {self.DEFAULT_SCOPES['write'][1]} is required for read operations"
                 )
 
         if read:

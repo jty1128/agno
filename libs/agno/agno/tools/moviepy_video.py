@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Dict, List, Optional
 
 from agno.tools import Toolkit
@@ -233,9 +235,9 @@ class MoviePyVideoTools(Toolkit):
             video.audio.write_audiofile(output_path)
             log_info(f"Audio extracted to {output_path}")
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to extract audio: {str(e)}")
-            return f"Failed to extract audio: {str(e)}"
+        except (OSError, ValueError) as e:
+            logger.error(f"Failed to extract audio: {e!s}")
+            return f"Failed to extract audio: {e!s}"
 
     def create_srt(self, transcription: str, output_path: str) -> str:
         """Save transcription text to SRT formatted file
@@ -252,9 +254,9 @@ class MoviePyVideoTools(Toolkit):
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(transcription)
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to create SRT file: {str(e)}")
-            return f"Failed to create SRT file: {str(e)}"
+        except OSError as e:
+            logger.error(f"Failed to create SRT file: {e!s}")
+            return f"Failed to create SRT file: {e!s}"
 
     def embed_captions(
         self,
@@ -342,6 +344,6 @@ class MoviePyVideoTools(Toolkit):
 
             return output_path
 
-        except Exception as e:
-            logger.error(f"Failed to embed captions: {str(e)}")
-            return f"Failed to embed captions: {str(e)}"
+        except (OSError, ValueError) as e:
+            logger.error(f"Failed to embed captions: {e!s}")
+            return f"Failed to embed captions: {e!s}"

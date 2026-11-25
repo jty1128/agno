@@ -64,7 +64,7 @@ class SpiderTools(Toolkit):
             options = {"fetch_page_content": False, "num": max_results, **self.optional_params}
             results = app.search(query, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching results from spider: {e}")
             return f"Error fetching results from spider: {e}"
 
@@ -75,7 +75,7 @@ class SpiderTools(Toolkit):
             options = {"return_format": "markdown", **self.optional_params}
             results = app.scrape_url(url, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching content from spider: {e}")
             return f"Error fetching content from spider: {e}"
 
@@ -88,6 +88,6 @@ class SpiderTools(Toolkit):
             options = {"return_format": "markdown", "limit": limit, **self.optional_params}
             results = app.crawl_url(url, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching content from spider: {e}")
             return f"Error fetching content from spider: {e}"

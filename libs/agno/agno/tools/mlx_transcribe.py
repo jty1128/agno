@@ -15,9 +15,11 @@ optimized for Apple Silicon processors. It supports various audio formats and
 provides high-quality transcription capabilities.
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -87,7 +89,7 @@ class MLXTranscribeTools(Toolkit):
                 return "No audio file path provided"
 
             log_info(f"Transcribing audio file {audio_file_path}")
-            transcription_kwargs: Dict[str, Any] = {
+            transcription_kwargs: dict[str, Any] = {
                 "path_or_hf_repo": self.path_or_hf_repo,
             }
             if self.verbose is not None:

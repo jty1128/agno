@@ -1,11 +1,13 @@
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from typing import Any, Optional
 
 from agno.tools.function import Function, FunctionCall
 from agno.utils.functions import get_function_call
 
 
 def get_function_call_for_tool_call(
-    tool_call: Dict[str, Any], functions: Optional[Dict[str, Function]] = None
+    tool_call: dict[str, Any], functions: Optional[dict[str, Function]] = None
 ) -> Optional[FunctionCall]:
     if tool_call.get("type") == "function":
         _tool_call_id = tool_call.get("id")

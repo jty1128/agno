@@ -1,5 +1,3 @@
-from typing import List
-
 from agno.agent import Agent, RunEvent, RunResponse
 from agno.models.openai import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools
@@ -16,9 +14,7 @@ def test_streaming():
 
     response = agent.run("Hi, my name is John", stream=True)
 
-    chunks: List[RunResponse] = []
-    for chunk in response:
-        chunks.append(chunk)
+    chunks: list[RunResponse] = [chunk for chunk in response]
 
     assert len(chunks) > 0
     assert chunks[0].content is not None
@@ -37,9 +33,7 @@ async def test_async_streaming():
 
     response = await agent.arun("Hi, my name is John", stream=True)
 
-    chunks: List[RunResponse] = []
-    async for chunk in response:
-        chunks.append(chunk)
+    chunks: list[RunResponse] = [chunk async for chunk in response]
 
     assert len(chunks) > 0
     assert chunks[0].content is not None
@@ -59,9 +53,8 @@ def test_tool_streaming():
 
     response = agent.run("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     tool_calls: bool = False
-
+    chunks: list[RunResponse] = []
     for chunk in response:
         chunks.append(chunk)
         if chunk.tools:
@@ -83,9 +76,8 @@ async def test_async_tool_streaming():
 
     response = await agent.arun("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     tool_calls: bool = False
-
+    chunks: list[RunResponse] = []
     async for chunk in response:
         chunks.append(chunk)
         if chunk.tools:
@@ -107,11 +99,10 @@ def test_streaming_with_intermediate_steps():
 
     response = agent.run("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     run_started: bool = False
     run_response: bool = False
     run_completed: bool = False
-
+    chunks: list[RunResponse] = []
     for chunk in response:
         chunks.append(chunk)
         if chunk.event == RunEvent.run_started.value:
@@ -139,11 +130,10 @@ async def test_async_streaming_with_intermediate_steps():
 
     response = await agent.arun("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     run_started: bool = False
     run_completed: bool = False
     run_response: bool = False
-
+    chunks: list[RunResponse] = []
     async for chunk in response:
         chunks.append(chunk)
         if chunk.event == RunEvent.run_started.value:
@@ -172,13 +162,12 @@ def test_tool_call_streaming_with_intermediate_steps():
 
     response = agent.run("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     run_started: bool = False
     run_completed: bool = False
     run_response: bool = False
     tool_call_started: bool = False
     tool_call_completed: bool = False
-
+    chunks: list[RunResponse] = []
     for chunk in response:
         chunks.append(chunk)
         if chunk.event == RunEvent.run_started.value:
@@ -213,13 +202,12 @@ async def test_async_tool_call_streaming_with_intermediate_steps():
 
     response = await agent.arun("Tell me the latest news in France", stream=True)
 
-    chunks: List[RunResponse] = []
     run_started: bool = False
     run_completed: bool = False
     run_response: bool = False
     tool_call_started: bool = False
     tool_call_completed: bool = False
-
+    chunks: list[RunResponse] = []
     async for chunk in response:
         chunks.append(chunk)
         if chunk.event == RunEvent.run_started.value:

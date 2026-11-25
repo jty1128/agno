@@ -1,6 +1,6 @@
 import json
 from os import getenv
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.utils.log import logger
@@ -23,6 +23,7 @@ class TavilyTools(Toolkit):
         use_search_context: bool = False,
         **kwargs,
     ):
+
         super().__init__(name="tavily_tools", **kwargs)
 
         self.api_key = api_key or getenv("TAVILY_API_KEY")
@@ -57,7 +58,7 @@ class TavilyTools(Toolkit):
             query=query, search_depth=self.search_depth, include_answer=self.include_answer, max_results=max_results
         )
 
-        clean_response: Dict[str, Any] = {"query": query}
+        clean_response: dict[str, Any] = {"query": query}
         if "answer" in response:
             clean_response["answer"] = response["answer"]
 

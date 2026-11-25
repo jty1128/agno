@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -55,7 +55,7 @@ class EmailTools(Toolkit):
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                 smtp.login(self.sender_email, self.sender_passkey)
                 smtp.send_message(msg)
-        except Exception as e:
+        except smtplib.SMTPException as e:
             logger.error(f"Error sending email: {e}")
             return f"error: {e}"
         return "email sent successfully"
