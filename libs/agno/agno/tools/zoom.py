@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import requests
 
@@ -39,7 +41,7 @@ class ZoomTools(Toolkit):
                 "ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, and ZOOM_CLIENT_SECRET must be set either through parameters or environment variables."
             )
 
-        tools: List[Any] = []
+        tools: list[Any] = []
 
         tools.append(self.schedule_meeting)
         tools.append(self.get_upcoming_meetings)
@@ -58,7 +60,7 @@ class ZoomTools(Toolkit):
             str: The current access token or empty string if token generation fails.
         """
         # Check if we have a valid token
-        if self.__access_token and self.__token_expiry and datetime.now() < self.__token_expiry:
+        if self.__access_token and self.__token_expiry and datetime.now(timezone.utc) < self.__token_expiry:
             return self.__access_token
 
         # Generate new token
@@ -82,12 +84,12 @@ class ZoomTools(Toolkit):
             token_data = response.json()
             self.__access_token = token_data["access_token"]
             # Set expiry time slightly before actual expiry to ensure token validity
-            self.__token_expiry = datetime.now() + timedelta(seconds=token_data["expires_in"] - 60)  # type: ignore
+            self.__token_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"] - 60)  # type: ignore
 
             log_debug("Successfully generated new Zoom access token")
             return self.__access_token  # type: ignore
 
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Failed to generate Zoom access token: {e}")
             self.__access_token = None
             self.__token_expiry = None
@@ -147,7 +149,7 @@ class ZoomTools(Toolkit):
             }
             log_info(f"Meeting scheduled successfully. ID: {meeting_info['id']}")
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error scheduling meeting: {e}")
             return json.dumps({"error": str(e)})
 
@@ -180,7 +182,7 @@ class ZoomTools(Toolkit):
             result = {"message": "Upcoming meetings retrieved successfully", "meetings": meetings.get("meetings", [])}
             log_info(f"Retrieved {len(result['meetings'])} upcoming meetings")
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error fetching upcoming meetings: {e}")
             return json.dumps({"error": str(e)})
 
@@ -226,7 +228,7 @@ class ZoomTools(Toolkit):
             }
             log_info(f"Retrieved {len(result['meetings'])} meetings")
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error fetching meetings: {e}")
             return json.dumps({"error": str(e)})
 
@@ -258,11 +260,10 @@ class ZoomTools(Toolkit):
         params = {}
         if include_download_token:
             params["include_fields"] = "download_access_token"
-            if token_ttl is not None:
-                if 0 <= token_ttl <= 604800:
-                    params["ttl"] = str(token_ttl)  # Convert to string if necessary
-                else:
-                    logger.warning("Invalid TTL value. Must be between 0 and 604800 seconds.")
+            if token_ttl is not None and 0 <= token_ttl <= 604800:
+                params["ttl"] = str(token_ttl)  # Convert to string if necessary
+            elif token_ttl is not None:
+                logger.warning("Invalid TTL value. Must be between 0 and 604800 seconds.")
 
         try:
             response = requests.get(url, headers=headers, params=params)
@@ -284,7 +285,7 @@ class ZoomTools(Toolkit):
 
             log_info(f"Retrieved {result['recording_count']} recording files")
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error fetching meeting recordings: {e}")
             return json.dumps({"error": str(e)})
 
@@ -323,7 +324,7 @@ class ZoomTools(Toolkit):
                 result = response.json()
 
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error deleting meeting: {e}")
             return json.dumps({"error": str(e)})
 
@@ -367,7 +368,7 @@ class ZoomTools(Toolkit):
 
             log_info(f"Retrieved details for meeting ID: {meeting_id}")
             return json.dumps(result, indent=2)
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Error fetching meeting details: {e}")
             return json.dumps({"error": str(e)})
 

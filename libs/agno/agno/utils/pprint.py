@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import AsyncIterable, Iterable, Union
+from collections.abc import AsyncIterable, Iterable
 
 from pydantic import BaseModel
 

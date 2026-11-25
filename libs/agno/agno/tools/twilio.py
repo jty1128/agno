@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -15,12 +17,12 @@ except ImportError:
 class TwilioTools(Toolkit):
     def __init__(
         self,
-        account_sid: Optional[str] = None,
-        auth_token: Optional[str] = None,
-        api_key: Optional[str] = None,
-        api_secret: Optional[str] = None,
-        region: Optional[str] = None,
-        edge: Optional[str] = None,
+        account_sid: str | None = None,
+        auth_token: str | None = None,
+        api_key: str | None = None,
+        api_secret: str | None = None,
+        region: str | None = None,
+        edge: str | None = None,
         debug: bool = False,
         **kwargs,
     ):
@@ -83,7 +85,7 @@ class TwilioTools(Toolkit):
             logging.basicConfig()
             self.client.http_client.logger.setLevel(logging.INFO)
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.send_sms)
         tools.append(self.get_call_details)
         tools.append(self.list_messages)
@@ -116,13 +118,13 @@ class TwilioTools(Toolkit):
                 return "Error: Message body cannot be empty"
 
             message = self.client.messages.create(to=to, from_=from_, body=body)
-            log_info(f"SMS sent. SID: {message.sid}, to: {to}")
-            return f"Message sent successfully. SID: {message.sid}"
+            log_info(f"SMS sent. SID: {message.sid!s}, to: {to!s}")
+            return f"Message sent successfully. SID: {message.sid!s}"
         except TwilioRestException as e:
-            logger.error(f"Failed to send SMS to {to}: {e}")
-            return f"Error sending message: {str(e)}"
+            logger.error(f"Failed to send SMS to {to!s}: {e!s}")
+            return f"Error sending message: {e!s}"
 
-    def get_call_details(self, call_sid: str) -> Dict[str, Any]:
+    def get_call_details(self, call_sid: str) -> dict[str, Any]:
         """
         Get details about a specific call.
 
@@ -134,7 +136,7 @@ class TwilioTools(Toolkit):
         """
         try:
             call = self.client.calls(call_sid).fetch()
-            log_info(f"Fetched details for call SID: {call_sid}")
+            log_info(f"Fetched details for call SID: {call_sid!s}")
             return {
                 "to": call.to,
                 "from": call.from_,
@@ -146,10 +148,10 @@ class TwilioTools(Toolkit):
                 "end_time": str(call.end_time),
             }
         except TwilioRestException as e:
-            logger.error(f"Failed to fetch call details for SID {call_sid}: {e}")
+            logger.error(f"Failed to fetch call details for SID {call_sid!s}: {e!s}")
             return {"error": str(e)}
 
-    def list_messages(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def list_messages(self, limit: int = 20) -> list[dict[str, Any]]:
         """
         List recent SMS messages.
 
@@ -172,8 +174,8 @@ class TwilioTools(Toolkit):
                         "date_sent": str(message.date_sent),
                     }
                 )
-            log_info(f"Retrieved {len(messages)} messages")
+            log_info(f"Retrieved {len(messages)!s} messages")
             return messages
         except TwilioRestException as e:
-            logger.error(f"Failed to list messages: {e}")
+            logger.error(f"Failed to list messages: {e!s}")
             return [{"error": str(e)}]

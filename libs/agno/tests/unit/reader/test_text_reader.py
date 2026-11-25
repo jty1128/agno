@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -10,7 +9,6 @@ from agno.document.base import Document
 from agno.document.reader.text_reader import TextReader
 
 
-@pytest.fixture
 def test_read_text_file_path(tmp_path):
     # Create a temporary text file
     text_path = tmp_path / "test.txt"
@@ -116,8 +114,7 @@ def test_invalid_encoding(tmp_path):
     # Test handling of invalid encoding
     text_path = tmp_path / "invalid.txt"
     try:
-        with open(text_path, "wb") as f:
-            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+        text_path.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
 
         reader = TextReader()
         documents = reader.read(text_path)
@@ -133,8 +130,7 @@ def test_cp950_encoding(tmp_path):
     test_data = "中文測試"  # Chinese test text
     text_path = tmp_path / "cp950.txt"
     try:
-        with open(text_path, "w", encoding="cp950") as f:
-            f.write(test_data)
+        text_path.write_text(test_data, encoding="cp950")
 
         reader = TextReader()
         documents = reader.read(text_path)
@@ -292,8 +288,7 @@ async def test_async_without_aiofiles(tmp_path):
 async def test_async_invalid_encoding(tmp_path):
     text_path = tmp_path / "invalid.txt"
     try:
-        with open(text_path, "wb") as f:
-            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+        text_path.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
 
         reader = TextReader()
         documents = await reader.async_read(text_path)
@@ -319,7 +314,7 @@ async def test_async_parallel_chunking():
     ]
 
     # Create a mock async chunk processor
-    async def mock_async_chunk_processor(document: Document) -> List[Document]:
+    async def mock_async_chunk_processor(document: Document) -> list[Document]:
         await asyncio.sleep(0.1)  # Simulate async work
         return reader.chunk_document(document)
 

@@ -97,11 +97,11 @@ def test_generate_image_success(mock_post, azure_openai_tools, mock_agent):
 
     # Verify the API call
     mock_post.assert_called_once()
-    args, kwargs = mock_post.call_args
+    _, kwargs = mock_post.call_args
     # Check URL with more flexible assertion to accommodate potential double slashes
-    assert "test-endpoint.openai.azure.com" in args[0]
-    assert "openai/deployments/test-deployment/images/generations" in args[0]
-    assert "api-version=" in args[0]
+    assert "test-endpoint.openai.azure.com" in kwargs["url"]
+    assert "openai/deployments/test-deployment/images/generations" in kwargs["url"]
+    assert "api-version=" in kwargs["url"]
     assert kwargs["headers"]["api-key"] == "test_api_key"
 
     # Check the enforced parameters in the JSON payload
@@ -134,11 +134,11 @@ def test_generate_image_with_custom_parameters(mock_post, azure_openai_tools, mo
 
     # Verify the API call uses the correct deployment
     mock_post.assert_called_once()
-    args, kwargs = mock_post.call_args
+    _, kwargs = mock_post.call_args
     # Check URL with more flexible assertion to accommodate potential double slashes
-    assert "test-endpoint.openai.azure.com" in args[0]
-    assert "openai/deployments/test-deployment/images/generations" in args[0]
-    assert "api-version=" in args[0]
+    assert "test-endpoint.openai.azure.com" in kwargs["url"]
+    assert "openai/deployments/test-deployment/images/generations" in kwargs["url"]
+    assert "api-version=" in kwargs["url"]
 
     # Verify all parameters are correctly passed
     assert kwargs["json"]["prompt"] == "A test prompt"
