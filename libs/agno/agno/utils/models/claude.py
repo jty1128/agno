@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from agno.media import File, Image
 from agno.models.message import Message
@@ -21,7 +23,7 @@ ROLE_MAP = {
 }
 
 
-def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
+def _format_image_for_message(image: Image) -> dict[str, Any] | None:
     """
     Add an image to a message by converting it to base64 encoded format.
     """
@@ -102,12 +104,12 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
             },
         }
 
-    except Exception as e:
+    except (OSError, ValueError, TypeError) as e:
         log_error(f"Error processing image: {e}")
         return None
 
 
-def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
+def _format_file_for_message(file: File) -> dict[str, Any] | None:
     """
     Add a document url or base64 encoded content to a message.
     """
@@ -117,15 +119,13 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
         "text/plain": "text",
     }
     # Case 0: File is an Anthropic uploaded file
-    print('file.external:', file.external)
-    if file.external is not None and hasattr(file.external, 'id'):
-        print('file.external.id:', file.external.id)
+    if file.external is not None and hasattr(file.external, "id"):
         return {
-            "type": "document", 
+            "type": "document",
             "source": {
                 "type": "file",
                 "file_id": file.external.id,
-            }
+            },
         }
 
     # Case 1: Document is a URL
@@ -140,7 +140,6 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
         }
     # Case 2: Document is a local file path
     elif file.filepath is not None:
-        print('--------')
         import base64
         from pathlib import Path
 
@@ -183,18 +182,18 @@ def _format_file_for_message(file: File) -> Optional[Dict[str, Any]]:
     return None
 
 
-def format_messages(messages: List[Message]) -> Tuple[List[Dict[str, str]], str]:
+def format_messages(messages: list[Message]) -> tuple[list[dict[str, str]], str]:
     """
     Process the list of messages and separate them into API messages and system messages.
 
     Args:
-        messages (List[Message]): The list of messages to process.
+        messages (list[Message]): The list of messages to process.
 
     Returns:
-        Tuple[List[Dict[str, str]], str]: A tuple containing the list of API messages and the concatenated system messages.
+        tuple[list[dict[str, str]], str]: A tuple containing the list of API messages and the concatenated system messages.
     """
-    chat_messages: List[Dict[str, str]] = []
-    system_messages: List[str] = []
+    chat_messages: list[dict[str, str]] = []
+    system_messages: list[str] = []
 
     for message in messages:
         content = message.content or ""

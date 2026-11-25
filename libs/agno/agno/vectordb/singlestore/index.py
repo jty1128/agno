@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -8,7 +8,7 @@ class Ivfflat(BaseModel):
     nlist: int = 128  # Number of inverted lists
     nprobe: int = 8  # Number of probes at query time
     metric_type: str = "DOT_PRODUCT"  # Can be "DOT_PRODUCT" or "DOT_PRODUCT"
-    configuration: Dict[str, Any] = {}
+    configuration: dict[str, Any] = {}
 
 
 class IvfPQ(BaseModel):
@@ -18,7 +18,7 @@ class IvfPQ(BaseModel):
     nbits: int = 8  # Number of bits per quantization index
     nprobe: int = 8  # Number of probes at query time
     metric_type: str = "DOT_PRODUCT"  # Can be "DOT_PRODUCT" or "DOT_PRODUCT"
-    configuration: Dict[str, Any] = {}
+    configuration: dict[str, Any] = {}
 
 
 class HNSWFlat(BaseModel):
@@ -27,7 +27,7 @@ class HNSWFlat(BaseModel):
     ef_construction: int = 200  # Expansion factor at construction time
     ef_search: int = 200  # Expansion factor at search time
     metric_type: str = "DOT_PRODUCT"  # Can be "DOT_PRODUCT" or "DOT_PRODUCT"
-    configuration: Dict[str, Any] = {}
+    configuration: dict[str, Any] = {}
 
 
 class HNSWPQ(BaseModel):
@@ -38,4 +38,4 @@ class HNSWPQ(BaseModel):
     nbits: int = 8  # Number of bits per quantization index
     ef_search: int = 200  # Expansion factor at search time
     metric_type: str = "DOT_PRODUCT"  # Can be "DOT_PRODUCT" or "DOT_PRODUCT"
-    configuration: Dict[str, Any] = {}
+    configuration: dict[str, Any] = {}

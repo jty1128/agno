@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import json
-from typing import Union
 
 from pydantic import BaseModel
 
 from agno.utils.log import log_warning
 
 
-def get_json_output_prompt(response_model: Union[str, list, BaseModel]) -> str:
+def get_json_output_prompt(response_model: str | list | BaseModel) -> str:
     """Return the JSON output prompt for the Agent.
 
     This is added to the system prompt when the response_model is set and structured_outputs is False.
@@ -71,13 +72,13 @@ def get_json_output_prompt(response_model: Union[str, list, BaseModel]) -> str:
                                         if prop_name != "title"
                                     }
                                     formatted_def_properties[field_name] = formatted_field_properties
-                            if len(formatted_def_properties) > 0:
+                            if formatted_def_properties:
                                 response_model_properties["$defs"][def_name] = formatted_def_properties
 
-                if len(response_model_properties) > 0:
+                if response_model_properties:
                     json_output_prompt += "\n<json_fields>"
                     json_output_prompt += (
-                        f"\n{json.dumps([key for key in response_model_properties.keys() if key != '$defs'])}"
+                        f"\n{json.dumps([key for key in response_model_properties if key != '$defs'])}"
                     )
                     json_output_prompt += "\n</json_fields>"
                     json_output_prompt += "\n\nHere are the properties for each field:"

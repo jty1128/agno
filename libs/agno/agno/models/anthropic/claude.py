@@ -3,7 +3,6 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from os import getenv
 from typing import Any, Dict, List, Optional, Type, Union
-from pathlib import Path
 
 from pydantic import BaseModel
 
@@ -13,7 +12,6 @@ from agno.models.message import Citations, DocumentCitation, Message, UrlCitatio
 from agno.models.response import ModelResponse
 from agno.utils.log import log_error, log_warning
 from agno.utils.models.claude import format_messages
-from agno.media import File
 
 try:
     from anthropic import Anthropic as AnthropicClient
@@ -46,25 +44,25 @@ class Claude(Model):
     provider: str = "Anthropic"
 
     # Request parameters
-    max_tokens: Optional[int] = 4096
-    thinking: Optional[Dict[str, Any]] = None
-    temperature: Optional[float] = None
-    stop_sequences: Optional[List[str]] = None
-    top_p: Optional[float] = None
-    top_k: Optional[int] = None
-    request_params: Optional[Dict[str, Any]] = None
+    max_tokens: int | None = 4096
+    thinking: dict[str, Any] | None = None
+    temperature: float | None = None
+    stop_sequences: list[str] | None = None
+    top_p: float | None = None
+    top_k: int | None = None
+    request_params: dict[str, Any] | None = None
 
     # Client parameters
-    api_key: Optional[str] = None
-    client_params: Optional[Dict[str, Any]] = None
-    default_headers: Optional[Dict[str, Any]] = None
+    api_key: str | None = None
+    client_params: dict[str, Any] | None = None
+    default_headers: dict[str, Any] | None = None
 
     # Anthropic clients
-    client: Optional[AnthropicClient] = None
-    async_client: Optional[AsyncAnthropicClient] = None
+    client: AnthropicClient | None = None
+    async_client: AsyncAnthropicClient | None = None
 
-    def _get_client_params(self) -> Dict[str, Any]:
-        client_params: Dict[str, Any] = {}
+    def _get_client_params(self) -> dict[str, Any]:
+        client_params: dict[str, Any] = {}
 
         self.api_key = self.api_key or getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
@@ -102,11 +100,11 @@ class Claude(Model):
         return self.async_client
 
     @property
-    def request_kwargs(self) -> Dict[str, Any]:
+    def request_kwargs(self) -> dict[str, Any]:
         """
         Generate keyword arguments for API requests.
         """
-        _request_params: Dict[str, Any] = {}
+        _request_params: dict[str, Any] = {}
         if self.max_tokens:
             _request_params["max_tokens"] = self.max_tokens
         if self.thinking:
@@ -123,9 +121,7 @@ class Claude(Model):
             _request_params.update(self.request_params)
         return _request_params
 
-    def _prepare_request_kwargs(
-        self, system_message: str, tools: Optional[List[Dict[str, Any]]] = None
-    ) -> Dict[str, Any]:
+    def _prepare_request_kwargs(self, system_message: str, tools: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         """
         Prepare the request keyword arguments for the API call.
 
@@ -133,7 +129,7 @@ class Claude(Model):
             system_message (str): The concatenated system messages.
 
         Returns:
-            Dict[str, Any]: The request keyword arguments.
+            dict[str, Any]: The request keyword arguments.
         """
         request_kwargs = self.request_kwargs.copy()
         request_kwargs["system"] = system_message
@@ -142,32 +138,32 @@ class Claude(Model):
             request_kwargs["tools"] = self._format_tools_for_model(tools)
         return request_kwargs
 
-    def _format_tools_for_model(self, tools: Optional[List[Dict[str, Any]]] = None) -> Optional[List[Dict[str, Any]]]:
+    def _format_tools_for_model(self, tools: list[dict[str, Any]] | None = None) -> list[dict[str, Any]] | None:
         """
         Transforms function definitions into a format accepted by the Anthropic API.
         """
         if not tools:
             return None
 
-        parsed_tools: List[Dict[str, Any]] = []
+        parsed_tools: list[dict[str, Any]] = []
         for tool_def in tools:
             if tool_def.get("type", "") != "function":
                 parsed_tools.append(tool_def)
                 continue
 
             func_def = tool_def.get("function", {})
-            parameters: Dict[str, Any] = func_def.get("parameters", {})
-            properties: Dict[str, Any] = parameters.get("properties", {})
-            required_params: List[str] = []
+            parameters: dict[str, Any] = func_def.get("parameters", {})
+            properties: dict[str, Any] = parameters.get("properties", {})
+            required_params: list[str] = []
 
             for param_name, param_info in properties.items():
                 param_type = param_info.get("type", "")
-                param_type_list: List[str] = [param_type] if isinstance(param_type, str) else param_type or []
+                param_type_list: list[str] = [param_type] if isinstance(param_type, str) else param_type or []
 
                 if "null" not in param_type_list:
                     required_params.append(param_name)
 
-            input_properties: Dict[str, Dict[str, Union[str, List[str]]]] = {}
+            input_properties: dict[str, dict[str, str | list[str]]] = {}
             for param_name, param_info in properties.items():
                 input_properties[param_name] = {
                     "description": param_info.get("description", ""),
@@ -201,7 +197,7 @@ class Claude(Model):
         """
         try:
             chat_messages, system_message = format_messages(messages)
-            print('--> chat_messages', chat_messages)
+            print("--> chat_messages", chat_messages)
             request_kwargs = self._prepare_request_kwargs(system_message, tools)
 
             return self.get_client().messages.create(
@@ -210,18 +206,18 @@ class Claude(Model):
                 **request_kwargs,
             )
         except APIConnectionError as e:
-            log_error(f"Connection error while calling Claude API: {str(e)}")
+            log_error(f"Connection error while calling Claude API: {e!s}")
             raise ModelProviderError(message=e.message, model_name=self.name, model_id=self.id) from e
         except RateLimitError as e:
-            log_warning(f"Rate limit exceeded: {str(e)}")
+            log_warning(f"Rate limit exceeded: {e!s}")
             raise ModelRateLimitError(message=e.message, model_name=self.name, model_id=self.id) from e
         except APIStatusError as e:
-            log_error(f"Claude API error (status {e.status_code}): {str(e)}")
+            log_error(f"Claude API error (status {e.status_code}): {e!s}")
             raise ModelProviderError(
                 message=e.message, status_code=e.status_code, model_name=self.name, model_id=self.id
             ) from e
         except Exception as e:
-            log_error(f"Unexpected error calling Claude API: {str(e)}")
+            log_error(f"Unexpected error calling Claude API: {e!s}")
             raise ModelProviderError(message=str(e), model_name=self.name, model_id=self.id) from e
 
     def invoke_stream(
@@ -259,18 +255,18 @@ class Claude(Model):
                 .__enter__()
             )
         except APIConnectionError as e:
-            log_error(f"Connection error while calling Claude API: {str(e)}")
+            log_error(f"Connection error while calling Claude API: {e!s}")
             raise ModelProviderError(message=e.message, model_name=self.name, model_id=self.id) from e
         except RateLimitError as e:
-            log_warning(f"Rate limit exceeded: {str(e)}")
+            log_warning(f"Rate limit exceeded: {e!s}")
             raise ModelRateLimitError(message=e.message, model_name=self.name, model_id=self.id) from e
         except APIStatusError as e:
-            log_error(f"Claude API error (status {e.status_code}): {str(e)}")
+            log_error(f"Claude API error (status {e.status_code}): {e!s}")
             raise ModelProviderError(
                 message=e.message, status_code=e.status_code, model_name=self.name, model_id=self.id
             ) from e
         except Exception as e:
-            log_error(f"Unexpected error calling Claude API: {str(e)}")
+            log_error(f"Unexpected error calling Claude API: {e!s}")
             raise ModelProviderError(message=str(e), model_name=self.name, model_id=self.id) from e
 
     async def ainvoke(
@@ -293,18 +289,18 @@ class Claude(Model):
                 **request_kwargs,
             )
         except APIConnectionError as e:
-            log_error(f"Connection error while calling Claude API: {str(e)}")
+            log_error(f"Connection error while calling Claude API: {e!s}")
             raise ModelProviderError(message=e.message, model_name=self.name, model_id=self.id) from e
         except RateLimitError as e:
-            log_warning(f"Rate limit exceeded: {str(e)}")
+            log_warning(f"Rate limit exceeded: {e!s}")
             raise ModelRateLimitError(message=e.message, model_name=self.name, model_id=self.id) from e
         except APIStatusError as e:
-            log_error(f"Claude API error (status {e.status_code}): {str(e)}")
+            log_error(f"Claude API error (status {e.status_code}): {e!s}")
             raise ModelProviderError(
                 message=e.message, status_code=e.status_code, model_name=self.name, model_id=self.id
             ) from e
         except Exception as e:
-            log_error(f"Unexpected error calling Claude API: {str(e)}")
+            log_error(f"Unexpected error calling Claude API: {e!s}")
             raise ModelProviderError(message=str(e), model_name=self.name, model_id=self.id) from e
 
     async def ainvoke_stream(
@@ -339,33 +335,33 @@ class Claude(Model):
                 async for chunk in stream:
                     yield chunk
         except APIConnectionError as e:
-            log_error(f"Connection error while calling Claude API: {str(e)}")
+            log_error(f"Connection error while calling Claude API: {e!s}")
             raise ModelProviderError(message=e.message, model_name=self.name, model_id=self.id) from e
         except RateLimitError as e:
-            log_warning(f"Rate limit exceeded: {str(e)}")
+            log_warning(f"Rate limit exceeded: {e!s}")
             raise ModelRateLimitError(message=e.message, model_name=self.name, model_id=self.id) from e
         except APIStatusError as e:
-            log_error(f"Claude API error (status {e.status_code}): {str(e)}")
+            log_error(f"Claude API error (status {e.status_code}): {e!s}")
             raise ModelProviderError(
                 message=e.message, status_code=e.status_code, model_name=self.name, model_id=self.id
             ) from e
         except Exception as e:
-            log_error(f"Unexpected error calling Claude API: {str(e)}")
+            log_error(f"Unexpected error calling Claude API: {e!s}")
             raise ModelProviderError(message=str(e), model_name=self.name, model_id=self.id) from e
 
     def format_function_call_results(
-        self, messages: List[Message], function_call_results: List[Message], tool_ids: List[str]
+        self, messages: list[Message], function_call_results: list[Message], tool_ids: list[str]
     ) -> None:
         """
         Handle the results of function calls.
 
         Args:
-            messages (List[Message]): The list of conversation messages.
-            function_call_results (List[Message]): The results of the function calls.
-            tool_ids (List[str]): The tool ids.
+            messages (list[Message]): The list of conversation messages.
+            function_call_results (list[Message]): The results of the function calls.
+            tool_ids (list[str]): The tool ids.
         """
         if len(function_call_results) > 0:
-            fc_responses: List = []
+            fc_responses: list = []
             for _fc_message in function_call_results:
                 fc_responses.append(
                     {
@@ -376,7 +372,7 @@ class Claude(Model):
                 )
             messages.append(Message(role="user", content=fc_responses))
 
-    def get_system_message_for_model(self, tools: Optional[List[Any]] = None) -> Optional[str]:
+    def get_system_message_for_model(self, tools: list[Any] | None = None) -> str | None:
         if tools is not None and len(tools) > 0:
             tool_call_prompt = "Do not reflect on the quality of the returned search results in your response"
             return tool_call_prompt
@@ -460,7 +456,7 @@ class Claude(Model):
         return model_response
 
     def parse_provider_response_delta(
-        self, response: Union[ContentBlockDeltaEvent, ContentBlockStopEvent, MessageDeltaEvent]
+        self, response: ContentBlockDeltaEvent | ContentBlockStopEvent | MessageDeltaEvent
     ) -> ModelResponse:
         """
         Parse the Claude streaming response into ModelProviderResponse objects.

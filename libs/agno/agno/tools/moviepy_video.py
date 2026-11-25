@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -19,7 +21,7 @@ class MoviePyVideoTools(Toolkit):
         embed_captions: bool = True,
         **kwargs,
     ):
-        tools: List[Any] = []
+        tools: list[Any] = []
         if process_video:
             tools.append(self.extract_audio)
         if generate_captions:
@@ -29,7 +31,7 @@ class MoviePyVideoTools(Toolkit):
 
         super().__init__(name="video_tools", tools=tools, **kwargs)
 
-    def split_text_into_lines(self, words: List[Dict]) -> List[Dict]:
+    def split_text_into_lines(self, words: list[dict]) -> list[dict]:
         """Split transcribed words into lines based on duration and length constraints
         Args:
             words: List of dictionaries containing word data with 'word', 'start', and 'end' keys
@@ -54,17 +56,16 @@ class MoviePyVideoTools(Toolkit):
             chars_exceeded = len(temp) > MAX_CHARS
             maxgap_exceeded = idx > 0 and word_data["start"] - words[idx - 1]["end"] > MAX_GAP
 
-            if duration_exceeded or chars_exceeded or maxgap_exceeded:
-                if line:
-                    subtitle_line = {
-                        "word": " ".join(item["word"] for item in line),
-                        "start": line[0]["start"],
-                        "end": line[-1]["end"],
-                        "textcontents": line,
-                    }
-                    subtitles.append(subtitle_line)
-                    line = []
-                    line_duration = 0
+            if (duration_exceeded or chars_exceeded or maxgap_exceeded) and line:
+                subtitle_line = {
+                    "word": " ".join(item["word"] for item in line),
+                    "start": line[0]["start"],
+                    "end": line[-1]["end"],
+                    "textcontents": line,
+                }
+                subtitles.append(subtitle_line)
+                line = []
+                line_duration = 0
 
         if line:
             subtitle_line = {
@@ -79,14 +80,14 @@ class MoviePyVideoTools(Toolkit):
 
     def create_caption_clips(
         self,
-        text_json: Dict,
+        text_json: dict,
         frame_size: tuple,
         font="Arial",
         color="white",
         highlight_color="yellow",
         stroke_color="black",
         stroke_width=1.5,
-    ) -> List[TextClip]:
+    ) -> list[TextClip]:
         """Create word-level caption clips with highlighting effects
         Args:
             text_json: Dictionary containing text and timing information
@@ -119,7 +120,7 @@ class MoviePyVideoTools(Toolkit):
                 TextClip(
                     text=word_data["word"],
                     font=font,
-                    font_size=int(fontsize),
+                    font_size=fontsize,
                     color=color,
                     stroke_color=stroke_color,
                     stroke_width=int(stroke_width),
@@ -131,7 +132,7 @@ class MoviePyVideoTools(Toolkit):
 
             # Create space clip
             space_clip = (
-                TextClip(text=" ", font=font, font_size=int(fontsize), color=color, method="label")
+                TextClip(text=" ", font=font, font_size=fontsize, color=color, method="label")
                 .with_start(text_json["start"])
                 .with_duration(full_duration)
             )
@@ -160,7 +161,7 @@ class MoviePyVideoTools(Toolkit):
                 TextClip(
                     text=word_data["word"],
                     font=font,
-                    font_size=int(fontsize),
+                    font_size=fontsize,
                     color=highlight_color,
                     stroke_color=stroke_color,
                     stroke_width=int(stroke_width),
@@ -175,7 +176,7 @@ class MoviePyVideoTools(Toolkit):
 
         return word_clips
 
-    def parse_srt(self, srt_content: str) -> List[Dict]:
+    def parse_srt(self, srt_content: str) -> list[dict]:
         """Convert SRT formatted content into word-level timing data
         Args:
             srt_content: String containing SRT formatted subtitles
@@ -234,9 +235,9 @@ class MoviePyVideoTools(Toolkit):
             video.audio.write_audiofile(output_path)
             log_info(f"Audio extracted to {output_path}")
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to extract audio: {str(e)}")
-            return f"Failed to extract audio: {str(e)}"
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error(f"Failed to extract audio: {e!s}")
+            return f"Failed to extract audio: {e!s}"
 
     def create_srt(self, transcription: str, output_path: str) -> str:
         """Save transcription text to SRT formatted file
@@ -253,15 +254,15 @@ class MoviePyVideoTools(Toolkit):
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(transcription)
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to create SRT file: {str(e)}")
-            return f"Failed to create SRT file: {str(e)}"
+        except OSError as e:
+            logger.error(f"Failed to create SRT file: {e!s}")
+            return f"Failed to create SRT file: {e!s}"
 
     def embed_captions(
         self,
         video_path: str,
         srt_path: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         font_size: int = 24,
         font_color: str = "white",
         stroke_color: str = "black",
@@ -343,6 +344,6 @@ class MoviePyVideoTools(Toolkit):
 
             return output_path
 
-        except Exception as e:
-            logger.error(f"Failed to embed captions: {str(e)}")
-            return f"Failed to embed captions: {str(e)}"
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error(f"Failed to embed captions: {e!s}")
+            return f"Failed to embed captions: {e!s}"

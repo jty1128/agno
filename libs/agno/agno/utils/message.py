@@ -1,9 +1,11 @@
-from typing import Dict, List, Union
+from __future__ import annotations
+
+from typing import Union
 
 from agno.models.message import Message
 
 
-def get_text_from_message(message: Union[List, Dict, str, Message]) -> str:
+def get_text_from_message(message: Union[list, dict, str, Message]) -> str:
     """Return the user texts from the message"""
 
     if isinstance(message, str):
@@ -13,7 +15,7 @@ def get_text_from_message(message: Union[List, Dict, str, Message]) -> str:
         if len(message) == 0:
             return ""
 
-        if "type" in message[0]:
+        if len(message) > 0 and "type" in message[0]:
             for m in message:
                 m_type = m.get("type")
                 if m_type is not None and isinstance(m_type, str):
@@ -25,7 +27,7 @@ def get_text_from_message(message: Union[List, Dict, str, Message]) -> str:
                         #     text_messages.append(f"Image: {m_value}")
                         # else:
                         #     text_messages.append(f"{m_type}: {m_value}")
-        elif "role" in message[0]:
+        elif len(message) > 0 and "role" in message[0]:
             for m in message:
                 m_role = m.get("role")
                 if m_role is not None and isinstance(m_role, str):

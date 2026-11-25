@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -45,7 +47,7 @@ class XTools(Toolkit):
             access_token_secret=self.access_token_secret,
         )
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.create_post)
         tools.append(self.reply_to_post)
         tools.append(self.send_dm)
@@ -70,7 +72,7 @@ class XTools(Toolkit):
             response = self.client.create_tweet(text=text)
             post_id = response.data["id"]
             user = self.client.get_me().data
-            post_url = f"https://x.com/{user.username}/status/{post_id}"
+            post_url = f"https://x.com/{user.username!s}/status/{post_id}"
 
             result = {"message": "Post successfully created!", "url": post_url}
             return json.dumps(result, indent=2)
@@ -95,7 +97,7 @@ class XTools(Toolkit):
             response = self.client.create_tweet(text=text, in_reply_to_tweet_id=post_id)
             reply_id = response.data["id"]
             user = self.client.get_me().data
-            reply_url = f"https://twitter.com/{user.username}/status/{reply_id}"
+            reply_url = f"https://twitter.com/{user.username!s}/status/{reply_id}"
             result = {"message": "Reply successfully posted!", "url": reply_url}
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
@@ -144,9 +146,9 @@ class XTools(Toolkit):
                     f"Unable to send message to '{recipient}'. The user may have restricted who can send them messages."
                 )
             return json.dumps({"error": error_message}, indent=2)
-        except Exception as e:
+        except BaseException as e:
             logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+            return json.dumps({"error": f"An unexpected error occurred: {e!s}"}, indent=2)
 
     def get_my_info(self) -> str:
         """

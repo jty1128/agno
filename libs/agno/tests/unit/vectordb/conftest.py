@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,7 +13,7 @@ def mock_embedder():
     mock.dimensions = 1024
 
     # Create a fixed embedding vector of the correct size
-    mock_embedding: List[float] = [0.1] * 1024
+    mock_embedding: list[float] = [0.1] * 1024
 
     # Mock the get_embedding method
     mock.get_embedding.return_value = mock_embedding

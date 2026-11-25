@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import AsyncIterable, Iterable, Union
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -7,6 +9,9 @@ from agno.run.response import RunResponse
 from agno.run.team import TeamRunResponse
 from agno.utils.log import logger
 from agno.utils.timer import Timer
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterable, Iterable
 
 
 def pprint_run_response(

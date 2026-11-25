@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -24,7 +26,7 @@ class SQLTools(Toolkit):
         port: Optional[int] = None,
         schema: Optional[str] = None,
         dialect: Optional[str] = None,
-        tables: Optional[Dict[str, Any]] = None,
+        tables: Optional[dict[str, Any]] = None,
         list_tables: bool = True,
         describe_table: bool = True,
         run_sql_query: bool = True,
@@ -50,9 +52,9 @@ class SQLTools(Toolkit):
         self.schema = schema
 
         # Tables this toolkit can access
-        self.tables: Optional[Dict[str, Any]] = tables
+        self.tables: Optional[dict[str, Any]] = tables
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if list_tables:
             tools.append(self.list_tables)
         if describe_table:
@@ -80,9 +82,9 @@ class SQLTools(Toolkit):
                 table_names = inspector.get_table_names()
             log_debug(f"table_names: {table_names}")
             return json.dumps(table_names)
-        except Exception as e:
-            logger.error(f"Error getting tables: {e}")
-            return f"Error getting tables: {e}"
+        except Exception:
+            logger.error("Error getting tables")
+            return "Error getting tables"
 
     def describe_table(self, table_name: str) -> str:
         """Use this function to describe a table.
@@ -104,9 +106,9 @@ class SQLTools(Toolkit):
                     for column in table_schema
                 ]
             )
-        except Exception as e:
-            logger.error(f"Error getting table schema: {e}")
-            return f"Error getting table schema: {e}"
+        except Exception:
+            logger.error("Error getting table schema")
+            return "Error getting table schema"
 
     def run_sql_query(self, query: str, limit: Optional[int] = 10) -> str:
         """Use this function to run a SQL query and return the result.
@@ -122,11 +124,11 @@ class SQLTools(Toolkit):
 
         try:
             return json.dumps(self.run_sql(sql=query, limit=limit), default=str)
-        except Exception as e:
-            logger.error(f"Error running query: {e}")
-            return f"Error running query: {e}"
+        except Exception:
+            logger.error("Error running query")
+            return "Error running query"
 
-    def run_sql(self, sql: str, limit: Optional[int] = None) -> List[dict]:
+    def run_sql(self, sql: str, limit: Optional[int] = None) -> list[dict]:
         """Internal function to run a sql query.
 
         Args:
@@ -134,7 +136,7 @@ class SQLTools(Toolkit):
             limit (int, optional): The number of rows to return. Defaults to None.
 
         Returns:
-            List[dict]: The result of the query.
+            list[dict]: The result of the query.
         """
         log_debug(f"Running sql |\n{sql}")
 
@@ -148,6 +150,6 @@ class SQLTools(Toolkit):
                 else:
                     rows = result.fetchall()
                 return [row._asdict() for row in rows]
-            except Exception as e:
-                logger.error(f"Error while executing SQL: {e}")
+            except Exception:
+                logger.error("Error while executing SQL")
                 return []
