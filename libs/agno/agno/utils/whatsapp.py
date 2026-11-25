@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import Optional
 
@@ -116,7 +118,7 @@ def upload_media(media_data: bytes, mime_type: str, filename: str = "file"):
         return media_id
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
-    except Exception as e:
+    except (ValueError, TypeError, OSError) as e:
         return {"error": str(e)}
 
 
@@ -154,7 +156,7 @@ async def upload_media_async(media_data: bytes, mime_type: str, filename: str = 
             return media_id
     except httpx.HTTPStatusError as e:
         return {"error": str(e)}
-    except Exception as e:
+    except (ValueError, TypeError, OSError) as e:
         return {"error": str(e)}
 
 
@@ -204,7 +206,7 @@ async def send_image_message_async(
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {e!s}")
         raise
 
 
@@ -252,5 +254,5 @@ def send_image_message(
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {e!s}")
         raise

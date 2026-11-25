@@ -183,12 +183,12 @@ def test_tool_call_multiple_requires_external_execution():
 
     assert response.is_paused
     tool_found = False
-    for _t in response.tools:
-        if _t.external_execution_required:
+    for tool_call in response.tools:
+        if tool_call.external_execution_required:
             tool_found = True
-            assert _t.tool_name == "get_the_weather"
-            assert _t.tool_args == {"city": "Tokyo"}
-            _t.result = "It is currently 70 degrees and cloudy in Tokyo"
+            assert tool_call.tool_name == "get_the_weather"
+            assert tool_call.tool_args == {"city": "Tokyo"}
+            tool_call.result = "It is currently 70 degrees and cloudy in Tokyo"
 
     assert tool_found, "No tool was found to require external execution"
 

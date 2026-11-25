@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from packaging import version
@@ -225,7 +227,7 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -273,8 +275,8 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
         namespace: Optional[str] = None,
         batch_size: Optional[int] = None,
         show_progress: bool = False,
@@ -383,10 +385,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
@@ -449,10 +451,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,7 +464,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.

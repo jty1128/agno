@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.media import Image
 from agno.utils.log import log_error, log_warning
@@ -45,7 +47,7 @@ def format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
                     content_bytes = f.read()
             else:
                 log_error(f"Image file {image_path} does not exist.")
-                raise
+                raise FileNotFoundError(f"Image file {image_path} does not exist.")
             return {
                 "mime_type": "image/jpeg",
                 "data": content_bytes,

@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -75,7 +76,7 @@ class XTools(Toolkit):
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
             logger.error(f"Error creating post: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": f"{e}"})
 
     def reply_to_post(self, post_id: str, text: str) -> str:
         """
@@ -99,7 +100,7 @@ class XTools(Toolkit):
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
             logger.error(f"Error replying to post: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": f"{e}"})
 
     def send_dm(self, recipient: str, text: str) -> str:
         """
@@ -145,7 +146,7 @@ class XTools(Toolkit):
             return json.dumps({"error": error_message}, indent=2)
         except Exception as e:
             logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+            return json.dumps({"error": f"An unexpected error occurred: {e!s}"}, indent=2)
 
     def get_my_info(self) -> str:
         """
@@ -172,7 +173,7 @@ class XTools(Toolkit):
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
             logger.error(f"Error fetching user info: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": f"{e}"})
 
     def get_user_info(self, username: str) -> str:
         """
@@ -202,7 +203,7 @@ class XTools(Toolkit):
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
             logger.error(f"Error fetching user info: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": f"{e}"})
 
     def get_home_timeline(self, max_results: int = 10) -> str:
         """
@@ -236,4 +237,4 @@ class XTools(Toolkit):
             return json.dumps(result, indent=2)
         except tweepy.TweepyException as e:
             logger.error(f"Error fetching home timeline: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": f"{e}"})

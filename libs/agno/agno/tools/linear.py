@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Optional
 
@@ -55,7 +57,7 @@ class LinearTools(Toolkit):
 
             if "errors" in data:
                 logger.error(f"GraphQL Error: {data['errors']}")
-                raise Exception(f"GraphQL Error: {data['errors']}")
+                raise RuntimeError(f"GraphQL Error: {data['errors']}")
 
             log_info("GraphQL query executed successfully.")
             return data.get("data")
@@ -251,7 +253,7 @@ class LinearTools(Toolkit):
                 logger.error(f"Failed to update issue ID {issue_id}. Success flag was false.")
                 return None
 
-        except Exception as e:
+        except (KeyError, TypeError, RuntimeError) as e:
             logger.error(f"Error updating issue ID {issue_id}: {e}")
             raise
 
@@ -299,7 +301,7 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve user or issues.")
                 return None
 
-        except Exception as e:
+        except (KeyError, TypeError, RuntimeError) as e:
             logger.error(f"Error retrieving issues for user ID {user_id}: {e}")
             raise
 
@@ -342,7 +344,7 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve issues for the specified workflow state.")
                 return None
 
-        except Exception as e:
+        except (KeyError, TypeError, RuntimeError) as e:
             logger.error(f"Error retrieving issues for workflow state ID {workflow_id}: {e}")
             raise
 
@@ -383,6 +385,6 @@ class LinearTools(Toolkit):
                 logger.error("Failed to retrieve high-priority issues.")
                 return None
 
-        except Exception as e:
+        except (KeyError, TypeError, RuntimeError) as e:
             logger.error(f"Error retrieving high-priority issues: {e}")
             raise

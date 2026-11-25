@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -151,7 +153,7 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     def send_template_message_sync(
@@ -242,7 +244,7 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     async def send_template_message_async(
@@ -250,7 +252,7 @@ class WhatsAppTools(Toolkit):
         recipient: Optional[str] = None,
         template_name: str = "",
         language_code: str = "en_US",
-        components: Optional[List[Dict[str, Any]]] = None,
+        components: Optional[list[dict[str, Any]]] = None,
     ) -> str:
         """Send a template message to a WhatsApp user (asynchronous version).
 

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from sqlalchemy.dialects import mysql
@@ -119,7 +121,7 @@ class SingleStore(VectorDb):
         log_debug(f"Checking if table exists: {self.table.name}")
         try:
             return inspect(self.db_engine).has_table(self.table.name, schema=self.schema)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(e)
             return False
 
@@ -325,7 +327,7 @@ class SingleStore(VectorDb):
             if neighbor.embedding:
                 try:
                     embedding_list = json.loads(neighbor.embedding)
-                except Exception as e:
+                except (ValueError, TypeError) as e:
                     logger.error(f"Error extracting vector: {e}")
                     embedding_list = []
 

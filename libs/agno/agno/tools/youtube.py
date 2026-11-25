@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -76,7 +78,8 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception as e:
+            log_debug(f"Error getting video ID from URL: {e}")
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
@@ -102,6 +105,7 @@ class YouTubeTools(Toolkit):
                 }
                 return json.dumps(clean_data, indent=4)
         except Exception as e:
+            log_debug(f"Error getting video data: {e}")
             return f"Error getting video data: {e}"
 
     def get_youtube_video_captions(self, url: str) -> str:
@@ -120,12 +124,13 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception as e:
+            log_debug(f"Error getting video ID from URL: {e}")
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -136,6 +141,7 @@ class YouTubeTools(Toolkit):
                 return " ".join(line["text"] for line in captions)
             return "No captions found for video"
         except Exception as e:
+            log_debug(f"Error getting captions for video: {e}")
             return f"Error getting captions for video: {e}"
 
     def get_video_timestamps(self, url: str) -> str:
@@ -154,11 +160,12 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception as e:
+            log_debug(f"Error getting video ID from URL: {e}")
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -109,7 +111,7 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Document does not exist: {e}")
         return False
 
@@ -126,10 +128,10 @@ class ChromaDb(VectorDb):
         if self.client:
             try:
                 collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                for col in collections:  # type: ignore
+                    if name in col:
                         return True
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Document with given name does not exist: {e}")
         return False
 
@@ -268,16 +270,16 @@ class ChromaDb(VectorDb):
             metadata[idx]["distances"] = distance
 
         try:
-            for idx, (id_, metadata, document) in enumerate(zip(ids, metadata, documents)):
+            for idx, (id_, meta, document) in enumerate(zip(ids, metadata, documents)):
                 search_results.append(
                     Document(
                         id=id_,
-                        meta_data=metadata,
+                        meta_data=meta,
                         content=document,
                         embedding=embeddings[idx],
                     )
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building search results: {e}")
 
         if self.reranker:
@@ -286,7 +288,7 @@ class ChromaDb(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    def _convert_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+    def _convert_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Convert simple filters to ChromaDB's filter format.
 
         Handles conversion of simple key-value filters to ChromaDB's operator format
@@ -296,7 +298,7 @@ class ChromaDb(VectorDb):
             return {}
 
         # If filters already use ChromaDB operators ($eq, $ne, etc.), return as is
-        if any(key.startswith("$") for key in filters.keys()):
+        if any(key.startswith("$") for key in filters):
             return filters
 
         # Convert simple key-value pairs to ChromaDB's format
@@ -312,8 +314,8 @@ class ChromaDb(VectorDb):
         return converted
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         """Search asynchronously by running in a thread."""
         return await asyncio.to_thread(self.search, query, limit, filters)
 
@@ -332,7 +334,7 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Collection does not exist: {e}")
         return False
 
@@ -346,7 +348,7 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error getting count: {e}")
         return 0
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from os import getenv
 from typing import Literal, Optional
 from uuid import uuid4
@@ -75,8 +77,8 @@ class OpenAITools(Toolkit):
                 response_format="text",
             )
         except Exception as e:  # type: ignore[return]
-            log_error(f"Failed to transcribe audio: {str(e)}")
-            return f"Failed to transcribe audio: {str(e)}"
+            log_error(f"Failed to transcribe audio: {e!s}")
+            return f"Failed to transcribe audio: {e!s}"
 
         log_debug(f"Transcript: {transcript}")
         return transcript  # type: ignore[return-value]
@@ -132,7 +134,7 @@ class OpenAITools(Toolkit):
                 )
                 return "Image generated successfully."
             return "Failed to generate image: No content received from API."
-        except Exception as e:
+        except OpenAIError as e:
             log_error(f"Failed to generate image using {self.image_model}: {e}")
             return f"Failed to generate image: {e}"
 
@@ -171,4 +173,4 @@ class OpenAITools(Toolkit):
             )
             return f"Speech generated successfully with ID: {media_id}"
         except Exception as e:
-            return f"Failed to generate speech: {str(e)}"
+            return f"Failed to generate speech: {e!s}"

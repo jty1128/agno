@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Any, Optional
@@ -58,7 +60,7 @@ class GoogleBigQueryTools(Toolkit):
             return tables_str
         except Exception as e:
             logger.error(f"Error getting tables: {e}")
-            return f"Error getting tables: {e}"
+            return f"Error getting tables: {e}"  # type: ignore
 
     def describe_table(self, table_id: str) -> str:
         """Use this function to describe a table.
@@ -78,7 +80,7 @@ class GoogleBigQueryTools(Toolkit):
             return result
         except Exception as e:
             logger.error(f"Error getting table schema: {e}")
-            return f"Error getting table schema: {e}"
+            return f"Error getting table schema: {e}"  # type: ignore
 
     def run_sql_query(self, query: str) -> str:
         """Use this function to run a BigQuery SQL query and return the result.
@@ -93,7 +95,7 @@ class GoogleBigQueryTools(Toolkit):
             return json.dumps(self._run_sql(sql=query), default=str)
         except Exception as e:
             logger.error(f"Error running query: {e}")
-            return f"Error running query: {e}"
+            return f"Error running query: {e}"  # type: ignore
 
     def _run_sql(self, sql: str) -> str:
         """Internal function to run a sql query.
@@ -111,4 +113,4 @@ class GoogleBigQueryTools(Toolkit):
             return results_str.replace("\\", "").replace("\n", "")
         except Exception as e:
             logger.error(f"Error while executing SQL: {e}")
-            return ""
+            return ""  # type: ignore

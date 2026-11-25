@@ -1,18 +1,22 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug
 
 try:
     from googlesearch import search
-except ImportError:
-    raise ImportError("`googlesearch-python` not installed. Please install using `pip install googlesearch-python`")
+except ImportError as e:
+    raise ImportError(
+        "`googlesearch-python` not installed. Please install using `pip install googlesearch-python`"
+    ) from e
 
 try:
     from pycountry import pycountry
-except ImportError:
-    raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`")
+except ImportError as e:
+    raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`") from e
 
 
 class GoogleSearchTools(Toolkit):

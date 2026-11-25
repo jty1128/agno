@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,19 +49,19 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise TypeError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
-    def workspace_settings(self) -> Optional[WorkspaceSettings]:
+    def workspace_settings(self) -> WorkspaceSettings | None:
         if self._workspace_settings is not None:
             return self._workspace_settings
 
-        ws_settings_file: Optional[Path] = None
+        ws_settings_file: Path | None = None
         if self.workspace_dir_path is not None:
             _ws_settings_file = self.workspace_dir_path.joinpath("settings.py")
             if _ws_settings_file.exists() and _ws_settings_file.is_file():
@@ -97,17 +99,17 @@ class WorkspaceConfig(BaseModel):
         )
 
         if self.ws_root_path is not None:
-            environ[WORKSPACE_ROOT_ENV_VAR] = str(self.ws_root_path)
+            environ[WORKSPACE_ROOT_ENV_VAR] = f"{self.ws_root_path}"
 
-            workspace_dir_path: Optional[Path] = self.workspace_dir_path
+            workspace_dir_path: Path | None = self.workspace_dir_path
             if workspace_dir_path is not None:
-                environ[WORKSPACE_DIR_ENV_VAR] = str(workspace_dir_path)
+                environ[WORKSPACE_DIR_ENV_VAR] = f"{workspace_dir_path}"
 
             if self.workspace_settings is not None:
-                environ[WORKSPACE_NAME_ENV_VAR] = str(self.workspace_settings.ws_name)
+                environ[WORKSPACE_NAME_ENV_VAR] = f"{self.workspace_settings.ws_name}"
 
         if self.ws_schema is not None and self.ws_schema.id_workspace is not None:
-            environ[WORKSPACE_ID_ENV_VAR] = str(self.ws_schema.id_workspace)
+            environ[WORKSPACE_ID_ENV_VAR] = f"{self.ws_schema.id_workspace}"
 
         if (
             environ.get(AWS_REGION_ENV_VAR) is None
@@ -118,10 +120,10 @@ class WorkspaceConfig(BaseModel):
 
     def get_resources(
         self,
-        env: Optional[str] = None,
-        infra: Optional[str] = None,
+        env: str | None = None,
+        infra: str | None = None,
         order: str = "create",
-    ) -> List[InfraResources]:
+    ) -> list[InfraResources]:
         if self.ws_root_path is None:
             logger.warning("WorkspaceConfig.ws_root_path is None")
             return []
@@ -140,13 +142,13 @@ class WorkspaceConfig(BaseModel):
         #     eg: https://stackoverflow.com/questions/6323860/sibling-package-imports/50193944#50193944
         # To make them work, we add workspace_root to sys.path so is treated as a module
         logger.debug(f"Adding {self.ws_root_path} to path")
-        sys_path.insert(0, str(self.ws_root_path))
+        sys_path.insert(0, f"{self.ws_root_path}")
 
-        workspace_dir_path: Optional[Path] = self.workspace_dir_path
+        workspace_dir_path: Path | None = self.workspace_dir_path
         if workspace_dir_path is not None:
             logger.debug(f"--^^-- Loading workspace from: {workspace_dir_path}")
             # Create a dict of objects in the workspace directory
-            workspace_objects: Dict[str, InfraResources] = {}
+            workspace_objects: dict[str, InfraResources] = {}
             resource_files = workspace_dir_path.rglob("*.py")
             for resource_file in resource_files:
                 if resource_file.name == "__init__.py":
@@ -183,10 +185,10 @@ class WorkspaceConfig(BaseModel):
             logger.debug(f"workspace_objects: {workspace_objects}")
         logger.debug("**--> WorkspaceConfig loaded")
         logger.debug(f"Removing {self.ws_root_path} from path")
-        sys_path.remove(str(self.ws_root_path))
+        sys_path.remove(f"{self.ws_root_path}")
 
         # Filter resources by infra
-        filtered_ws_objects_by_infra_type: Dict[str, InfraResources] = {}
+        filtered_ws_objects_by_infra_type: dict[str, InfraResources] = {}
         logger.debug(f"Filtering resources for env: {env} | infra: {infra} | order: {order}")
         if infra is None:
             filtered_ws_objects_by_infra_type = workspace_objects
@@ -196,7 +198,7 @@ class WorkspaceConfig(BaseModel):
                     filtered_ws_objects_by_infra_type[resource_name] = resource
 
         # Filter resources by env
-        filtered_infra_objects_by_env: Dict[str, InfraResources] = {}
+        filtered_infra_objects_by_env: dict[str, InfraResources] = {}
         if env is None:
             filtered_infra_objects_by_env = filtered_ws_objects_by_infra_type
         else:
@@ -213,27 +215,20 @@ class WorkspaceConfig(BaseModel):
             )
             logger.debug(f"Created WorkspaceSettings: {self._workspace_settings}")
         # Update the resources with the workspace settings
-        if self._workspace_settings is not None:
-            for resource_name, resource in filtered_infra_objects_by_env.items():
-                logger.debug(f"Setting workspace settings for {resource.__class__.__name__}")
-                resource.set_workspace_settings(self._workspace_settings)
+        for resource_name, resource in filtered_infra_objects_by_env.items():
+            logger.debug(f"Setting workspace settings for {resource.__class__.__name__}")
+            resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
-
-        return infra_resources_list
+        return [resource for resource in filtered_infra_objects_by_env.values() if isinstance(resource, InfraResources)]
 
     @staticmethod
     def get_resources_from_file(
         resource_file: Path,
-        env: Optional[str] = None,
-        infra: Optional[str] = None,
+        env: str | None = None,
+        infra: str | None = None,
         order: str = "create",
-    ) -> List[InfraResources]:
+    ) -> list[InfraResources]:
         if not resource_file.exists():
             raise FileNotFoundError(f"File {resource_file} does not exist")
         if not resource_file.is_file():
@@ -257,12 +252,12 @@ class WorkspaceConfig(BaseModel):
         #     eg: https://stackoverflow.com/questions/6323860/sibling-package-imports/50193944#50193944
         # To make them work, we add the resource_file_parent_dir to sys.path so it can be treated as a module
         logger.debug(f"Adding {resource_file_parent_dir} to path")
-        sys_path.insert(0, str(resource_file_parent_dir))
+        sys_path.insert(0, f"{resource_file_parent_dir}")
 
         logger.debug(f"**--> Reading Infra resources from {resource_file}")
 
         # Get all infra resources from the file
-        infra_objects: Dict[str, InfraBase] = {}
+        infra_objects: dict[str, InfraBase] = {}
         try:
             # Get all python objects from the file
             python_objects = get_python_objects_from_module(resource_file)
@@ -279,7 +274,7 @@ class WorkspaceConfig(BaseModel):
             raise
 
         # Filter resources by infra
-        filtered_infra_objects_by_infra_type: Dict[str, InfraBase] = {}
+        filtered_infra_objects_by_infra_type: dict[str, InfraBase] = {}
         logger.debug(f"Filtering resources for env: {env} | infra: {infra} | order: {order}")
         if infra is None:
             filtered_infra_objects_by_infra_type = infra_objects
@@ -289,7 +284,7 @@ class WorkspaceConfig(BaseModel):
                     filtered_infra_objects_by_infra_type[resource_name] = resource
 
         # Filter resources by env
-        filtered_infra_objects_by_env: Dict[str, InfraBase] = {}
+        filtered_infra_objects_by_env: dict[str, InfraBase] = {}
         if env is None:
             filtered_infra_objects_by_env = filtered_infra_objects_by_infra_type
         else:
@@ -311,7 +306,7 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(temporary_ws_config._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
+        infra_resources_list: list[InfraResources] = []
         for resource_name, resource in filtered_infra_objects_by_env.items():
             # If the resource is an InfraResources object, add it to the list
             if isinstance(resource, InfraResources):
