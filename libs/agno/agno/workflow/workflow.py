@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import AsyncGenerator, AsyncIterator
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -140,7 +141,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -185,7 +185,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -293,7 +293,7 @@ class Workflow:
             result = await self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.arun() failed: {e}")
-            raise e
+            raise
 
         # Handle async iterator results
         if isinstance(result, (AsyncIterator, AsyncGenerator)):
@@ -358,7 +358,6 @@ class Workflow:
     async def arun(self, **kwargs: Any):
         """Async version of run() that calls arun_workflow()"""
         logger.error(f"{self.__class__.__name__}.arun() method not implemented.")
-        return
 
     def set_storage_mode(self):
         if self.storage is not None:
@@ -468,8 +467,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -478,8 +477,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -604,16 +603,16 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
+                except (TypeError, KeyError, ValueError) as e:
                     log_warning(f"Failed to load runs from memory: {e}")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
+                        except (TypeError, KeyError, ValueError) as e:
                             logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
+                except (TypeError, KeyError, ValueError) as e:
                     logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
@@ -757,11 +756,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -769,11 +768,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -834,7 +833,7 @@ class Workflow:
         except Exception as e:
             log_warning(f"Failed to register workflow: {e}")
 
-    def to_config_dict(self) -> Dict[str, Any]:
+    def to_config_dict(self) -> dict[str, Any]:
         """Convert the workflow to a config dictionary including all agents and teams.
 
         Returns:
@@ -851,8 +850,8 @@ class Workflow:
             },
         }
 
-        agents: List[Dict[str, Any]] = []
-        teams: List[Dict[str, Any]] = []
+        agents: list[dict[str, Any]] = []
+        teams: list[dict[str, Any]] = []
 
         for attr_name in dir(self.__class__):
             # Skip private/special attributes and methods

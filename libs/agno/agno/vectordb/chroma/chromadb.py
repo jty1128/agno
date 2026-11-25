@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -24,11 +25,11 @@ class ChromaDb(VectorDb):
     def __init__(
         self,
         collection: str,
-        embedder: Optional[Embedder] = None,
+        embedder: Embedder | None = None,
         distance: Distance = Distance.cosine,
         path: str = "tmp/chromadb",
         persistent_client: bool = False,
-        reranker: Optional[Reranker] = None,
+        reranker: Reranker | None = None,
         **kwargs,
     ):
         # Collection attributes
@@ -45,17 +46,17 @@ class ChromaDb(VectorDb):
         self.distance: Distance = distance
 
         # Chroma client instance
-        self._client: Optional[ClientAPI] = None
+        self._client: ClientAPI | None = None
 
         # Chroma collection instance
-        self._collection: Optional[Collection] = None
+        self._collection: Collection | None = None
 
         # Persistent Chroma client instance
         self.persistent_client: bool = persistent_client
         self.path: str = path
 
         # Reranker instance
-        self.reranker: Optional[Reranker] = reranker
+        self.reranker: Reranker | None = reranker
 
         # Chroma client kwargs
         self.kwargs = kwargs
@@ -109,7 +110,7 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Document does not exist: {e}")
         return False
 
@@ -126,10 +127,10 @@ class ChromaDb(VectorDb):
         if self.client:
             try:
                 collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                for col in collections:  # type: ignore
+                    if name in col:
                         return True
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Document with given name does not exist: {e}")
         return False
 
@@ -137,7 +138,7 @@ class ChromaDb(VectorDb):
         """Check if a document with given name exists asynchronously."""
         return await asyncio.to_thread(self.name_exists, name)
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents into the collection.
 
         Args:
@@ -145,10 +146,10 @@ class ChromaDb(VectorDb):
             filters (Optional[Dict[str, Any]]): Filters to merge with document metadata
         """
         log_debug(f"Inserting {len(documents)} documents")
-        ids: List = []
-        docs: List = []
-        docs_embeddings: List = []
-        docs_metadata: List = []
+        ids: list = []
+        docs: list = []
+        docs_embeddings: list = []
+        docs_metadata: list = []
 
         if not self._collection:
             self._collection = self.client.get_collection(name=self.collection_name)
@@ -176,7 +177,7 @@ class ChromaDb(VectorDb):
                 self._collection.add(ids=ids, embeddings=docs_embeddings, documents=docs, metadatas=docs_metadata)
                 log_debug(f"Committed {len(docs)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents asynchronously by running in a thread."""
         await asyncio.to_thread(self.insert, documents, filters)
 
@@ -184,7 +185,7 @@ class ChromaDb(VectorDb):
         """Check if upsert is available in ChromaDB."""
         return True
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents into the collection.
 
         Args:
@@ -192,10 +193,10 @@ class ChromaDb(VectorDb):
             filters (Optional[Dict[str, Any]]): Filters to apply while upserting
         """
         log_debug(f"Upserting {len(documents)} documents")
-        ids: List = []
-        docs: List = []
-        docs_embeddings: List = []
-        docs_metadata: List = []
+        ids: list = []
+        docs: list = []
+        docs_embeddings: list = []
+        docs_metadata: list = []
 
         if not self._collection:
             self._collection = self.client.get_collection(name=self.collection_name)
@@ -217,11 +218,11 @@ class ChromaDb(VectorDb):
                 self._collection.upsert(ids=ids, embeddings=docs_embeddings, documents=docs, metadatas=docs_metadata)
                 log_debug(f"Committed {len(docs)} documents")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Upsert documents asynchronously by running in a thread."""
         await asyncio.to_thread(self.upsert, documents, filters)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """Search the collection for a query.
 
         Args:
@@ -255,7 +256,7 @@ class ChromaDb(VectorDb):
         )
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
 
         ids = result.get("ids", [[]])[0]
         metadata = result.get("metadatas", [{}])[0]
@@ -268,16 +269,16 @@ class ChromaDb(VectorDb):
             metadata[idx]["distances"] = distance
 
         try:
-            for idx, (id_, metadata, document) in enumerate(zip(ids, metadata, documents)):
+            for idx, (id_, meta, document) in enumerate(zip(ids, metadata, documents)):
                 search_results.append(
                     Document(
                         id=id_,
-                        meta_data=metadata,
+                        meta_data=meta,
                         content=document,
                         embedding=embeddings[idx],
                     )
                 )
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Error building search results: {e}")
 
         if self.reranker:
@@ -296,7 +297,7 @@ class ChromaDb(VectorDb):
             return {}
 
         # If filters already use ChromaDB operators ($eq, $ne, etc.), return as is
-        if any(key.startswith("$") for key in filters.keys()):
+        if any(key.startswith("$") for key in filters):
             return filters
 
         # Convert simple key-value pairs to ChromaDB's format
@@ -332,7 +333,7 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except ValueError as e:
             log_debug(f"Collection does not exist: {e}")
         return False
 
@@ -346,7 +347,7 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Error getting count: {e}")
         return 0
 
@@ -357,6 +358,6 @@ class ChromaDb(VectorDb):
         try:
             self.client.delete_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Error clearing collection: {e}")
             return False

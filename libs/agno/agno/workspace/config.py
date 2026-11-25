@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -80,8 +81,8 @@ class WorkspaceConfig(BaseModel):
                         if self.ws_schema is not None and self._workspace_settings is not None:
                             self._workspace_settings.ws_schema = self.ws_schema
                             logger.debug("Added WorkspaceSchema to WorkspaceSettings")
-        except Exception:
-            logger.warning(f"Error in {ws_settings_file}")
+        except Exception as e:
+            logger.warning(f"Error in {ws_settings_file}: {e}")
             raise
         return self._workspace_settings
 
@@ -177,8 +178,8 @@ class WorkspaceConfig(BaseModel):
                                 logger.debug(f"Skipping {obj_name}: disabled")
                                 continue
                             workspace_objects[obj_name] = obj
-                except Exception:
-                    logger.warning(f"Error in {resource_file}")
+                except Exception as e:
+                    logger.warning(f"Error in {resource_file}: {e}")
                     raise
             logger.debug(f"workspace_objects: {workspace_objects}")
         logger.debug("**--> WorkspaceConfig loaded")
@@ -219,11 +220,9 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
+        infra_resources_list: [
+            resource for resource in filtered_infra_objects_by_env.values() if isinstance(resource, InfraResources)
+        ]
 
         return infra_resources_list
 
@@ -274,8 +273,8 @@ class WorkspaceConfig(BaseModel):
                         logger.debug(f"Skipping {obj_name}: disabled")
                         continue
                     infra_objects[obj_name] = obj
-        except Exception:
-            logger.error(f"Error reading: {resource_file}")
+        except Exception as e:
+            logger.error(f"Error reading: {resource_file}: {e}")
             raise
 
         # Filter resources by infra
@@ -312,7 +311,7 @@ class WorkspaceConfig(BaseModel):
 
         # Create a list of InfraResources from the filtered resources
         infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
+        for resource in filtered_infra_objects_by_env.values():
             # If the resource is an InfraResources object, add it to the list
             if isinstance(resource, InfraResources):
                 infra_resources_list.append(resource)

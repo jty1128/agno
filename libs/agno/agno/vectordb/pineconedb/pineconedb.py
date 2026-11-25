@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     from packaging import version
@@ -68,37 +70,37 @@ class PineconeDb(VectorDb):
         self,
         name: str,
         dimension: int,
-        spec: Union[Dict, ServerlessSpec, PodSpec],
-        embedder: Optional[Embedder] = None,
-        metric: Optional[str] = "cosine",
-        additional_headers: Optional[Dict[str, str]] = None,
-        pool_threads: Optional[int] = 1,
-        namespace: Optional[str] = None,
-        timeout: Optional[int] = None,
-        index_api: Optional[Any] = None,
-        api_key: Optional[str] = None,
-        host: Optional[str] = None,
-        config: Optional[Config] = None,
+        spec: dict | ServerlessSpec | PodSpec,
+        embedder: Embedder | None = None,
+        metric: str | None = "cosine",
+        additional_headers: dict[str, str] | None = None,
+        pool_threads: int | None = 1,
+        namespace: str | None = None,
+        timeout: int | None = None,
+        index_api: Any | None = None,
+        api_key: str | None = None,
+        host: str | None = None,
+        config: Config | None = None,
         use_hybrid_search: bool = False,
         hybrid_alpha: float = 0.5,
-        reranker: Optional[Reranker] = None,
+        reranker: Reranker | None = None,
         **kwargs,
     ):
         self._client = None
         self._index = None
-        self.api_key: Optional[str] = api_key
-        self.host: Optional[str] = host
-        self.config: Optional[Config] = config
-        self.additional_headers: Dict[str, str] = additional_headers or {}
-        self.pool_threads: Optional[int] = pool_threads
-        self.namespace: Optional[str] = namespace
-        self.index_api: Optional[Any] = index_api
+        self.api_key: str | None = api_key
+        self.host: str | None = host
+        self.config: Config | None = config
+        self.additional_headers: dict[str, str] = additional_headers or {}
+        self.pool_threads: int | None = pool_threads
+        self.namespace: str | None = namespace
+        self.index_api: Any | None = index_api
         self.name: str = name
-        self.dimension: Optional[int] = dimension
-        self.spec: Union[Dict, ServerlessSpec, PodSpec] = spec
-        self.metric: Optional[str] = metric
-        self.timeout: Optional[int] = timeout
-        self.kwargs: Optional[Dict[str, str]] = kwargs
+        self.dimension: int | None = dimension
+        self.spec: dict | ServerlessSpec | PodSpec = spec
+        self.metric: str | None = metric
+        self.timeout: int | None = timeout
+        self.kwargs: dict[str, Any] | None = kwargs
         self.use_hybrid_search: bool = use_hybrid_search
         self.hybrid_alpha: float = hybrid_alpha
         if self.use_hybrid_search:
@@ -119,7 +121,7 @@ class PineconeDb(VectorDb):
             _embedder = OpenAIEmbedder()
             log_info("Embedder not provided, using OpenAIEmbedder as default.")
         self.embedder: Embedder = _embedder
-        self.reranker: Optional[Reranker] = reranker
+        self.reranker: Reranker | None = reranker
 
     @property
     def client(self) -> Pinecone:
@@ -234,19 +236,19 @@ class PineconeDb(VectorDb):
 
     def upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-        batch_size: Optional[int] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+        batch_size: int | None = None,
         show_progress: bool = False,
     ) -> None:
         """insert documents into the index.
 
         Args:
-            documents (List[Document]): The documents to upsert.
-            filters (Optional[Dict[str, Any]], optional): The filters for the upsert. Defaults to None.
-            namespace (Optional[str], optional): The namespace for the documents. Defaults to None.
-            batch_size (Optional[int], optional): The batch size for upsert. Defaults to None.
+            documents (list[Document]): The documents to upsert.
+            filters (dict[str, Any] | None, optional): The filters for the upsert. Defaults to None.
+            namespace (str | None, optional): The namespace for the documents. Defaults to None.
+            batch_size (int | None, optional): The batch size for upsert. Defaults to None.
             show_progress (bool, optional): Whether to show progress during upsert. Defaults to False.
 
         """
@@ -273,10 +275,10 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-        batch_size: Optional[int] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+        batch_size: int | None = None,
         show_progress: bool = False,
     ) -> None:
         """Upsert documents into the index asynchronously with batching."""
@@ -333,7 +335,7 @@ class PineconeDb(VectorDb):
             show_progress=show_progress,
         )
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Pinecone doesn't support insert. Raise an error."""
         raise NotImplementedError("Pinecone does not support insert operations. Use async_upsert instead.")
 
@@ -346,14 +348,14 @@ class PineconeDb(VectorDb):
         """
         return True
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents into the index.
 
         This method is not supported by Pinecone. Use `upsert` instead.
 
         Args:
-            documents (List[Document]): The documents to insert.
-            filters (Optional[Dict[str, Any]], optional): The filters for the insert. Defaults to None.
+            documents (list[Document]): The documents to insert.
+            filters (dict[str, Any] | None, optional): The filters for the insert. Defaults to None.
 
         Raises:
             NotImplementedError: This method is not supported by Pinecone.
@@ -361,7 +363,7 @@ class PineconeDb(VectorDb):
         """
         raise NotImplementedError("Pinecone does not support insert operations. Use upsert instead.")
 
-    def _hybrid_scale(self, dense: List[float], sparse: Dict[str, Any], alpha: float):
+    def _hybrid_scale(self, dense: list[float], sparse: dict[str, Any], alpha: float):
         """Hybrid vector scaling using a convex combination
         1 is pure semantic search, 0 is pure keyword search
         alpha * dense + (1 - alpha) * sparse
@@ -383,22 +385,22 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
             query (str): The query to search for.
             limit (int, optional): The maximum number of results to return. Defaults to 5.
-            filters (Optional[Dict[str, Union[str, float, int, bool, List, dict]]], optional): The filter for the search. Defaults to None.
-            namespace (Optional[str], optional): The namespace to search in. Defaults to None.
-            include_values (Optional[bool], optional): Whether to include values in the search results. Defaults to None.
-            include_metadata (Optional[bool], optional): Whether to include metadata in the search results. Defaults to None.
+            filters (dict[str, str | float | int | bool | list | dict] | None, optional): The filter for the search. Defaults to None.
+            namespace (str | None, optional): The namespace to search in. Defaults to None.
+            include_values (bool | None, optional): Whether to include values in the search results. Defaults to None.
+            include_metadata (bool | None, optional): Whether to include metadata in the search results. Defaults to None.
 
         Returns:
-            List[Document]: The list of matching documents.
+            list[Document]: The list of matching documents.
 
         """
         dense_embedding = self.embedder.get_embedding(query)
@@ -449,10 +451,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,19 +464,19 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
-    def delete(self, namespace: Optional[str] = None) -> bool:
+    def delete(self, namespace: str | None = None) -> bool:
         """Clear the index.
 
         Args:
-            namespace (Optional[str], optional): The namespace to clear. Defaults to None.
+            namespace (str | None, optional): The namespace to clear. Defaults to None.
 
         """
         try:
             self.index.delete(delete_all=True, namespace=namespace)
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error deleting namespace: {e}")
             return False
 
     async def async_drop(self) -> None:

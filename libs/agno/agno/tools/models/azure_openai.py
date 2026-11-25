@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 from uuid import uuid4
 
 from requests import post
@@ -65,7 +67,7 @@ class AzureOpenAITools(Toolkit):
             self.image_quality = "standard"
             log_debug(f"Enforcing valid quality: '{self.image_quality}' -> 'standard'")
 
-    def _enforce_valid_image_parameters(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _enforce_valid_image_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Enforce valid parameters by replacing invalid ones with defaults."""
         enforced = params.copy()
 
@@ -96,7 +98,7 @@ class AzureOpenAITools(Toolkit):
         agent: Agent,
         prompt: str,
         n: int = 1,
-        size: Optional[Literal["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"]] = "1024x1024",
+        size: Literal["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"] | None = "1024x1024",
         style: Literal["vivid", "natural"] = "vivid",
     ) -> str:
         """Generate an image using Azure OpenAI image generation.

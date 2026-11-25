@@ -428,9 +428,10 @@ def test_error_handling(mock_savefig, viz_tools):
 
 def test_matplotlib_import_error():
     """Test handling of matplotlib import error."""
-    with patch.dict("sys.modules", {"matplotlib": None}):
-        with pytest.raises(ImportError, match="matplotlib is not installed"):
-            VisualizationTools()
+    with patch.dict("sys.modules", {"matplotlib": None}), pytest.raises(
+        ImportError, match="matplotlib is not installed"
+    ):
+        VisualizationTools()
 
 
 def test_basic_initialization_has_correct_functions(basic_viz_tools):

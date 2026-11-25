@@ -1,7 +1,8 @@
 import json
+from collections.abc import AsyncGenerator
 from dataclasses import asdict
 from io import BytesIO
-from typing import Any, AsyncGenerator, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
@@ -41,7 +42,7 @@ async def agent_chat_response_streamer(
         async for run_response_chunk in run_response:
             run_response_chunk = cast(RunResponse, run_response_chunk)
             yield run_response_chunk.to_json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error_response = RunResponse(
             content=str(e),
             event=RunEvent.run_error,
@@ -75,7 +76,7 @@ async def team_chat_response_streamer(
         async for run_response_chunk in run_response:
             run_response_chunk = cast(TeamRunResponse, run_response_chunk)
             yield run_response_chunk.to_json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error_response = TeamRunResponse(
             content=str(e),
             event=RunEvent.run_error,
@@ -109,14 +110,14 @@ def get_async_router(
                 try:
                     base64_image = process_image(file)
                     base64_images.append(base64_image)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing image {file.filename}: {e}")
                     continue
             elif file.content_type in ["audio/wav", "audio/mp3", "audio/mpeg"]:
                 try:
                     base64_audio = process_audio(file)
                     base64_audios.append(base64_audio)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing audio {file.filename}: {e}")
                     continue
             elif file.content_type in [
@@ -135,7 +136,7 @@ def get_async_router(
                 try:
                     base64_video = process_video(file)
                     base64_videos.append(base64_video)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing video {file.filename}: {e}")
                     continue
             else:
@@ -206,14 +207,14 @@ def get_async_router(
                 try:
                     base64_image = process_image(file)
                     base64_images.append(base64_image)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing image {file.filename}: {e}")
                     continue
             elif file.content_type in ["audio/wav", "audio/mp3", "audio/mpeg"]:
                 try:
                     base64_audio = process_audio(file)
                     base64_audios.append(base64_audio)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing audio {file.filename}: {e}")
                     continue
             elif file.content_type in [
@@ -232,7 +233,7 @@ def get_async_router(
                 try:
                     base64_video = process_video(file)
                     base64_videos.append(base64_video)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Error processing video {file.filename}: {e}")
                     continue
             elif file.content_type in [

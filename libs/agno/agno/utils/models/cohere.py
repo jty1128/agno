@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List
 
 from agno.media import Image
 from agno.models.message import Message
@@ -40,21 +41,21 @@ def _format_images_for_message(message: Message, images: Sequence[Image]) -> Lis
                 message_content_with_image.append(image_payload)
 
         except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+            log_error(f"Failed to process image: {e!s}")
 
     # Update the message content with the images
     return message_content_with_image
 
 
-def format_messages(messages: List[Message]) -> List[Dict[str, Any]]:
+def format_messages(messages: list[Message]) -> list[dict[str, Any]]:
     """
     Format messages for the Cohere API.
 
     Args:
-        messages (List[Message]): The list of messages.
+        messages (list[Message]): The list of messages.
 
     Returns:
-        List[Dict[str, Any]]: The formatted messages.
+        list[dict[str, Any]]: The formatted messages.
     """
     formatted_messages = []
     for message in messages:

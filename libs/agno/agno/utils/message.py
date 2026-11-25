@@ -1,9 +1,14 @@
-from typing import Dict, List, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from agno.models.message import Message
 
+if TYPE_CHECKING:
+    from typing import Union
 
-def get_text_from_message(message: Union[List, Dict, str, Message]) -> str:
+
+def get_text_from_message(message: Union[list, dict, str, Message]) -> str:
     """Return the user texts from the message"""
 
     if isinstance(message, str):

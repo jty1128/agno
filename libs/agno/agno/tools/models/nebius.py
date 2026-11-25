@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import base64
 from os import getenv
-from typing import Optional
 from uuid import uuid4
 
 from agno.agent import Agent

@@ -1,8 +1,8 @@
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -302,7 +302,7 @@ class Qdrant(VectorDb):
             return len(scroll_result[0]) > 0
         return False
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, batch_size: int = 10) -> None:
+    def insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None, batch_size: int = 10) -> None:
         """
         Insert documents into the database.
 
@@ -364,7 +364,7 @@ class Qdrant(VectorDb):
             self.client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upsert {len(points)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Insert documents asynchronously.
 
@@ -426,7 +426,7 @@ class Qdrant(VectorDb):
             await self.async_client.upsert(collection_name=self.collection, wait=False, points=points)
         log_debug(f"Upserted {len(points)} documents asynchronously")
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """
         Upsert documents into the database.
 
@@ -437,12 +437,12 @@ class Qdrant(VectorDb):
         log_debug("Redirecting the request to insert")
         self.insert(documents, filters)
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Upsert documents asynchronously."""
         log_debug("Redirecting the async request to async_insert")
         await self.async_insert(documents, filters)
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         """
         Search for documents in the collection.
 
@@ -464,8 +464,8 @@ class Qdrant(VectorDb):
         return self._build_search_results(results, query)
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         filters = self._format_filters(filters or {})
         if self.search_type == SearchType.vector:
             results = await self._run_vector_search_async(query, limit, filters)
@@ -482,8 +482,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         dense_embedding = self.embedder.get_embedding(query)
         sparse_embedding = next(self.sparse_encoder.embed([query])).as_object()
         call = self.client.query_points(
@@ -508,8 +508,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         dense_embedding = self.embedder.get_embedding(query)
 
         # TODO(v2.0.0): Remove this conditional and always use named vectors
@@ -539,8 +539,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         sparse_embedding = next(self.sparse_encoder.embed([query])).as_object()
         call = self.client.query_points(
             collection_name=self.collection,
@@ -557,8 +557,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         dense_embedding = self.embedder.get_embedding(query)
 
         # TODO(v2.0.0): Remove this conditional and always use named vectors
@@ -588,8 +588,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         sparse_embedding = next(self.sparse_encoder.embed([query])).as_object()
         call = await self.async_client.query_points(
             collection_name=self.collection,
@@ -606,8 +606,8 @@ class Qdrant(VectorDb):
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]],
-    ) -> List[models.ScoredPoint]:
+        filters: Optional[dict[str, Any]],
+    ) -> list[models.ScoredPoint]:
         dense_embedding = self.embedder.get_embedding(query)
         sparse_embedding = next(self.sparse_encoder.embed([query])).as_object()
         call = await self.async_client.query_points(
@@ -628,8 +628,8 @@ class Qdrant(VectorDb):
         )
         return call.points
 
-    def _build_search_results(self, results, query: str) -> List[Document]:
-        search_results: List[Document] = []
+    def _build_search_results(self, results, query: str) -> list[Document]:
+        search_results: list[Document] = []
 
         for result in results:
             if result.payload is None:
@@ -651,7 +651,7 @@ class Qdrant(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    def _format_filters(self, filters: Optional[Dict[str, Any]]) -> Optional[models.Filter]:
+    def _format_filters(self, filters: Optional[dict[str, Any]]) -> Optional[models.Filter]:
         if filters:
             filter_conditions = []
             for key, value in filters.items():

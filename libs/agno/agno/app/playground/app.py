@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 from urllib.parse import quote
 from uuid import uuid4
 
@@ -128,7 +130,7 @@ class Playground:
         async def general_exception_handler(request: Request, call_next):
             try:
                 return await call_next(request)
-            except Exception as e:
+            except BaseException as e:
                 return JSONResponse(
                     status_code=e.status_code if hasattr(e, "status_code") else 500,
                     content={"detail": str(e)},
@@ -215,7 +217,7 @@ class Playground:
         try:
             log_debug(f"Creating app on Platform: {self.name}, {self.app_id}")
             create_app(app=AppCreate(name=self.name, app_id=self.app_id, config=self.to_dict()))
-        except Exception as e:
+        except BaseException as e:
             log_debug(f"Could not create Agent app: {e}")
         log_debug(f"Agent app created: {self.name}, {self.app_id}")
 

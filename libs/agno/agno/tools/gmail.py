@@ -26,7 +26,7 @@ How to Get These Credentials:
      * Client ID (GOOGLE_CLIENT_ID)
      * Client Secret (GOOGLE_CLIENT_SECRET)
    - The Project ID (GOOGLE_PROJECT_ID) is visible in the project dropdown at the top of the page
-   
+
 5. Add auth redirect URI:
    - Go to https://console.cloud.google.com/auth/clients and add the redirect URI as http://127.0.0.1/
 
@@ -43,6 +43,8 @@ Note: The first time you run the application, it will open a browser window for 
 A token.json file will be created to store the authentication credentials for future use.
 """
 
+from __future__ import annotations
+
 import base64
 import mimetypes
 import re
@@ -50,7 +52,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from agno.tools import Toolkit
 
@@ -112,10 +114,10 @@ class GmailTools(Toolkit):
         send_email: bool = True,
         send_email_reply: bool = True,
         search_emails: bool = True,
-        creds: Optional[Credentials] = None,
-        credentials_path: Optional[str] = None,
-        token_path: Optional[str] = None,
-        scopes: Optional[List[str]] = None,
+        creds: Credentials | None = None,
+        credentials_path: str | None = None,
+        token_path: str | None = None,
+        scopes: list[str] | None = None,
         **kwargs,
     ):
         """Initialize GmailTools and authenticate with Gmail API
@@ -132,10 +134,10 @@ class GmailTools(Toolkit):
             send_email (bool): Enable sending emails. Defaults to True.
             search_emails (bool): Enable searching emails. Defaults to True.
             send_email_reply (bool): Enable sending email replies. Defaults to True.
-            creds (Optional[Credentials]): Pre-existing credentials. Defaults to None.
-            credentials_path (Optional[str]): Path to credentials file. Defaults to None.
-            token_path (Optional[str]): Path to token file. Defaults to None.
-            scopes (Optional[List[str]]): Custom OAuth scopes. If None, uses DEFAULT_SCOPES.
+            creds (Credentials | None): Pre-existing credentials. Defaults to None.
+            credentials_path (str | None): Path to credentials file. Defaults to None.
+            token_path (str | None): Path to token file. Defaults to None.
+            scopes (list[str] | None): Custom OAuth scopes. If None, uses DEFAULT_SCOPES.
         """
         self.creds = creds
         self.credentials_path = credentials_path
@@ -166,7 +168,7 @@ class GmailTools(Toolkit):
             if read_scope not in self.scopes and write_scope not in self.scopes:
                 raise ValueError(f"The scope {read_scope} is required for email reading operations")
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if get_latest_emails:
             tools.append(self.get_latest_emails)
         if get_emails_from_user:
@@ -225,7 +227,7 @@ class GmailTools(Toolkit):
             if self.creds and self.creds.valid:
                 token_file.write_text(self.creds.to_json())
 
-    def _format_emails(self, emails: List[dict]) -> str:
+    def _format_emails(self, emails: list[dict]) -> str:
         """Format list of email dictionaries into a readable string"""
         if not emails:
             return "No emails found"
@@ -264,7 +266,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving latest emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving latest emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -286,7 +288,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails from {user}: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails from {user}: {type(error).__name__}: {error}"
 
     @authenticate
@@ -306,7 +308,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving unread emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving unread emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -327,7 +329,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails from thread {thread_id}: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails from thread {thread_id}: {type(error).__name__}: {error}"
 
     @authenticate
@@ -347,7 +349,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving starred emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving starred emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -368,13 +370,11 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails by context '{context}': {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails by context '{context}': {type(error).__name__}: {error}"
 
     @authenticate
-    def get_emails_by_date(
-        self, start_date: int, range_in_days: Optional[int] = None, num_emails: Optional[int] = 10
-    ) -> str:
+    def get_emails_by_date(self, start_date: int, range_in_days: int | None = None, num_emails: int | None = 10) -> str:
         """
         Get emails based on date range. start_date is an integer representing a unix timestamp
 
@@ -399,7 +399,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails by date: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails by date: {type(error).__name__}: {error}"
 
     @authenticate
@@ -408,8 +408,8 @@ class GmailTools(Toolkit):
         to: str,
         subject: str,
         body: str,
-        cc: Optional[str] = None,
-        attachments: Optional[Union[str, List[str]]] = None,
+        cc: str | None = None,
+        attachments: str | list[str] | None = None,
     ) -> str:
         """
         Create and save a draft email. to and cc are comma separated string of email ids
@@ -451,8 +451,8 @@ class GmailTools(Toolkit):
         to: str,
         subject: str,
         body: str,
-        cc: Optional[str] = None,
-        attachments: Optional[Union[str, List[str]]] = None,
+        cc: str | None = None,
+        attachments: str | list[str] | None = None,
     ) -> str:
         """
         Send an email immediately. to and cc are comma separated string of email ids
@@ -496,8 +496,8 @@ class GmailTools(Toolkit):
         to: str,
         subject: str,
         body: str,
-        cc: Optional[str] = None,
-        attachments: Optional[Union[str, List[str]]] = None,
+        cc: str | None = None,
+        attachments: str | list[str] | None = None,
     ) -> str:
         """
         Respond to an existing email thread.
@@ -565,7 +565,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails with query '{query}': {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails with query '{query}': {type(error).__name__}: {error}"
 
     def _validate_email_params(self, to: str, subject: str, body: str) -> None:
@@ -586,18 +586,18 @@ class GmailTools(Toolkit):
 
     def _create_message(
         self,
-        to: List[str],
+        to: list[str],
         subject: str,
         body: str,
-        cc: Optional[List[str]] = None,
-        thread_id: Optional[str] = None,
-        message_id: Optional[str] = None,
-        attachments: Optional[List[str]] = None,
+        cc: list[str] | None = None,
+        thread_id: str | None = None,
+        message_id: str | None = None,
+        attachments: list[str] | None = None,
     ) -> dict:
         body = body.replace("\\n", "\n")
 
         # Create multipart message if attachments exist, otherwise simple text message
-        message: Union[MIMEMultipart, MIMEText]
+        message: MIMEMultipart | MIMEText
         if attachments:
             message = MIMEMultipart()
 
@@ -649,7 +649,7 @@ class GmailTools(Toolkit):
 
         return email_data
 
-    def _get_message_details(self, messages: List[dict]) -> List[dict]:
+    def _get_message_details(self, messages: list[dict]) -> list[dict]:
         """Get details for list of messages"""
         details = []
         for msg in messages:

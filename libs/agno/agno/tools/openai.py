@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -51,7 +53,7 @@ class OpenAITools(Toolkit):
         self.image_style = image_style
         self.image_size = image_size
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if enable_transcription:
             tools.append(self.transcribe_audio)
         if enable_image_generation:
@@ -68,16 +70,15 @@ class OpenAITools(Toolkit):
         """
         log_debug(f"Transcribing audio from {audio_path}")
         try:
-            audio_file = open(audio_path, "rb")
-
-            transcript = OpenAIClient().audio.transcriptions.create(
-                model=self.transcription_model,
-                file=audio_file,
-                response_format="text",
-            )
+            with open(audio_path, "rb") as audio_file:
+                transcript = OpenAIClient().audio.transcriptions.create(
+                    model=self.transcription_model,
+                    file=audio_file,
+                    response_format="text",
+                )
         except Exception as e:  # type: ignore[return]
-            log_error(f"Failed to transcribe audio: {str(e)}")
-            return f"Failed to transcribe audio: {str(e)}"
+            log_error(f"Failed to transcribe audio: {e!s}")
+            return f"Failed to transcribe audio: {e!s}"
 
         log_debug(f"Transcript: {transcript}")
         return transcript  # type: ignore[return-value]
@@ -133,7 +134,7 @@ class OpenAITools(Toolkit):
                 )
                 return "Image generated successfully."
             return "Failed to generate image: No content received from API."
-        except Exception as e:
+        except Exception as e:  # type: ignore[return]
             log_error(f"Failed to generate image using {self.image_model}: {e}")
             return f"Failed to generate image: {e}"
 
@@ -171,5 +172,5 @@ class OpenAITools(Toolkit):
                 )
             )
             return f"Speech generated successfully with ID: {media_id}"
-        except Exception as e:
-            return f"Failed to generate speech: {str(e)}"
+        except Exception as e:  # type: ignore[return]
+            return f"Failed to generate speech: {e!s}"
