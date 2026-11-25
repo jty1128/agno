@@ -26,37 +26,43 @@ def mock_session():
 @pytest.fixture
 def agent_storage(mock_engine, mock_session):
     """Create a PostgresStorage instance for agent mode with mocked components."""
-    with patch("agno.storage.postgres.scoped_session", return_value=mock_session[0]):
-        with patch("agno.storage.postgres.inspect", return_value=MagicMock()):
-            storage = PostgresStorage(table_name="agent_sessions", schema="ai", db_engine=mock_engine, mode="agent")
-            # Mock table_exists to return True
-            storage.table_exists = MagicMock(return_value=True)
-            return storage, mock_session[1]
+    with (
+        patch("agno.storage.postgres.scoped_session", return_value=mock_session[0]),
+        patch("agno.storage.postgres.inspect", return_value=MagicMock()),
+    ):
+        storage = PostgresStorage(table_name="agent_sessions", schema="ai", db_engine=mock_engine, mode="agent")
+        # Mock table_exists to return True
+        storage.table_exists = MagicMock(return_value=True)
+        return storage, mock_session[1]
 
 
 @pytest.fixture
 def workflow_storage(mock_engine, mock_session):
     """Create a PostgresStorage instance for workflow mode with mocked components."""
-    with patch("agno.storage.postgres.scoped_session", return_value=mock_session[0]):
-        with patch("agno.storage.postgres.inspect", return_value=MagicMock()):
-            storage = PostgresStorage(
-                table_name="workflow_sessions", schema="ai", db_engine=mock_engine, mode="workflow"
-            )
-            # Mock table_exists to return True
-            storage.table_exists = MagicMock(return_value=True)
-            return storage, mock_session[1]
+    with (
+        patch("agno.storage.postgres.scoped_session", return_value=mock_session[0]),
+        patch("agno.storage.postgres.inspect", return_value=MagicMock()),
+    ):
+        storage = PostgresStorage(
+            table_name="workflow_sessions", schema="ai", db_engine=mock_engine, mode="workflow"
+        )
+        # Mock table_exists to return True
+        storage.table_exists = MagicMock(return_value=True)
+        return storage, mock_session[1]
 
 
 def test_agent_storage_initialization():
     """Test PostgresStorage initialization with different parameters."""
     # Test with db_url
-    with patch("agno.storage.postgres.create_engine") as mock_create_engine:
-        with patch("agno.storage.postgres.scoped_session"):
-            with patch("agno.storage.postgres.inspect"):
-                mock_engine = MagicMock()
-                mock_create_engine.return_value = mock_engine
+    with (
+        patch("agno.storage.postgres.create_engine") as mock_create_engine,
+        patch("agno.storage.postgres.scoped_session"),
+        patch("agno.storage.postgres.inspect"),
+    ):
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+        storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
 
                 mock_create_engine.assert_called_once_with("postgresql://user:pass@localhost/db")
                 assert storage.table_name == "test_table"
@@ -70,7 +76,7 @@ def test_agent_storage_initialization():
 
 def test_agent_storage_crud(agent_storage):
     """Test CRUD operations for agent storage."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Create a test session
     session = AgentSession(
@@ -112,7 +118,7 @@ def test_agent_storage_crud(agent_storage):
 
 def test_workflow_storage_crud(workflow_storage):
     """Test CRUD operations for workflow storage."""
-    storage, mock_session = workflow_storage
+    storage, _ = workflow_storage
 
     # Create a test session
     session = WorkflowSession(
@@ -153,7 +159,7 @@ def test_workflow_storage_crud(workflow_storage):
 
 def test_get_all_sessions(agent_storage):
     """Test retrieving all sessions."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Create mock sessions
     sessions = [
@@ -199,7 +205,7 @@ def test_get_all_sessions(agent_storage):
 
 def test_get_all_session_ids(agent_storage):
     """Test retrieving all session IDs."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Mock the fetchall result
     mock_result = MagicMock()
@@ -213,7 +219,7 @@ def test_get_all_session_ids(agent_storage):
 
 def test_table_exists(agent_storage):
     """Test the table_exists method."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Test when table exists
     mock_scalar = MagicMock(return_value=1)
@@ -233,7 +239,7 @@ def test_table_exists(agent_storage):
 
 def test_create_table(agent_storage):
     """Test table creation."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Reset the mocked table_exists
     storage.table_exists = MagicMock(return_value=False)
@@ -247,7 +253,7 @@ def test_create_table(agent_storage):
 
 def test_drop_table(agent_storage):
     """Test dropping a table."""
-    storage, mock_session = agent_storage
+    storage, _ = agent_storage
 
     # Mock table_exists to return True
     storage.table_exists = MagicMock(return_value=True)
@@ -260,15 +266,14 @@ def test_drop_table(agent_storage):
 
 def test_mode_switching():
     """Test switching between agent and workflow modes."""
-    with patch("agno.storage.postgres.scoped_session"):
-        with patch("agno.storage.postgres.inspect"):
-            with patch("agno.storage.postgres.create_engine"):
-                # Create storage in agent mode
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
-                assert storage.mode == "agent"
+    with patch("agno.storage.postgres.scoped_session"), patch("agno.storage.postgres.inspect"):
+        with patch("agno.storage.postgres.create_engine"):
+            # Create storage in agent mode
+            storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+            assert storage.mode == "agent"
 
-                # Switch to workflow mode
-                with patch.object(storage, "get_table") as mock_get_table:
-                    storage.mode = "workflow"
-                    assert storage.mode == "workflow"
-                    mock_get_table.assert_called_once()
+            # Switch to workflow mode
+            with patch.object(storage, "get_table") as mock_get_table:
+                storage.mode = "workflow"
+                assert storage.mode == "workflow"
+                mock_get_table.assert_called_once()

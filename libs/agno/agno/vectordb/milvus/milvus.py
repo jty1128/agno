@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     import asyncio
 
     from pymilvus import AsyncMilvusClient, MilvusClient  # type: ignore
-except ImportError:
-    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
+except ImportError as e:
+    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.") from e
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -71,15 +73,15 @@ class Milvus(VectorDb):
             embedder = OpenAIEmbedder()
             log_info("Embedder not provided, using OpenAIEmbedder as default.")
         self.embedder: Embedder = embedder
-        self.dimensions: Optional[int] = self.embedder.dimensions
+        self.dimensions: int | None = self.embedder.dimensions
 
         self.distance: Distance = distance
         self.uri: str = uri
-        self.token: Optional[str] = token
-        self._client: Optional[MilvusClient] = None
-        self._async_client: Optional[AsyncMilvusClient] = None
+        self.token: str | None = token
+        self._client: MilvusClient | None = None
+        self._async_client: AsyncMilvusClient | None = None
         self.search_type: SearchType = search_type
-        self.reranker: Optional[Reranker] = reranker
+        self.reranker: Reranker | None = reranker
         self.sparse_vector_dimensions = sparse_vector_dimensions
         self.kwargs = kwargs
 
@@ -105,7 +107,7 @@ class Milvus(VectorDb):
             )
         return self._async_client
 
-    def _get_sparse_vector(self, text: str) -> Dict[int, float]:
+    def _get_sparse_vector(self, text: str) -> dict[int, float]:
         """
         Convert text into a sparse vector representation using a simple TF-IDF-like scoring.
 
@@ -193,7 +195,7 @@ class Milvus(VectorDb):
 
     def _prepare_document_data(
         self, document: Document, include_vectors: bool = True
-    ) -> Dict[str, Union[str, List[float], Dict[int, float], None]]:
+    ) -> dict[str, str | list[float] | dict[int, float] | None]:
         """
         Prepare document data for insertion.
 
@@ -218,7 +220,7 @@ class Milvus(VectorDb):
         meta_data_str = json.dumps(document.meta_data) if document.meta_data else "{}"
         usage_str = json.dumps(document.usage) if document.usage else "{}"
 
-        data: Dict[str, Union[str, List[float], Dict[int, float], None]] = {
+        data: dict[str, str | list[float] | dict[int, float] | None] = {
             "id": doc_id,
             "text": cleaned_content,
             "name": document.name,
@@ -231,12 +233,12 @@ class Milvus(VectorDb):
             if self.search_type == SearchType.hybrid:
                 data.update(
                     {
-                        "dense_vector": document.embedding,  # List[float] or None # Dict[int, float]
+                        "dense_vector": document.embedding,  # list[float] or None # dict[int, float]
                         "sparse_vector": self._get_sparse_vector(cleaned_content),
                     }
                 )
             else:
-                vector_data: Optional[List[float]] = document.embedding
+                vector_data: list[float] | None = document.embedding
                 data["vector"] = vector_data
 
         return data
@@ -722,7 +724,7 @@ class Milvus(VectorDb):
         return self.client.has_collection(self.collection)
 
     def get_count(self) -> int:
-        return self.client.get_collection_stats(collection_name="test_collection")["row_count"]
+        return self.client.get_collection_stats(collection_name=self.collection)["row_count"]
 
     def delete(self) -> bool:
         if self.client:
@@ -755,7 +757,7 @@ class Milvus(VectorDb):
                 expr = f'meta_data["{k}"] is null'
             else:
                 # For other types, convert to string
-                expr = f'meta_data["{k}"] == "{str(v)}"'
+                expr = f'meta_data["{k}"] == "{v!s}"'
 
             expressions.append(expr)
 

@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 try:
     from upstash_vector import Index, Vector
@@ -104,7 +106,7 @@ class UpstashVectorDb(VectorDb):
             self.index.info()
             return True
         except Exception as e:
-            logger.error(f"Error checking index existence: {str(e)}")
+            logger.error(f"Error checking index existence: {e!s}")
             return False
 
     def create(self) -> None:
@@ -112,14 +114,12 @@ class UpstashVectorDb(VectorDb):
         logger.warning(
             "Indexes can only be created through the Upstash Console or the developer API. Please create an index before using this vector database."
         )
-        pass
 
     def drop(self) -> None:
         """You can drop indexes via Upstash Console."""
         logger.warning(
             "Indexes can only be dropped through the Upstash Console. Make sure you have an existing index before performing operations."
         )
-        pass
 
     def drop_namespace(self, namespace: Optional[str] = None) -> None:
         """Delete a namespace from the index.
@@ -161,8 +161,9 @@ class UpstashVectorDb(VectorDb):
             bool: True if the index exists, False otherwise. (Name is not used.)
         """
         logger.warning(
-            f"You can check if an index with name {name} exists in Upstash Console."
-            "The token and url parameters you provided are used to connect to a specific index."
+            "You can check if an index with name %s exists in Upstash Console."
+            "The token and url parameters you provided are used to connect to a specific index.",
+            name,
         )
         return self.exists()
 
@@ -191,7 +192,7 @@ class UpstashVectorDb(VectorDb):
 
         for document in documents:
             if document.id is None:
-                logger.error(f"Document ID must not be None. Skipping document: {document.content[:100]}...")
+                logger.error("Document ID must not be None. Skipping document: %s...", document.content[:100])
                 continue
 
             document.meta_data["text"] = document.content
@@ -203,7 +204,7 @@ class UpstashVectorDb(VectorDb):
 
                 document.embed(embedder=self.embedder)
                 if document.embedding is None:
-                    logger.error(f"Failed to generate embedding for document: {document.id}")
+                    logger.error("Failed to generate embedding for document: %s", document.id)
                     continue
 
                 vector = Vector(
@@ -315,7 +316,7 @@ class UpstashVectorDb(VectorDb):
         """
         _namespace = self.namespace if namespace is None else namespace
         response = self.index.reset(namespace=_namespace, all=delete_all)
-        return True if response.lower().strip() == "success" else False
+        return response.lower().strip() == "success"
 
     def get_index_info(self) -> InfoResult:
         """Get information about the index.
@@ -328,7 +329,6 @@ class UpstashVectorDb(VectorDb):
         """Optimize the index.
         This method is empty as Upstash automatically optimizes indexes.
         """
-        pass
 
     async def async_name_exists(self, name: str) -> bool:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")

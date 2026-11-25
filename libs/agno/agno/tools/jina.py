@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Dict, Optional
+from typing import Optional
 
 import httpx
 from pydantic import BaseModel, Field, HttpUrl
@@ -52,8 +54,8 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error reading URL: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error reading URL: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -66,8 +68,8 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error performing search: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error performing search: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -80,7 +82,7 @@ class JinaReaderTools(Toolkit):
         if self.config.api_key:
             headers["Authorization"] = f"Bearer {self.config.api_key}"
         if self.config.timeout:
-            headers["X-Timeout"] = str(self.config.timeout)
+            headers["X-Timeout"] = f"{self.config.timeout!s}"
 
         return headers
 

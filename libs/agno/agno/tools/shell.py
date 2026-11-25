@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Union
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -15,11 +17,11 @@ class ShellTools(Toolkit):
 
         self.register(self.run_shell_command)
 
-    def run_shell_command(self, args: List[str], tail: int = 100) -> str:
+    def run_shell_command(self, args: list[str], tail: int = 100) -> str:
         """Runs a shell command and returns the output or error.
 
         Args:
-            args (List[str]): The command to run as a list of strings.
+            args (list[str]): The command to run as a list of strings.
             tail (int): The number of lines to return from the output.
 
         Returns:
@@ -33,6 +35,7 @@ class ShellTools(Toolkit):
                 args,
                 capture_output=True,
                 text=True,
+                check=True,
                 cwd=str(self.base_dir) if self.base_dir else None,
             )
             log_debug(f"Result: {result}")
@@ -40,6 +43,9 @@ class ShellTools(Toolkit):
             if result.returncode != 0:
                 return f"Error: {result.stderr}"
             return "\n".join(result.stdout.split("\n")[-tail:])
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"Failed to run shell command: {e}")
+            return f"Error: {e.stderr}"
+        except subprocess.SubprocessError as e:
             logger.warning(f"Failed to run shell command: {e}")
             return f"Error: {e}"

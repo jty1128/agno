@@ -2,7 +2,7 @@ from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 try:
-    from qdrant_client import AsyncQdrantClient, QdrantClient  # noqa: F401
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.http import models
 except ImportError:
     raise ImportError(
@@ -373,7 +373,7 @@ class Qdrant(VectorDb):
         try:
             # Execute search with parameters
             results = self.client.search(**search_params)  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -444,7 +444,7 @@ class Qdrant(VectorDb):
         try:
             # Execute search with parameters
             results = await self.async_client.search(**search_params)  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 

@@ -122,7 +122,7 @@ class LanceDb(VectorDb):
                 import tantivy  # noqa: F401
             except ImportError:
                 raise ImportError(
-                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."  # noqa: E501
+                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."
                 )
 
         log_debug(f"Initialized LanceDb with table: '{self.table_name}'")
@@ -184,8 +184,9 @@ class LanceDb(VectorDb):
                 doc_id = md5(cleaned_content.encode()).hexdigest()
                 result = self.table.search().where(f"{self._id}='{doc_id}'").to_arrow()
                 return len(result) > 0
-        except Exception:
+        except Exception as e:
             # Search sometimes fails with stale cache data, it means the doc doesn't exist
+            logger.debug(f"Error checking document existence: {e}")
             return False
 
         return False
@@ -534,7 +535,7 @@ class LanceDb(VectorDb):
                     )
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building search results: {e}")
 
         return search_results
@@ -592,7 +593,7 @@ class LanceDb(VectorDb):
 
             # Check if the name exists in any of the payloads
             return any(payload.get("name") == name for payload in payloads)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking name existence: {e}")
             return False
 
