@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import chess
 import streamlit as st
@@ -383,14 +382,14 @@ class SimpleChessBoard:
         return "\n".join(html_output)
 
     def update_position(
-        self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]
+        self, from_pos: tuple[int, int], to_pos: tuple[int, int]
     ) -> None:
         """Updates the board with a new move"""
         piece = self.board[from_pos[0]][from_pos[1]]
         self.board[from_pos[0]][from_pos[1]] = "."
         self.board[to_pos[0]][to_pos[1]] = piece
 
-    def is_valid_position(self, pos: Tuple[int, int]) -> bool:
+    def is_valid_position(self, pos: tuple[int, int]) -> bool:
         """Checks if a position is within the board boundaries"""
         return 0 <= pos[0] < 8 and 0 <= pos[1] < 8
 
@@ -445,7 +444,7 @@ class SimpleChessBoard:
         }
         return piece_names.get(piece, "Unknown")
 
-    def get_piece_at_position(self, pos: Tuple[int, int]) -> str:
+    def get_piece_at_position(self, pos: tuple[int, int]) -> str:
         """Returns the piece at the given position"""
         return self.board[pos[0]][pos[1]]
 
@@ -456,7 +455,7 @@ class ChessBoard:
         self.current_color = WHITE
         self.move_history = []
 
-    def make_move(self, move_str: str) -> Tuple[bool, str]:
+    def make_move(self, move_str: str) -> tuple[bool, str]:
         """
         Make a move on the board using python-chess for validation.
 
@@ -483,7 +482,7 @@ class ChessBoard:
         except ValueError:
             return False, f"Invalid move format: {move_str}. Use format like 'e2e4'."
         except Exception as e:
-            return False, f"Error making move: {str(e)}"
+            return False, f"Error making move: {e!s}"
 
     def get_board_state(self) -> str:
         """
@@ -503,7 +502,7 @@ class ChessBoard:
         """
         return self.board.fen()
 
-    def get_legal_moves(self, color: str = None) -> List[str]:
+    def get_legal_moves(self, color: str | None = None) -> list[str]:
         """
         Get all legal moves for the current player or specified color.
 
@@ -531,12 +530,12 @@ class ChessBoard:
         """
         return self.board.is_game_over()
 
-    def get_game_state(self) -> Tuple[bool, Dict]:
+    def get_game_state(self) -> tuple[bool, dict]:
         """
         Get the current game state.
 
         Returns:
-            Tuple[bool, Dict]: (is_game_over, state_info)
+            tuple[bool, dict]: (is_game_over, state_info)
         """
         is_game_over = self.board.is_game_over()
 
@@ -684,7 +683,7 @@ def display_move_history(move_history):
             if i < len(move_history):
                 try:
                     board.push(chess.Move.from_uci(move_history[i]["move"]))
-                except (chess.InvalidMoveError, ValueError) as e:
+                except (chess.InvalidMoveError, ValueError):
                     continue
 
         # Get the current move's from and to squares
@@ -773,8 +772,6 @@ def parse_move(move_text: str) -> str:
         return move_text
 
     # Try to extract the move from text
-    import re
-
     move_match = re.search(r"([a-h][1-8][a-h][1-8])", move_text)
     if move_match:
         return move_match.group(1)

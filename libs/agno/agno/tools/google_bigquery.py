@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -57,7 +59,7 @@ class GoogleBigQueryTools(Toolkit):
             tables_str = str([table.table_id for table in tables])
             log_debug(f"table_names: {tables_str}")
             return tables_str
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting tables: {e}")
             return f"Error getting tables: {e}"
 
@@ -77,7 +79,7 @@ class GoogleBigQueryTools(Toolkit):
             col_names = str([column["name"] for column in table_api_repr["schema"]["fields"]])  # Columns in a table
             result = json.dumps({"table_description": desc, "columns": col_names})
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting table schema: {e}")
             return f"Error getting table schema: {e}"
 
@@ -92,7 +94,7 @@ class GoogleBigQueryTools(Toolkit):
         """
         try:
             return json.dumps(self._run_sql(sql=query), default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error running query: {e}")
             return f"Error running query: {e}"
 
@@ -110,6 +112,6 @@ class GoogleBigQueryTools(Toolkit):
             results = query_job.result()
             results_str = str([dict(row) for row in results])
             return results_str.replace("\\", "").replace("\n", "")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error while executing SQL: {e}")
             return ""

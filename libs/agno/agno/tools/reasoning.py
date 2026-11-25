@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 from agno.agent import Agent
 from agno.reasoning.step import NextAction, ReasoningStep
@@ -31,7 +31,7 @@ class ReasoningTools(Toolkit):
                     self.instructions += "\n" + self.FEW_SHOT_EXAMPLES
             self.instructions += "\n</reasoning_instructions>\n"
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if think:
             tools.append(self.think)
         if analyze:
@@ -97,7 +97,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, TypeError) as e:
             log_error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"
 
@@ -165,7 +165,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, TypeError) as e:
             log_error(f"Error recording analysis: {e}")
             return f"Error recording analysis: {e}"
 

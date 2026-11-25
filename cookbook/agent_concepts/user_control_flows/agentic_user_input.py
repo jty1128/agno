@@ -4,7 +4,7 @@ This example shows how to use the UserControlFlowTools to allow the agent to get
 If the agent doesn't have enough information to complete a task, it will use the toolkit to get the information it needs from the user.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
@@ -51,7 +51,7 @@ agent = Agent(
 run_response = agent.run("Send an email with the body 'What is the weather in Tokyo?'")
 while run_response.is_paused:
     for tool in run_response.tools_requiring_user_input:
-        input_schema: Dict[str, Any] = tool.user_input_schema
+        input_schema: dict[str, Any] = tool.user_input_schema
 
         for field in input_schema:
             # Get user input for each field in the schema

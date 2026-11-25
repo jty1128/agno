@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -60,7 +62,7 @@ class BrowserbaseTools(Toolkit):
         self._session = None
         self._connect_url = None
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.navigate_to)
         tools.append(self.screenshot)
         tools.append(self.get_page_content)
@@ -77,7 +79,7 @@ class BrowserbaseTools(Toolkit):
                 if self._session:
                     log_debug(f"Created new session with ID: {self._session.id}")
             except Exception as e:
-                logger.error(f"Failed to create session: {str(e)}")
+                logger.error(f"Failed to create session: {e!s}")
                 raise
 
     def _initialize_browser(self, connect_url: Optional[str] = None):
@@ -92,8 +94,7 @@ class BrowserbaseTools(Toolkit):
 
         if not self._playwright:
             self._playwright = sync_playwright().start()  # type: ignore
-            if self._playwright:
-                self._browser = self._playwright.chromium.connect_over_cdp(self._connect_url)
+            self._browser = self._playwright.chromium.connect_over_cdp(self._connect_url)
             context = self._browser.contexts[0] if self._browser else ""
             self._page = context.pages[0] or context.new_page()  # type: ignore
 
@@ -107,7 +108,7 @@ class BrowserbaseTools(Toolkit):
             self._playwright = None
         self._page = None
 
-    def _create_session(self) -> Dict[str, str]:
+    def _create_session(self) -> dict[str, str]:
         """Creates a new browser session.
 
         Returns:
@@ -197,4 +198,4 @@ class BrowserbaseTools(Toolkit):
                 }
             )
         except Exception as e:
-            return json.dumps({"status": "warning", "message": f"Cleanup completed with warning: {str(e)}"})
+            return json.dumps({"status": "warning", "message": f"Cleanup completed with warning: {e!s}"})

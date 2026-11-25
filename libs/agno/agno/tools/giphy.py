@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 import uuid
-from typing import Any, List, Optional, Union
+from typing import Any, Optional
 
 import httpx
 
@@ -31,12 +33,12 @@ class GiphyTools(Toolkit):
 
         self.limit: int = limit
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.search_gifs)
 
         super().__init__(name="giphy_tools", tools=tools, **kwargs)
 
-    def search_gifs(self, agent: Union[Agent, Team], query: str) -> str:
+    def search_gifs(self, agent: Agent | Team, query: str) -> str:
         """Find a GIPHY gif
 
         Args:
@@ -75,7 +77,7 @@ class GiphyTools(Toolkit):
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
-        except Exception as e:
+        except httpx.HTTPError as e:
             logger.error(f"An error occurred: {e}")
 
         return "No gifs found"

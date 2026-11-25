@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 
@@ -44,7 +46,7 @@ class FinancialDatasetsTools(Toolkit):
 
         self.base_url = "https://api.financialdatasets.ai"
 
-        tools: List[Any] = []
+        tools: list[Any] = []
 
         if enable_financial_statements:
             tools.extend(
@@ -73,7 +75,7 @@ class FinancialDatasetsTools(Toolkit):
 
         super().__init__(name="financial_datasets_tools", tools=tools, **kwargs)
 
-    def _make_request(self, endpoint: str, params: Dict[str, Any]) -> str:
+    def _make_request(self, endpoint: str, params: dict[str, Any]) -> str:
         """
         Makes a request to the Financial Datasets API.
 
@@ -96,8 +98,8 @@ class FinancialDatasetsTools(Toolkit):
             response.raise_for_status()
             return response.text
         except requests.exceptions.RequestException as e:
-            log_error(f"Error making request to {url}: {str(e)}")
-            return f"Error making request to {url}: {str(e)}"
+            log_error(f"Error making request to {url}: {e!s}")
+            return f"Error making request to {url}: {e!s}"
 
     # Financial Statements
     def get_income_statements(self, ticker: str, period: str = "annual", limit: int = 10) -> str:
@@ -240,7 +242,7 @@ class FinancialDatasetsTools(Toolkit):
         Returns:
             Dictionary containing news items
         """
-        params: Dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if ticker:
             params["ticker"] = ticker
         return self._make_request("news", params)

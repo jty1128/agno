@@ -185,12 +185,12 @@ def test_tool_call_multiple_requires_user_input():
 
     assert response.is_paused
     tool_found = False
-    for _t in response.tools:
-        if _t.requires_user_input:
+    for tool in response.tools:
+        if tool.requires_user_input:
             tool_found = True
-            assert _t.tool_name == "get_the_weather"
-            assert _t.tool_args == {"city": "Tokyo"}
-            _t.user_input_schema[0].value = "Tokyo"
+            assert tool.tool_name == "get_the_weather"
+            assert tool.tool_args == {"city": "Tokyo"}
+            tool.user_input_schema[0].value = "Tokyo"
 
     assert tool_found, "No tool was found to require user input"
 

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 from base64 import b64encode
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -81,7 +83,7 @@ class CartesiaTools(Toolkit):
                         continue
 
             return json.dumps(filtered_result, indent=4)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error listing voices from Cartesia: {e}", exc_info=True)
             return json.dumps({"error": str(e), "detail": "Error occurred in list_voices function."})
 
@@ -91,7 +93,7 @@ class CartesiaTools(Toolkit):
         description: str,
         language: str,
         original_speaker_gender: str,
-        voice_id: Optional[str] = None,
+        voice_id: str | None = None,
     ) -> str:
         """Create a new voice localized to a different language.
 
@@ -122,15 +124,15 @@ class CartesiaTools(Toolkit):
             else:
                 return result.model_dump_json(indent=4)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error localizing voice with Cartesia: {e}", exc_info=True)
             return json.dumps({"error": str(e), "type": type(e).__name__})
 
     def text_to_speech(
         self,
-        agent: Union[Agent, Team],
+        agent: Agent | Team,
         transcript: str,
-        voice_id: Optional[str] = None,
+        voice_id: str | None = None,
     ) -> str:
         """
         Convert text to speechß.
@@ -159,7 +161,7 @@ class CartesiaTools(Toolkit):
                 "encoding": "mp3",
             }
 
-            params: Dict[str, Any] = {
+            params: dict[str, Any] = {
                 "model_id": self.model_id,
                 "transcript": transcript,
                 "voice": {"mode": "id", "id": effective_voice_id},
@@ -179,6 +181,6 @@ class CartesiaTools(Toolkit):
 
             return "Audio generated and attached successfully."
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error generating speech with Cartesia: {e}", exc_info=True)
             return f"Error generating speech: {e}"

@@ -7,8 +7,8 @@ try:
     from mcp import ClientSession
     from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
     from mcp.types import Tool as MCPTool
-except (ImportError, ModuleNotFoundError):
-    raise ImportError("`mcp` not installed. Please install using `pip install mcp`")
+except ImportError as e:
+    raise ImportError("`mcp` not installed. Please install using `pip install mcp`") from e
 
 
 from agno.media import ImageArtifact
@@ -34,7 +34,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
 
             # Return an error if the tool call failed
             if result.isError:
-                raise Exception(f"Error from MCP tool '{tool_name}': {result.content}")
+                raise RuntimeError(f"Error from MCP tool '{tool_name}': {result.content}")
 
             # Process the result content
             response_str = ""

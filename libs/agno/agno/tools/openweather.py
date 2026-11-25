@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -44,7 +46,7 @@ class OpenWeatherTools(Toolkit):
         self.base_url = "https://api.openweathermap.org/data/2.5"
         self.geo_url = "https://api.openweathermap.org/geo/1.0"
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if current_weather:
             tools.append(self.get_current_weather)
         if forecast:
@@ -56,15 +58,15 @@ class OpenWeatherTools(Toolkit):
 
         super().__init__(name="openweather_tools", tools=tools, **kwargs)
 
-    def _make_request(self, url: str, params: Dict) -> Dict:
+    def _make_request(self, url: str, params: dict) -> dict:
         """Make a request to the OpenWeatherMap API.
 
         Args:
             url (str): The API endpoint URL.
-            params (Dict): Query parameters for the request.
+            params (dict): Query parameters for the request.
 
         Returns:
-            Dict: The JSON response from the API.
+            dict: The JSON response from the API.
         """
         try:
             params["appid"] = self.api_key

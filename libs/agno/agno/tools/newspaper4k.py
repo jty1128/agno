@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -31,7 +33,7 @@ class Newspaper4kTools(Toolkit):
 
         super().__init__(name="newspaper4k_tools", tools=tools, **kwargs)
 
-    def get_article_data(self, url: str) -> Optional[Dict[str, Any]]:
+    def get_article_data(self, url: str) -> dict[str, Any] | None:
         """Read and get article data from a URL.
 
         Args:
@@ -56,8 +58,8 @@ class Newspaper4kTools(Toolkit):
             try:
                 if article.publish_date:
                     article_data["publish_date"] = article.publish_date.isoformat() if article.publish_date else None
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error parsing publish date for article from {url}: {e}")
 
             return article_data
         except Exception as e:
@@ -84,5 +86,5 @@ class Newspaper4kTools(Toolkit):
                 article_data["text"] = article_data["text"][: self.article_length]
 
             return json.dumps(article_data, indent=2)
-        except Exception as e:
+        except ValueError as e:
             return f"Error reading article from {url}: {e}"

@@ -1,5 +1,5 @@
 from os import getenv
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -50,7 +50,7 @@ class DalleTools(Toolkit):
         if not self.api_key:
             logger.error("OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.")
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.create_image)
 
         super().__init__(name="dalle", tools=tools, **kwargs)
@@ -97,6 +97,6 @@ class DalleTools(Toolkit):
                         )
                         response_str += f"Image has been generated at the URL {img.url}\n"
             return response_str or "No images were generated"
-        except Exception as e:
-            logger.error(f"Failed to generate image: {e}")
-            return f"Error: {e}"
+        except Exception:
+            logger.error("Failed to generate image")
+            return "Error: Failed to generate image"

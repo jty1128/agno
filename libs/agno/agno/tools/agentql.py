@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info
@@ -63,9 +65,9 @@ class AgentQLTools(Toolkit):
                         deduplicated = list(set(text_items))
                         return " ".join(deduplicated)
 
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     return f"Error extracting text: {e}"
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             return f"Error launching browser: {e}"
 
         return "No text content found"
@@ -103,9 +105,9 @@ class AgentQLTools(Toolkit):
                         deduplicated = list(set(text_items))
                         return " ".join(deduplicated)
 
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     return f"Error extracting text: {e}"
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             return f"Error launching browser: {e}"
 
         return "No text content found"

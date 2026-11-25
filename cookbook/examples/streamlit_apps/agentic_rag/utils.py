@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 import streamlit as st
 from agentic_rag import get_agentic_rag_agent
@@ -7,7 +9,7 @@ from agno.utils.log import logger
 
 
 def add_message(
-    role: str, content: str, tool_calls: Optional[List[Dict[str, Any]]] = None
+    role: str, content: str, tool_calls: list[dict[str, Any]] | None = None
 ) -> None:
     """Safely add a message to the session state"""
     if "messages" not in st.session_state or not isinstance(
@@ -80,7 +82,7 @@ def display_tool_calls(tool_calls_container, tools):
                         args_dict = json.loads(_tool_args)
                         st.markdown("**Arguments:**")
                         st.json(args_dict)
-                    except:
+                    except json.JSONDecodeError:
                         # If not valid JSON, display as string
                         st.markdown("**Arguments:**")
                         st.markdown(f"```\n{_tool_args}\n```")
@@ -96,7 +98,7 @@ def display_tool_calls(tool_calls_container, tools):
                     else:
                         try:
                             st.json(_content)
-                        except Exception:
+                        except TypeError:
                             st.markdown(_content)
 
                 if _metrics:
@@ -237,7 +239,7 @@ def session_selector_widget(agent: Agent, model_id: str) -> None:
                                     seen_messages.add(msg_id)
                                     add_message("user", user_msg)
 
-                                if "content" in run and run["content"]:
+                                if run.get("content"):
                                     asst_msg = run["content"]
                                     msg_id = f"assistant:{asst_msg}"
 
@@ -249,8 +251,8 @@ def session_selector_widget(agent: Agent, model_id: str) -> None:
 
                     st.rerun()
                 except Exception as e:
-                    logger.error(f"Error switching sessions: {str(e)}")
-                    st.sidebar.error(f"Error loading session: {str(e)}")
+                    logger.error(f"Error switching sessions: {e!s}")
+                    st.sidebar.error(f"Error loading session: {e!s}")
         else:
             st.sidebar.info("No saved sessions available.")
 

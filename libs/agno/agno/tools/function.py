@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Literal, Optional, Type, TypeVar, get_type_hints
+from typing import Any, Callable, Literal, Optional, Type, TypeVar, get_type_hints
 
 from docstring_parser import parse
 from pydantic import BaseModel, Field, validate_call
@@ -49,10 +51,17 @@ class UserInputField:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserInputField":
+    def from_dict(cls, data: dict[str, Any]) -> UserInputField:
+        import builtins
+
+        builtin_types = {
+            attr: getattr(builtins, attr) for attr in dir(builtins) if isinstance(getattr(builtins, attr), type)
+        }
+        builtin_types.update({"None": type(None)})
+
         return cls(
             name=data["name"],
-            field_type=eval(data["field_type"]),  # Convert string type name to actual type
+            field_type=builtin_types.get(data["field_type"], str),  # Convert string type name to actual type
             description=data["description"],
             value=data["value"],
         )
@@ -131,7 +140,7 @@ class Function(BaseModel):
         )
 
     @classmethod
-    def from_callable(cls, c: Callable, strict: bool = False) -> "Function":
+    def from_callable(cls, c: Callable, strict: bool = False) -> Function:
         from inspect import getdoc, isasyncgenfunction, signature
 
         from agno.utils.json_schema import get_json_schema
@@ -189,7 +198,7 @@ class Function(BaseModel):
                 ]
 
             # log_debug(f"JSON schema for {function_name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {function_name}: {e}", exc_info=True)
 
         # Don't wrap async generator with validate_call
@@ -312,7 +321,7 @@ class Function(BaseModel):
             self.description = self.description or get_entrypoint_docstring(self.entrypoint)
 
             # log_debug(f"JSON schema for {self.name}: {parameters}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not parse args for {self.name}: {e}", exc_info=True)
 
         if not params_set_by_user:
@@ -322,14 +331,14 @@ class Function(BaseModel):
             # Don't wrap async generator with validate_call
             if not isasyncgenfunction(self.entrypoint):
                 self.entrypoint = validate_call(self.entrypoint, config=dict(arbitrary_types_allowed=True))  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to add validate decorator to entrypoint: {e}")
 
     def process_schema_for_strict(self):
         self.parameters["additionalProperties"] = False
         self.parameters["required"] = [name for name in self.parameters["properties"] if name not in ["agent", "team"]]
 
-    def _get_cache_key(self, entrypoint_args: Dict[str, Any], call_args: Optional[Dict[str, Any]] = None) -> str:
+    def _get_cache_key(self, entrypoint_args: dict[str, Any], call_args: Optional[dict[str, Any]] = None) -> str:
         """Generate a cache key based on function name and arguments."""
         from hashlib import md5
 
@@ -377,7 +386,7 @@ class Function(BaseModel):
 
             # Remove expired entry
             cache_path.unlink()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error reading cache: {e}")
 
         return None
@@ -390,7 +399,7 @@ class Function(BaseModel):
         try:
             with open(cache_file, "w") as f:
                 json.dump({"timestamp": time(), "result": result}, f)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error writing cache: {e}")
 
 
@@ -460,7 +469,7 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in pre-hook callback: {e}")
                 log_exception(e)
 
@@ -485,11 +494,11 @@ class FunctionCall(BaseModel):
                 log_debug(f"{e.__class__.__name__}: {e}")
                 self.error = str(e)
                 raise
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
-    def _build_entrypoint_args(self) -> Dict[str, Any]:
+    def _build_entrypoint_args(self) -> dict[str, Any]:
         """Builds the arguments for the entrypoint."""
         from inspect import signature
 
@@ -505,7 +514,7 @@ class FunctionCall(BaseModel):
             entrypoint_args["fc"] = self
         return entrypoint_args
 
-    def _build_nested_execution_chain(self, entrypoint_args: Dict[str, Any]):
+    def _build_nested_execution_chain(self, entrypoint_args: dict[str, Any]):
         """Build a nested chain of hook executions with the entrypoint at the center.
 
         This creates a chain where each hook wraps the next one, with the function call
@@ -603,7 +612,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)
@@ -666,7 +675,7 @@ class FunctionCall(BaseModel):
                 log_warning(f"Error in post-hook callback: {e}")
                 log_exception(e)
 
-    async def _build_nested_execution_chain_async(self, entrypoint_args: Dict[str, Any]):
+    async def _build_nested_execution_chain_async(self, entrypoint_args: dict[str, Any]):
         """Build a nested chain of async hook executions with the entrypoint at the center.
 
         Similar to _build_nested_execution_chain but for async execution.
@@ -786,7 +795,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
             self.error = str(e)

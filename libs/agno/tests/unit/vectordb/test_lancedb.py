@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import List
 
 import pytest
 
@@ -24,17 +23,14 @@ def lance_db(mock_embedder):
     db.create()
     yield db
 
-    try:
-        db.drop()
-    except Exception:
-        pass
+    db.drop()
 
     if os.path.exists(TEST_PATH):
         shutil.rmtree(TEST_PATH)
 
 
 @pytest.fixture
-def sample_documents() -> List[Document]:
+def sample_documents() -> list[Document]:
     """Fixture to create sample documents"""
     return [
         Document(

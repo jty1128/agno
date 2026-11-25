@@ -2,16 +2,11 @@
 Gemini Tutor: Advanced Educational AI Assistant powered by Gemini 2.5
 """
 
-import json
 import uuid
-from pathlib import Path
-from typing import Any, Dict, Optional
 
-from agno.agent import Agent, RunResponse
+from agno.agent import Agent
 from agno.models.google import Gemini
 from agno.models.message import Message
-from agno.tools.file import FileTools
-from agno.tools.googlesearch import GoogleSearchTools
 from agno.utils.log import logger
 
 # Import prompt templates
@@ -58,13 +53,13 @@ class TutorAppAgent:
         # Enable grounding if supported by the model
         if "gemini-2." in self.model_id or "gemini-1.5" in self.model_id:
             try:
-                setattr(gemini_model, "grounding", True)
+                gemini_model.grounding = True
                 logger.info("Enabled model grounding (google_search_retrieval)")
             except AttributeError:
                 logger.warning(
                     f"Model {self.model_id} does not support grounding attribute."
                 )
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Could not enable model grounding: {e}")
 
         # Format description and instructions directly

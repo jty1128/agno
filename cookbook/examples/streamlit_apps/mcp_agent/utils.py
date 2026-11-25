@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import streamlit as st
 from agents import get_mcp_agent
@@ -55,7 +56,7 @@ def get_num_history_responses() -> int:
     return num_history
 
 
-def get_mcp_server_config() -> Optional[MCPServerConfig]:
+def get_mcp_server_config() -> MCPServerConfig | None:
     """Get a single MCP server config to add to the agent.
 
     Returns:
@@ -107,7 +108,7 @@ def get_mcp_server_config() -> Optional[MCPServerConfig]:
 
 
 def add_message(
-    role: str, content: str, tool_calls: Optional[List[Dict[str, Any]]] = None
+    role: str, content: str, tool_calls: list[dict[str, Any]] | None = None
 ) -> None:
     """Safely add a message to the session state."""
     if "messages" not in st.session_state or not isinstance(
@@ -176,8 +177,8 @@ def display_tool_calls(tool_calls_container, tools):
                             st.markdown(content)
 
     except Exception as e:
-        logger.error(f"Error displaying tool calls: {str(e)}")
-        tool_calls_container.error(f"Failed to display tool results: {str(e)}")
+        logger.error(f"Error displaying tool calls: {e!s}")
+        tool_calls_container.error(f"Failed to display tool results: {e!s}")
 
 
 def example_inputs(server_id: str) -> None:
@@ -230,8 +231,8 @@ def session_selector_widget(
     agent: Agent,
     model_str: str,
     num_history_responses: int,
-    mcp_tools: List[MCPTools],
-    mcp_server_ids: List[str],
+    mcp_tools: list[MCPTools],
+    mcp_server_ids: list[str],
 ) -> None:
     """Display a session selector in the sidebar, if a new session is selected, the agent is restarted with the new session."""
 
@@ -318,7 +319,7 @@ def session_selector_widget(
                 if st.button("✎", key="edit_session_name"):
                     st.session_state.session_edit_mode = True
     except Exception as e:
-        logger.error(f"Error in session selector: {str(e)}")
+        logger.error(f"Error in session selector: {e!s}")
         st.sidebar.error("Failed to load sessions")
 
 
@@ -380,10 +381,13 @@ def utilities_widget(agent: Agent) -> None:
             mime="text/markdown",
         ):
             st.sidebar.success("Chat history exported!")
-    if agent is not None and agent.knowledge is not None:
-        if st.sidebar.button("📚 Load Knowledge"):
-            agent.knowledge.load()
-            st.sidebar.success("Knowledge loaded!")
+    if (
+        agent is not None
+        and agent.knowledge is not None
+        and st.sidebar.button("📚 Load Knowledge")
+    ):
+        agent.knowledge.load()
+        st.sidebar.success("Knowledge loaded!")
 
 
 def about_widget() -> None:

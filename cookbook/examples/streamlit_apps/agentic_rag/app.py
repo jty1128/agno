@@ -1,6 +1,5 @@
 import os
 import tempfile
-from typing import List
 
 import nest_asyncio
 import requests
@@ -114,7 +113,7 @@ def main():
                 agentic_rag_agent.load_session()
             )
         except Exception as e:
-            logger.error(f"Session load error: {str(e)}")
+            logger.error(f"Session load error: {e!s}")
             st.warning("Could not create Agent session, is the database running?")
             # Continue anyway instead of returning, to avoid breaking session switching
     elif (
@@ -129,7 +128,7 @@ def main():
                 st.session_state["agentic_rag_agent_session_id"]
             )
         except Exception as e:
-            logger.error(f"Failed to load existing session: {str(e)}")
+            logger.error(f"Failed to load existing session: {e!s}")
             # Continue anyway
 
     ####################################################################
@@ -195,7 +194,7 @@ def main():
                     # Clean up temporary file
                     os.unlink(tmp_path)
                 except Exception as e:
-                    st.sidebar.error(f"Error processing PDF: {str(e)}")
+                    st.sidebar.error(f"Error processing PDF: {e!s}")
                     docs = []
             else:
                 scraper = WebsiteReader(max_links=2, max_depth=1)
@@ -214,23 +213,25 @@ def main():
     uploaded_file = st.sidebar.file_uploader(
         "Add a Document (.pdf, .csv, or .txt)", key="file_upload"
     )
+    file_identifier = f"{uploaded_file.name}_{uploaded_file.size}"
     if (
-        uploaded_file and not prompt and not st.session_state.knowledge_base_initialized
+        uploaded_file
+        and not prompt
+        and not st.session_state.knowledge_base_initialized
+        and file_identifier not in st.session_state.loaded_files
     ):  # Only load if KB not initialized
-        file_identifier = f"{uploaded_file.name}_{uploaded_file.size}"
-        if file_identifier not in st.session_state.loaded_files:
-            alert = st.sidebar.info("Processing document...", icon="ℹ️")
-            file_type = uploaded_file.name.split(".")[-1].lower()
-            reader = get_reader(file_type)
-            if reader:
-                docs = reader.read(uploaded_file)
-                agentic_rag_agent.knowledge.load_documents(docs, upsert=True)
-                st.session_state.loaded_files.add(file_identifier)
-                st.sidebar.success(f"{uploaded_file.name} added to knowledge base")
-                st.session_state.knowledge_base_initialized = True
-            alert.empty()
-        else:
-            st.sidebar.info(f"{uploaded_file.name} already loaded in knowledge base")
+        alert = st.sidebar.info("Processing document...", icon="ℹ️")
+        file_type = uploaded_file.name.split(".")[-1].lower()
+        reader = get_reader(file_type)
+        if reader:
+            docs = reader.read(uploaded_file)
+            agentic_rag_agent.knowledge.load_documents(docs, upsert=True)
+            st.session_state.loaded_files.add(file_identifier)
+            st.sidebar.success(f"{uploaded_file.name} added to knowledge base")
+            st.session_state.knowledge_base_initialized = True
+        alert.empty()
+    elif uploaded_file and file_identifier in st.session_state.loaded_files:
+        st.sidebar.info(f"{uploaded_file.name} already loaded in knowledge base")
 
     if st.sidebar.button("Clear Knowledge Base"):
         agentic_rag_agent.knowledge.vector_db.delete()
@@ -277,7 +278,7 @@ def main():
             if _content is not None:
                 with st.chat_message(message["role"]):
                     # Display tool calls if they exist in the message
-                    if "tool_calls" in message and message["tool_calls"]:
+                    if message.get("tool_calls"):
                         display_tool_calls(st.empty(), message["tool_calls"])
                     st.markdown(_content)
 
@@ -312,7 +313,7 @@ def main():
                         "assistant", response, agentic_rag_agent.run_response.tools
                     )
                 except Exception as e:
-                    error_message = f"Sorry, I encountered an error: {str(e)}"
+                    error_message = f"Sorry, I encountered an error: {e!s}"
                     add_message("assistant", error_message)
                     st.error(error_message)
 

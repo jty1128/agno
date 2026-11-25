@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional, Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -52,14 +54,14 @@ class ModelsLabTools(Toolkit):
         if not self.api_key:
             logger.error("MODELS_LAB_API_KEY not set. Please set the MODELS_LAB_API_KEY environment variable.")
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.generate_media)
 
         super().__init__(name="models_labs", tools=tools, **kwargs)
 
-    def _create_payload(self, prompt: str) -> Dict[str, Any]:
+    def _create_payload(self, prompt: str) -> dict[str, Any]:
         """Create payload based on file type."""
-        base_payload: Dict[str, Any] = {
+        base_payload: dict[str, Any] = {
             "key": self.api_key,
             "prompt": prompt,
             "webhook": None,
@@ -121,7 +123,7 @@ class ModelsLabTools(Toolkit):
 
         return False
 
-    def generate_media(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def generate_media(self, agent: Agent | Team, prompt: str) -> str:
         """Generate media (video, image, or audio) given a prompt."""
         if not self.api_key:
             return "Please set the MODELS_LAB_API_KEY"
@@ -165,7 +167,7 @@ class ModelsLabTools(Toolkit):
             error_msg = f"Network error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
-        except Exception as e:
+        except (ValueError, KeyError, TypeError) as e:
             error_msg = f"Unexpected error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"

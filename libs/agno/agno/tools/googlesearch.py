@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug
@@ -10,7 +12,7 @@ except ImportError:
     raise ImportError("`googlesearch-python` not installed. Please install using `pip install googlesearch-python`")
 
 try:
-    from pycountry import pycountry
+    import pycountry
 except ImportError:
     raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`")
 
@@ -80,7 +82,7 @@ class GoogleSearchTools(Toolkit):
         results = list(search(query, num_results=max_results, lang=language, proxy=self.proxy, advanced=True))
 
         # Collect the search results
-        res: List[Dict[str, str]] = []
+        res: list[dict[str, str]] = []
         for result in results:
             res.append(
                 {

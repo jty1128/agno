@@ -81,12 +81,11 @@ def test_nebius_tools_init_with_env_var():
             return env_api_key
         return None
 
-    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv:
-        with patch("agno.tools.models.nebius.Nebius") as mock_nebius_cls:
-            mock_nebius_instance = MagicMock()
-            mock_client_instance = MagicMock()
-            mock_nebius_instance.get_client.return_value = mock_client_instance
-            mock_nebius_cls.return_value = mock_nebius_instance
+    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv, patch("agno.tools.models.nebius.Nebius") as mock_nebius_cls:
+        mock_nebius_instance = MagicMock()
+        mock_client_instance = MagicMock()
+        mock_nebius_instance.get_client.return_value = mock_client_instance
+        mock_nebius_cls.return_value = mock_nebius_instance
 
             nebius_tools = NebiusTools()
 
@@ -225,9 +224,9 @@ def test_generate_image_with_custom_params():
         with patch("agno.tools.models.nebius.uuid4", return_value=UUID("12345678-1234-5678-1234-567812345678")):
             nebius_tools.generate_image(mock_agent, prompt)
 
-            mock_client.images.generate.assert_called_once_with(
-                model=custom_model,
-                prompt=prompt,
+        mock_client.images.generate.assert_called_once_with(
+            model=custom_model,
+            prompt=prompt,
                 response_format="b64_json",
                 size=custom_size,
                 quality=custom_quality,

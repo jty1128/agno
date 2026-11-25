@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from time import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
@@ -24,7 +26,7 @@ class TeamRunResponse:
     model: Optional[str] = None
     model_provider: Optional[str] = None
 
-    member_responses: List[Union["TeamRunResponse", RunResponse]] = field(default_factory=list)
+    member_responses: List[Union[TeamRunResponse, RunResponse]] = field(default_factory=list)
 
     run_id: Optional[str] = None
     team_id: Optional[str] = None
@@ -46,7 +48,7 @@ class TeamRunResponse:
     extra_data: Optional[RunResponseExtraData] = None
     created_at: int = field(default_factory=lambda: int(time()))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         _dict = {
             k: v
             for k, v in asdict(self).items()
@@ -101,12 +103,12 @@ class TeamRunResponse:
         return json.dumps(_dict, indent=2)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TeamRunResponse":
+    def from_dict(cls, data: Dict[str, Any]) -> TeamRunResponse:
         messages = data.pop("messages", None)
         messages = [Message.model_validate(message) for message in messages] if messages else None
 
         member_responses = data.pop("member_responses", None)
-        parsed_member_responses: List[Union["TeamRunResponse", RunResponse]] = []
+        parsed_member_responses: List[Union[TeamRunResponse, RunResponse]] = []
         if member_responses is not None:
             for response in member_responses:
                 if "agent_id" in response:
@@ -157,7 +159,7 @@ class TeamRunResponse:
         else:
             return json.dumps(self.content, **kwargs)
 
-    def add_member_run(self, run_response: Union["TeamRunResponse", RunResponse]) -> None:
+    def add_member_run(self, run_response: Union[TeamRunResponse, RunResponse]) -> None:
         self.member_responses.append(run_response)
         if run_response.images is not None:
             if self.images is None:

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 
 try:
     from crawl4ai import AsyncWebCrawler, CacheMode
-except ImportError:
-    raise ImportError("`crawl4ai` not installed. Please install using `pip install crawl4ai`")
+except ImportError as e:
+    raise ImportError("`crawl4ai` not installed. Please install using `pip install crawl4ai`") from e
 
 
 class Crawl4aiTools(Toolkit):
@@ -17,7 +19,7 @@ class Crawl4aiTools(Toolkit):
     ):
         self.max_length = max_length
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.web_crawler)
 
         # Call superclass with tools list
@@ -56,7 +58,7 @@ class Crawl4aiTools(Toolkit):
                 return "No result"
 
             # Remove spaces and truncate if length is specified
-            if length:
+            if length and result.markdown:
                 result = result.markdown[:length]
                 result = result.replace(" ", "")
                 return result
