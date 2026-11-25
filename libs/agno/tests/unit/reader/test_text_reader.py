@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -116,8 +115,7 @@ def test_invalid_encoding(tmp_path):
     # Test handling of invalid encoding
     text_path = tmp_path / "invalid.txt"
     try:
-        with open(text_path, "wb") as f:
-            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+        text_path.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
 
         reader = TextReader()
         documents = reader.read(text_path)
@@ -133,8 +131,7 @@ def test_cp950_encoding(tmp_path):
     test_data = "中文測試"  # Chinese test text
     text_path = tmp_path / "cp950.txt"
     try:
-        with open(text_path, "w", encoding="cp950") as f:
-            f.write(test_data)
+        text_path.write_text(test_data, encoding="cp950")
 
         reader = TextReader()
         documents = reader.read(text_path)

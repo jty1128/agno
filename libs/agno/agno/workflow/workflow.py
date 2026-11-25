@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import AsyncGenerator, AsyncIterator
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -140,7 +141,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -185,7 +185,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -293,7 +293,7 @@ class Workflow:
             result = await self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.arun() failed: {e}")
-            raise e
+            raise
 
         # Handle async iterator results
         if isinstance(result, (AsyncIterator, AsyncGenerator)):
@@ -358,7 +358,6 @@ class Workflow:
     async def arun(self, **kwargs: Any):
         """Async version of run() that calls arun_workflow()"""
         logger.error(f"{self.__class__.__name__}.arun() method not implemented.")
-        return
 
     def set_storage_mode(self):
         if self.storage is not None:
@@ -468,8 +467,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -478,8 +477,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -618,7 +617,7 @@ class Workflow:
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
-    def read_from_storage(self) -> Optional[WorkflowSession]:
+    def read_from_storage(self) -> WorkflowSession | None:
         """Load the WorkflowSession from storage.
 
         Returns:
@@ -630,7 +629,7 @@ class Workflow:
                 self.load_workflow_session(session=self.workflow_session)
         return self.workflow_session
 
-    def write_to_storage(self) -> Optional[WorkflowSession]:
+    def write_to_storage(self) -> WorkflowSession | None:
         """Save the WorkflowSession to storage
 
         Returns:
@@ -640,7 +639,7 @@ class Workflow:
             self.workflow_session = cast(WorkflowSession, self.storage.upsert(session=self.get_workflow_session()))
         return self.workflow_session
 
-    def load_session(self, force: bool = False) -> Optional[str]:
+    def load_session(self, force: bool = False) -> str | None:
         """Load an existing session from the database and return the session_id.
         If a session does not exist, create a new session.
 
@@ -669,7 +668,7 @@ class Workflow:
                     raise Exception("Failed to create new WorkflowSession in storage")
                 log_debug(f"-*- Created WorkflowSession: {self.workflow_session.session_id}")
                 self.log_workflow_session()
-        return self.session_id
+            return self.session_id
 
     def new_session(self) -> None:
         """Create a new Workflow session
@@ -716,7 +715,7 @@ class Workflow:
         # -*- Delete session
         self.storage.delete_session(session_id=session_id)
 
-    def deep_copy(self, *, update: Optional[Dict[str, Any]] = None) -> Workflow:
+    def deep_copy(self, *, update: dict[str, Any] | None = None) -> Workflow:
         """Create and return a deep copy of this Workflow, optionally updating fields.
 
         Args:
@@ -726,7 +725,7 @@ class Workflow:
             Workflow: A new Workflow instance.
         """
         # Extract the fields to set for the new Workflow
-        fields_for_new_workflow: Dict[str, Any] = {}
+        fields_for_new_workflow: dict[str, Any] = {}
 
         for f in fields(self):
             field_value = getattr(self, f.name)
@@ -757,11 +756,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -769,11 +768,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -802,7 +801,7 @@ class Workflow:
             )
 
             log_debug(f"Registered workflow: {self.name} (ID: {self.workflow_id})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to register workflow: {e}")
 
     def register_workflow(self, force: bool = False) -> None:
@@ -831,17 +830,17 @@ class Workflow:
             )
 
             log_debug(f"Registered workflow: {self.name} (ID: {self.workflow_id})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to register workflow: {e}")
 
-    def to_config_dict(self) -> Dict[str, Any]:
+    def to_config_dict(self) -> dict[str, Any]:
         """Convert the workflow to a config dictionary including all agents and teams.
 
         Returns:
             Dict[str, Any]: Dictionary representation of the workflow config.
         """
         # Basic workflow information
-        config: Dict[str, Any] = {
+        config: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "type": "workflow",
@@ -851,8 +850,8 @@ class Workflow:
             },
         }
 
-        agents: List[Dict[str, Any]] = []
-        teams: List[Dict[str, Any]] = []
+        agents: list[dict[str, Any]] = []
+        teams: list[dict[str, Any]] = []
 
         for attr_name in dir(self.__class__):
             # Skip private/special attributes and methods
@@ -864,7 +863,7 @@ class Workflow:
 
             if isinstance(attr_value, Agent):
                 # Skip agents already in the list
-                if any(a.get("name") == (attr_value.name or attr_name) for a in agents):
+                if any(a["name"] == (attr_value.name or attr_name) for a in agents):
                     continue
 
                 agent_config = attr_value.get_agent_config_dict()
@@ -878,7 +877,7 @@ class Workflow:
                 agents.append(agent_config)
 
             elif isinstance(attr_value, Team):
-                if any(t.get("name") == (attr_value.name or attr_name) for t in teams):
+                if any(t["name"] == (attr_value.name or attr_name) for t in teams):
                     continue
 
                 team_config = attr_value.to_platform_dict()

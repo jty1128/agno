@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -54,17 +56,16 @@ class MoviePyVideoTools(Toolkit):
             chars_exceeded = len(temp) > MAX_CHARS
             maxgap_exceeded = idx > 0 and word_data["start"] - words[idx - 1]["end"] > MAX_GAP
 
-            if duration_exceeded or chars_exceeded or maxgap_exceeded:
-                if line:
-                    subtitle_line = {
-                        "word": " ".join(item["word"] for item in line),
-                        "start": line[0]["start"],
-                        "end": line[-1]["end"],
-                        "textcontents": line,
-                    }
-                    subtitles.append(subtitle_line)
-                    line = []
-                    line_duration = 0
+            if (duration_exceeded or chars_exceeded or maxgap_exceeded) and line:
+                subtitle_line = {
+                    "word": " ".join(item["word"] for item in line),
+                    "start": line[0]["start"],
+                    "end": line[-1]["end"],
+                    "textcontents": line,
+                }
+                subtitles.append(subtitle_line)
+                line = []
+                line_duration = 0
 
         if line:
             subtitle_line = {
@@ -119,10 +120,10 @@ class MoviePyVideoTools(Toolkit):
                 TextClip(
                     text=word_data["word"],
                     font=font,
-                    font_size=int(fontsize),
+                    font_size=fontsize,
                     color=color,
                     stroke_color=stroke_color,
-                    stroke_width=int(stroke_width),
+                    stroke_width=stroke_width,
                     method="label",
                 )
                 .with_start(text_json["start"])
@@ -131,7 +132,7 @@ class MoviePyVideoTools(Toolkit):
 
             # Create space clip
             space_clip = (
-                TextClip(text=" ", font=font, font_size=int(fontsize), color=color, method="label")
+                TextClip(text=" ", font=font, font_size=fontsize, color=color, method="label")
                 .with_start(text_json["start"])
                 .with_duration(full_duration)
             )
@@ -160,10 +161,10 @@ class MoviePyVideoTools(Toolkit):
                 TextClip(
                     text=word_data["word"],
                     font=font,
-                    font_size=int(fontsize),
+                    font_size=fontsize,
                     color=highlight_color,
                     stroke_color=stroke_color,
-                    stroke_width=int(stroke_width),
+                    stroke_width=stroke_width,
                     method="label",
                 )
                 .with_start(word_data["start"])
@@ -234,9 +235,9 @@ class MoviePyVideoTools(Toolkit):
             video.audio.write_audiofile(output_path)
             log_info(f"Audio extracted to {output_path}")
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to extract audio: {str(e)}")
-            return f"Failed to extract audio: {str(e)}"
+        except OSError as e:
+            logger.error(f"Failed to extract audio: {e}")
+            return f"Failed to extract audio: {e}"
 
     def create_srt(self, transcription: str, output_path: str) -> str:
         """Save transcription text to SRT formatted file
@@ -253,9 +254,9 @@ class MoviePyVideoTools(Toolkit):
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(transcription)
             return output_path
-        except Exception as e:
-            logger.error(f"Failed to create SRT file: {str(e)}")
-            return f"Failed to create SRT file: {str(e)}"
+        except OSError as e:
+            logger.error(f"Failed to create SRT file: {e}")
+            return f"Failed to create SRT file: {e}"
 
     def embed_captions(
         self,
@@ -343,6 +344,6 @@ class MoviePyVideoTools(Toolkit):
 
             return output_path
 
-        except Exception as e:
-            logger.error(f"Failed to embed captions: {str(e)}")
-            return f"Failed to embed captions: {str(e)}"
+        except OSError as e:
+            logger.error(f"Failed to embed captions: {e}")
+            return f"Failed to embed captions: {e}"

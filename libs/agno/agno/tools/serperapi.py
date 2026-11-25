@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from os import getenv
 from typing import Optional
@@ -76,5 +78,5 @@ class SerperApiTools(Toolkit):
 
             return results
 
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             return f"Error searching for the query {query}: {e}"

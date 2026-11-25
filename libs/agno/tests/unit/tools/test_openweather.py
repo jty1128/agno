@@ -24,15 +24,14 @@ def openweather_tools():
 
 def test_initialization_without_api_key():
     """Test initialization without API key."""
-    with patch.dict("os.environ", clear=True):
-        with pytest.raises(ValueError, match="OpenWeather API key is required"):
-            OpenWeatherTools()
+    with patch.dict("os.environ", clear=True), pytest.raises(ValueError, match="OpenWeather API key is required"):
+        OpenWeatherTools()
 
 
 def test_init_with_selective_tools():
     """Test initialization with only selected tools."""
     with patch.dict("os.environ", {"OPENWEATHER_API_KEY": "test_api_key"}):
-        tools = OpenWeatherTools(
+        OpenWeatherTools(
             current_weather=True,
             forecast=False,
             air_pollution=True,
@@ -248,7 +247,7 @@ def test_units_parameter(openweather_tools, mock_openweather_api):
 
     # Create a tool with imperial units
     with patch.dict("os.environ", {"OPENWEATHER_API_KEY": "test_api_key"}):
-        imperial_tools = OpenWeatherTools(units="imperial")
+        OpenWeatherTools(units="imperial")
 
     # Reset the mock
     mock_openweather_api.reset_mock()

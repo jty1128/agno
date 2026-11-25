@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import httpx
 import requests
@@ -21,7 +21,7 @@ def get_phone_number_id() -> str:
     return phone_number_id
 
 
-def get_media(media_id: str) -> Union[dict, bytes]:
+def get_media(media_id: str) -> dict | bytes:
     """
     Sends a GET request to the Facebook Graph API to retrieve media information.
 
@@ -51,7 +51,7 @@ def get_media(media_id: str) -> Union[dict, bytes]:
         return {"error": str(e)}
 
 
-async def get_media_async(media_id: str) -> Union[dict, bytes]:
+async def get_media_async(media_id: str) -> dict | bytes:
     """
     Sends a GET request to the Facebook Graph API to retrieve media information.
 
@@ -116,7 +116,7 @@ def upload_media(media_data: bytes, mime_type: str, filename: str = "file"):
         return media_id
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         return {"error": str(e)}
 
 
@@ -154,7 +154,7 @@ async def upload_media_async(media_data: bytes, mime_type: str, filename: str = 
             return media_id
     except httpx.HTTPStatusError as e:
         return {"error": str(e)}
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         return {"error": str(e)}
 
 
@@ -204,7 +204,7 @@ async def send_image_message_async(
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {e!s}")
         raise
 
 
@@ -252,5 +252,5 @@ def send_image_message(
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")  # type: ignore
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {e!s}")
         raise

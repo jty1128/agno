@@ -46,26 +46,26 @@ def test_tool_call_requires_external_execution_stream():
     )
 
     found_external_execution = False
-    for response in agent.run(
+    for response_chunk in agent.run(
         "Send an email to john@doe.com with the subject 'Test' and the body 'Hello, how are you?'", stream=True
     ):
-        if response.is_paused:
-            assert response.tools[0].external_execution_required
-            assert response.tools[0].tool_name == "send_email"
-            assert response.tools[0].tool_args == {
+        if response_chunk.is_paused:
+            assert response_chunk.tools[0].external_execution_required
+            assert response_chunk.tools[0].tool_name == "send_email"
+            assert response_chunk.tools[0].tool_args == {
                 "to": "john@doe.com",
                 "subject": "Test",
                 "body": "Hello, how are you?",
             }
 
             # Mark the tool as confirmed
-            response.tools[0].result = "Email sent to john@doe.com with subject Test and body Hello, how are you?"
+            response_chunk.tools[0].result = "Email sent to john@doe.com with subject Test and body Hello, how are you?"
             found_external_execution = True
     assert found_external_execution, "No tools were found to require external execution"
 
     found_external_execution = False
-    for response in agent.continue_run(response, stream=True):
-        if response.is_paused:
+    for response_chunk in agent.continue_run(response_chunk, stream=True):
+        if response_chunk.is_paused:
             found_external_execution = True
     assert found_external_execution is False, "Some tools still require external execution"
 
@@ -135,26 +135,26 @@ async def test_tool_call_requires_external_execution_stream_async():
     )
 
     found_external_execution = False
-    async for response in await agent.arun(
+    async for response_chunk in await agent.arun(
         "Send an email to john@doe.com with the subject 'Test' and the body 'Hello, how are you?'", stream=True
     ):
-        if response.is_paused:
-            assert response.tools[0].external_execution_required
-            assert response.tools[0].tool_name == "send_email"
-            assert response.tools[0].tool_args == {
+        if response_chunk.is_paused:
+            assert response_chunk.tools[0].external_execution_required
+            assert response_chunk.tools[0].tool_name == "send_email"
+            assert response_chunk.tools[0].tool_args == {
                 "to": "john@doe.com",
                 "subject": "Test",
                 "body": "Hello, how are you?",
             }
 
             # Mark the tool as confirmed
-            response.tools[0].result = "Email sent to john@doe.com with subject Test and body Hello, how are you?"
+            response_chunk.tools[0].result = "Email sent to john@doe.com with subject Test and body Hello, how are you?"
             found_external_execution = True
     assert found_external_execution, "No tools were found to require external execution"
 
     found_external_execution = False
-    async for response in await agent.acontinue_run(response, stream=True):
-        if response.is_paused:
+    async for response_chunk in await agent.acontinue_run(response_chunk, stream=True):
+        if response_chunk.is_paused:
             found_external_execution = True
     assert found_external_execution is False, "Some tools still require external execution"
 

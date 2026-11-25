@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -14,7 +15,7 @@ except ImportError:
 class SerpApiTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         search_youtube: bool = False,
         **kwargs,
     ):
@@ -22,7 +23,7 @@ class SerpApiTools(Toolkit):
         if not self.api_key:
             logger.warning("No Serpapi API key provided")
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.search_google)
         if search_youtube:
             tools.append(self.search_youtube)
@@ -70,7 +71,7 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except serpapi.SerpApiError as e:
             return f"Error searching for the query {query}: {e}"
 
     def search_youtube(self, query: str) -> str:

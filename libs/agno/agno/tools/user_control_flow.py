@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Optional
 
 from agno.tools import Toolkit
 
