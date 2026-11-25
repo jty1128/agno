@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.reasoning.step import NextAction, ReasoningStep
@@ -13,10 +13,10 @@ class ReasoningTools(Toolkit):
         self,
         think: bool = True,
         analyze: bool = True,
-        instructions: Optional[str] = None,
+        instructions: str | None = None,
         add_instructions: bool = False,
         add_few_shot: bool = False,
-        few_shot_examples: Optional[str] = None,
+        few_shot_examples: str | None = None,
         **kwargs,
     ):
         """A toolkit that provides step-by-step reasoning tools: Think and Analyze."""
@@ -44,7 +44,7 @@ class ReasoningTools(Toolkit):
             self.register(self.analyze)
 
     def think(
-        self, agent: Union[Agent, Team], title: str, thought: str, action: Optional[str] = None, confidence: float = 0.8
+        self, agent: Union[Agent, Team], title: str, thought: str, action: str | None = None, confidence: float = 0.8
     ) -> str:
         """Use this tool as a scratchpad to reason about the question and work through it step-by-step.
         This tool will help you break down complex problems into logical steps and track the reasoning process.
@@ -95,7 +95,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"
 
@@ -163,7 +163,7 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Error recording analysis: {e}")
             return f"Error recording analysis: {e}"
 

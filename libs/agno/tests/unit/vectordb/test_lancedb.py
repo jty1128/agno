@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from contextlib import suppress
 
 import pytest
 
@@ -15,26 +15,23 @@ TEST_PATH = "tmp/test_lancedb"
 @pytest.fixture
 def lance_db(mock_embedder):
     """Fixture to create and clean up a LanceDb instance"""
-    os.makedirs(TEST_PATH, exist_ok=True)
     if os.path.exists(TEST_PATH):
         shutil.rmtree(TEST_PATH)
-        os.makedirs(TEST_PATH)
+    os.makedirs(TEST_PATH)
 
     db = LanceDb(uri=TEST_PATH, table_name=TEST_TABLE, embedder=mock_embedder)
     db.create()
     yield db
 
-    try:
+    with suppress(Exception):
         db.drop()
-    except Exception:
-        pass
 
     if os.path.exists(TEST_PATH):
         shutil.rmtree(TEST_PATH)
 
 
 @pytest.fixture
-def sample_documents() -> List[Document]:
+def sample_documents() -> list[Document]:
     """Fixture to create sample documents"""
     return [
         Document(

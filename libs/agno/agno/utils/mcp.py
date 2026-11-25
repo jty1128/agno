@@ -14,7 +14,7 @@ except (ImportError, ModuleNotFoundError):
 from agno.media import ImageArtifact
 
 
-def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
+def get_entrypoint_for_tool(tool: "MCPTool", session: "ClientSession") -> "Callable[..., Awaitable[str]]":
     """
     Return an entrypoint for an MCP tool.
 
@@ -27,7 +27,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
     """
     from agno.agent import Agent
 
-    async def call_tool(agent: Agent, tool_name: str, **kwargs) -> str:
+    async def call_tool(agent: "Agent", tool_name: str, **kwargs: Any) -> str:
         try:
             log_debug(f"Calling MCP Tool '{tool_name}' with args: {kwargs}")
             result: CallToolResult = await session.call_tool(tool_name, kwargs)  # type: ignore
@@ -59,7 +59,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
                     response_str += f"[Unsupported content type: {content_item.type}]\n"
 
             return response_str.strip()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_exception(f"Failed to call MCP tool '{tool_name}': {e}")
             return f"Error: {e}"
 

@@ -1,6 +1,6 @@
 import json
 from os import getenv
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -14,8 +14,8 @@ except ImportError:
 class OpenBBTools(Toolkit):
     def __init__(
         self,
-        obb: Optional[Any] = None,
-        openbb_pat: Optional[str] = None,
+        obb: Any | None = None,
+        openbb_pat: str | None = None,
         provider: Literal["benzinga", "fmp", "intrinio", "polygon", "tiingo", "tmx", "yfinance"] = "yfinance",
         stock_price: bool = True,
         search_symbols: bool = False,
@@ -30,7 +30,7 @@ class OpenBBTools(Toolkit):
         try:
             if openbb_pat or getenv("OPENBB_PAT"):
                 self.obb.account.login(pat=openbb_pat or getenv("OPENBB_PAT"))  # type: ignore
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error logging into OpenBB: {e}")
 
         self.provider: Literal["benzinga", "fmp", "intrinio", "polygon", "tiingo", "tmx", "yfinance"] = provider
@@ -78,7 +78,7 @@ class OpenBBTools(Toolkit):
                     }
                 )
             return json.dumps(clean_results, indent=2, default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error fetching current price for {symbol}: {e}"
 
     def search_company_symbol(self, company_name: str) -> str:
@@ -114,7 +114,7 @@ class OpenBBTools(Toolkit):
             log_debug(f"Fetching price targets for {symbol}")
             result = self.obb.equity.estimates.consensus(symbol=symbol, provider=self.provider).to_polars()  # type: ignore
             return json.dumps(result.to_dicts(), indent=2, default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error fetching company news for {symbol}: {e}"
 
     def get_company_news(self, symbol: str, num_stories: int = 10) -> str:
@@ -137,7 +137,7 @@ class OpenBBTools(Toolkit):
                     row.pop("images")
                     clean_results.append(row)
             return json.dumps(clean_results[:num_stories], indent=2, default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error fetching company news for {symbol}: {e}"
 
     def get_company_profile(self, symbol: str) -> str:
@@ -154,5 +154,5 @@ class OpenBBTools(Toolkit):
             log_debug(f"Fetching company profile for {symbol}")
             result = self.obb.equity.profile(symbol=symbol, provider=self.provider).to_polars()  # type: ignore
             return json.dumps(result.to_dicts(), indent=2, default=str)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error fetching company profile for {symbol}: {e}"

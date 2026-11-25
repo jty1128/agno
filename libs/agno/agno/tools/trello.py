@@ -1,6 +1,5 @@
 import json
 from os import getenv
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -14,9 +13,9 @@ except ImportError:
 class TrelloTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        api_secret: Optional[str] = None,
-        token: Optional[str] = None,
+        api_key: str | None = None,
+        api_secret: str | None = None,
+        token: str | None = None,
         create_card: bool = True,
         get_board_lists: bool = True,
         move_card: bool = True,
@@ -37,7 +36,7 @@ class TrelloTools(Toolkit):
 
         try:
             self.client = TrelloClient(api_key=self.api_key, api_secret=self.api_secret, token=self.token)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error initializing Trello client: {e}")
             self.client = None
 
@@ -90,7 +89,7 @@ class TrelloTools(Toolkit):
 
             return json.dumps({"id": card.id, "name": card.name, "url": card.url, "list": list_name})
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error creating card: {e}"
 
     def get_board_lists(self, board_id: str) -> str:
@@ -116,7 +115,7 @@ class TrelloTools(Toolkit):
 
             return json.dumps({"lists": lists_info})
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error getting board lists: {e}"
 
     def move_card(self, card_id: str, list_id: str) -> str:
@@ -141,7 +140,7 @@ class TrelloTools(Toolkit):
 
             return json.dumps({"success": True, "card_id": card_id, "new_list_id": list_id})
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error moving card: {e}"
 
     def get_cards(self, list_id: str) -> str:
@@ -176,7 +175,7 @@ class TrelloTools(Toolkit):
 
             return json.dumps({"cards": cards_info})
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error getting cards: {e}"
 
     def create_board(self, name: str, default_lists: bool = False) -> str:
@@ -206,7 +205,7 @@ class TrelloTools(Toolkit):
                 }
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error creating board: {e}"
 
     def create_list(self, board_id: str, list_name: str, pos: str = "bottom") -> str:
@@ -239,7 +238,7 @@ class TrelloTools(Toolkit):
                 }
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error creating list: {e}"
 
     def list_boards(self, board_filter: str = "all") -> str:
@@ -282,5 +281,5 @@ class TrelloTools(Toolkit):
                 }
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error listing boards: {e}"

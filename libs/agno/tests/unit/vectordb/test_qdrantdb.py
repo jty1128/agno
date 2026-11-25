@@ -1,4 +1,3 @@
-from typing import List
 from unittest.mock import Mock, patch
 
 import pytest
@@ -74,7 +73,7 @@ def qdrant_db(mock_qdrant_client, mock_embedder):
 
 
 @pytest.fixture
-def sample_documents() -> List[Document]:
+def sample_documents() -> list[Document]:
     """Fixture to create sample documents"""
     return [
         Document(
@@ -227,7 +226,8 @@ async def test_async_create(mock_embedder):
     db = Qdrant(embedder=mock_embedder, collection="test_collection")
 
     with patch.object(db, "async_create", return_value=None):
-        await db.async_create()
+        result = await db.async_create()
+        assert result is None
 
 
 @pytest.mark.asyncio

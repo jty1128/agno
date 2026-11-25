@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -164,7 +163,7 @@ class Workflow:
         try:
             self._subclass_run = cast(Callable, self._subclass_run)
             result = self._subclass_run(**kwargs)
-        except Exception as e:
+        except BaseException as e:
             logger.error(f"Workflow.run() failed: {e}")
             raise e
 
@@ -329,8 +328,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -339,8 +338,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -358,22 +357,21 @@ class Workflow:
         self.memory = cast(WorkflowMemory, self.memory)
         self.session_id = cast(str, self.session_id)
         self.workflow_id = cast(str, self.workflow_id)
-        if self.memory is not None:
-            if isinstance(self.memory, WorkflowMemory):
-                self.memory = cast(WorkflowMemory, self.memory)
-                memory_dict = self.memory.to_dict()
-                # We only persist the runs for the current session ID (not all runs in memory)
-                memory_dict["runs"] = [
-                    agent_run.model_dump()
-                    for agent_run in self.memory.runs
-                    if agent_run.response is not None and agent_run.response.session_id == self.session_id
-                ]
-            else:
-                self.memory = cast(Memory, self.memory)
-                # We fake the structure on storage, to maintain the interface with the legacy implementation
-                run_responses = self.memory.runs[self.session_id]  # type: ignore
-                memory_dict = self.memory.to_dict()
-                memory_dict["runs"] = [rr.to_dict() for rr in run_responses]
+        if self.memory is not None and isinstance(self.memory, WorkflowMemory):
+            self.memory = cast(WorkflowMemory, self.memory)
+            memory_dict = self.memory.to_dict()
+            # We only persist the runs for the current session ID (not all runs in memory)
+            memory_dict["runs"] = [
+                agent_run.model_dump()
+                for agent_run in self.memory.runs
+                if agent_run.response is not None and agent_run.response.session_id == self.session_id
+            ]
+        elif self.memory is not None:
+            self.memory = cast(Memory, self.memory)
+            # We fake the structure on storage, to maintain the interface with the legacy implementation
+            run_responses = self.memory.runs[self.session_id]  # type: ignore
+            memory_dict = self.memory.to_dict()
+            memory_dict["runs"] = [rr.to_dict() for rr in run_responses]
         else:
             memory_dict = None
         return WorkflowSession(
@@ -465,21 +463,21 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
+                except BaseException as e:
                     log_warning(f"Failed to load runs from memory: {e}")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
+                        except BaseException as e:
                             logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
+                except BaseException as e:
                     logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
-    def read_from_storage(self) -> Optional[WorkflowSession]:
+    def read_from_storage(self) -> WorkflowSession | None:
         """Load the WorkflowSession from storage.
 
         Returns:
@@ -491,7 +489,7 @@ class Workflow:
                 self.load_workflow_session(session=self.workflow_session)
         return self.workflow_session
 
-    def write_to_storage(self) -> Optional[WorkflowSession]:
+    def write_to_storage(self) -> WorkflowSession | None:
         """Save the WorkflowSession to storage
 
         Returns:
@@ -501,7 +499,7 @@ class Workflow:
             self.workflow_session = cast(WorkflowSession, self.storage.upsert(session=self.get_workflow_session()))
         return self.workflow_session
 
-    def load_session(self, force: bool = False) -> Optional[str]:
+    def load_session(self, force: bool = False) -> str | None:
         """Load an existing session from the database and return the session_id.
         If a session does not exist, create a new session.
 
@@ -510,9 +508,13 @@ class Workflow:
         """
         # If a workflow_session is already loaded, return the session_id from the workflow_session
         #   if the session_id matches the session_id from the workflow_session
-        if self.workflow_session is not None and not force:
-            if self.session_id is not None and self.workflow_session.session_id == self.session_id:
-                return self.workflow_session.session_id
+        if (
+            self.workflow_session is not None
+            and not force
+            and self.session_id is not None
+            and self.workflow_session.session_id == self.session_id
+        ):
+            return self.workflow_session.session_id
 
         # Load an existing session or create a new session
         if self.storage is not None:
@@ -618,11 +620,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except BaseException as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except BaseException as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -630,11 +632,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except BaseException as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except BaseException as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 

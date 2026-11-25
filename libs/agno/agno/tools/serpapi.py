@@ -1,6 +1,5 @@
 import json
 from os import getenv
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -14,7 +13,7 @@ except ImportError:
 class SerpApiTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         search_youtube: bool = False,
         **kwargs,
     ):

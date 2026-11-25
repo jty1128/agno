@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from sqlalchemy.dialects import mysql
@@ -27,15 +29,15 @@ class SingleStore(VectorDb):
     def __init__(
         self,
         collection: str,
-        schema: Optional[str] = "ai",
-        db_url: Optional[str] = None,
-        db_engine: Optional[Engine] = None,
-        embedder: Optional[Embedder] = None,
+        schema: str | None = "ai",
+        db_url: str | None = None,
+        db_engine: Engine | None = None,
+        embedder: Embedder | None = None,
         distance: Distance = Distance.cosine,
-        reranker: Optional[Reranker] = None,
+        reranker: Reranker | None = None,
         # index: Optional[Union[Ivfflat, HNSW]] = HNSW(),
     ):
-        _engine: Optional[Engine] = db_engine
+        _engine: Engine | None = db_engine
         if _engine is None and db_url is not None:
             _engine = create_engine(db_url)
 
@@ -43,8 +45,8 @@ class SingleStore(VectorDb):
             raise ValueError("Must provide either db_url or db_engine")
 
         self.collection: str = collection
-        self.schema: Optional[str] = schema
-        self.db_url: Optional[str] = db_url
+        self.schema: str | None = schema
+        self.db_url: str | None = db_url
         self.db_engine: Engine = _engine
         self.metadata: MetaData = MetaData(schema=self.schema)
 
@@ -54,12 +56,12 @@ class SingleStore(VectorDb):
             embedder = OpenAIEmbedder()
             log_info("Embedder not provided, using OpenAIEmbedder as default.")
         self.embedder: Embedder = embedder
-        self.dimensions: Optional[int] = self.embedder.dimensions
+        self.dimensions: int | None = self.embedder.dimensions
 
         self.distance: Distance = distance
         # self.index: Optional[Union[Ivfflat, HNSW]] = index
         self.Session: sessionmaker[Session] = sessionmaker(bind=self.db_engine)
-        self.reranker: Optional[Reranker] = reranker
+        self.reranker: Reranker | None = reranker
         self.table: Table = self.get_table()
 
     def get_table(self) -> Table:
@@ -119,8 +121,8 @@ class SingleStore(VectorDb):
         log_debug(f"Checking if table exists: {self.table.name}")
         try:
             return inspect(self.db_engine).has_table(self.table.name, schema=self.schema)
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception(f"Error checking if table exists: {self.table.name}")
             return False
 
     def doc_exists(self, document: Document) -> bool:
@@ -161,7 +163,7 @@ class SingleStore(VectorDb):
             result = sess.execute(stmt).first()
             return result is not None
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, batch_size: int = 10) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None, batch_size: int = 10) -> None:
         """
         Insert documents into the table.
 
@@ -204,7 +206,7 @@ class SingleStore(VectorDb):
         """Indicate that upsert functionality is available."""
         return True
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, batch_size: int = 20) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None, batch_size: int = 20) -> None:
         """
         Upsert (insert or update) documents in the table.
 
@@ -253,7 +255,7 @@ class SingleStore(VectorDb):
             sess.commit()
             log_debug(f"Committed {counter} documents")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Search for documents based on a query and optional filters.
 
@@ -325,8 +327,8 @@ class SingleStore(VectorDb):
             if neighbor.embedding:
                 try:
                     embedding_list = json.loads(neighbor.embedding)
-                except Exception as e:
-                    logger.error(f"Error extracting vector: {e}")
+                except Exception:
+                    logger.exception(f"Error extracting vector for neighbor: {neighbor.id}")
                     embedding_list = []
 
             search_results.append(
@@ -399,15 +401,13 @@ class SingleStore(VectorDb):
     async def async_doc_exists(self, document: Document) -> bool:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
     async def async_drop(self) -> None:

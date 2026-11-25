@@ -48,7 +48,7 @@ import json
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 
@@ -84,16 +84,16 @@ class GoogleSheetsTools(Toolkit):
         "write": "https://www.googleapis.com/auth/spreadsheets",
     }
 
-    service: Optional[Resource]
+    service: Resource | None
 
     def __init__(
         self,
-        scopes: Optional[List[str]] = None,
-        spreadsheet_id: Optional[str] = None,
-        spreadsheet_range: Optional[str] = None,
-        creds: Optional[Credentials] = None,
-        creds_path: Optional[str] = None,
-        token_path: Optional[str] = None,
+        scopes: list[str] | None = None,
+        spreadsheet_id: str | None = None,
+        spreadsheet_range: str | None = None,
+        creds: Credentials | None = None,
+        creds_path: str | None = None,
+        token_path: str | None = None,
         read: bool = True,
         create: bool = False,
         update: bool = False,
@@ -120,7 +120,7 @@ class GoogleSheetsTools(Toolkit):
         self.creds = creds
         self.credentials_path = creds_path
         self.token_path = token_path
-        self.service: Optional[Resource] = None
+        self.service: Resource | None = None
 
         # Determine required scopes based on operations if no custom scopes provided
         if scopes is None:
@@ -190,7 +190,7 @@ class GoogleSheetsTools(Toolkit):
             token_file.write_text(self.creds.to_json()) if self.creds else None
 
     @authenticate
-    def read_sheet(self, spreadsheet_id: Optional[str] = None, spreadsheet_range: Optional[str] = None) -> str:
+    def read_sheet(self, spreadsheet_id: str | None = None, spreadsheet_range: str | None = None) -> str:
         """
         Read values from a Google Sheet. Prioritizes instance attributes over method parameters.
 
@@ -215,7 +215,7 @@ class GoogleSheetsTools(Toolkit):
             result = self.service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()  # type: ignore
             return json.dumps(result.get("values", []))
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error reading Google Sheet: {e}"
 
     @authenticate
@@ -245,7 +245,7 @@ class GoogleSheetsTools(Toolkit):
 
     @authenticate
     def update_sheet(
-        self, data: List[List[Any]], spreadsheet_id: Optional[str] = None, range_name: Optional[str] = None
+        self, data: list[list[Any]], spreadsheet_id: str | None = None, range_name: str | None = None
     ) -> str:
         """Updates a Google Sheet with the provided data.
 
@@ -277,12 +277,12 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Sheet updated successfully: {spreadsheet_id}"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error updating Google Sheet: {e}"
 
     @authenticate
     def create_duplicate_sheet(
-        self, source_id: str, new_title: Optional[str] = None, copy_permissions: bool = True
+        self, source_id: str, new_title: str | None = None, copy_permissions: bool = True
     ) -> str:
         """Duplicate a Google Spreadsheet using the Google Drive API's copy feature.
         This ensures an exact duplicate including formatting and data.
@@ -346,5 +346,5 @@ class GoogleSheetsTools(Toolkit):
                     ).execute()
 
             return f"Spreadsheet duplicated successfully: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error duplicating spreadsheet via Drive API: {e}"

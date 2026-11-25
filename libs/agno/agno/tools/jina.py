@@ -1,5 +1,4 @@
 from os import getenv
-from typing import Dict, Optional
 
 import httpx
 from pydantic import BaseModel, Field, HttpUrl
@@ -14,6 +13,10 @@ class JinaReaderToolsConfig(BaseModel):
     search_url: HttpUrl = Field("https://s.jina.ai/", description="Search URL for Jina Reader API")  # type: ignore
     max_content_length: int = Field(10000, description="Maximum content length in characters")
     timeout: Optional[int] = Field(None, description="Timeout for Jina Reader API requests")
+
+
+if True:  # type: ignore
+    JinaReaderToolsConfig.model_rebuild()
 
 
 class JinaReaderTools(Toolkit):
@@ -52,8 +55,8 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error reading URL: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error reading URL: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -66,12 +69,12 @@ class JinaReaderTools(Toolkit):
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error performing search: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error performing search: {e!s}"
             logger.error(error_msg)
             return error_msg
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict:
         headers = {
             "Accept": "application/json",
             "X-With-Links-Summary": "true",

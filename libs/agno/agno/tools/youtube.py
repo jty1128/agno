@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -20,14 +20,14 @@ class YouTubeTools(Toolkit):
         get_video_captions: bool = True,
         get_video_data: bool = True,
         get_video_timestamps: bool = True,
-        languages: Optional[List[str]] = None,
-        proxies: Optional[Dict[str, Any]] = None,
+        languages: list[str] | None = None,
+        proxies: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(name="youtube_tools", **kwargs)
 
-        self.languages: Optional[List[str]] = languages
-        self.proxies: Optional[Dict[str, Any]] = proxies
+        self.languages: list[str] | None = languages
+        self.proxies: dict[str, Any] | None = proxies
         if get_video_captions:
             self.register(self.get_youtube_video_captions)
         if get_video_data:
@@ -35,7 +35,7 @@ class YouTubeTools(Toolkit):
         if get_video_timestamps:
             self.register(self.get_video_timestamps)
 
-    def get_youtube_video_id(self, url: str) -> Optional[str]:
+    def get_youtube_video_id(self, url: str) -> str | None:
         """Function to get the video ID from a YouTube URL.
 
         Args:
@@ -76,7 +76,7 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError, IndexError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
@@ -120,12 +120,12 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError, IndexError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -154,11 +154,11 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError, IndexError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:

@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.team.team import Team
@@ -11,7 +11,7 @@ class ThinkingTools(Toolkit):
     def __init__(
         self,
         think: bool = True,
-        instructions: Optional[str] = None,
+        instructions: str | None = None,
         add_instructions: bool = False,
         **kwargs,
     ):
@@ -65,6 +65,6 @@ class ThinkingTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
-            logger.error(f"Error recording thought: {e}")
-            return f"Error recording thought: {e}"
+        except Exception:
+            logger.error("Error recording thought")
+            return "Error recording thought"

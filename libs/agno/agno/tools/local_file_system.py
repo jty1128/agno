@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional
 from uuid import uuid4
 
 from agno.tools import Toolkit
@@ -10,14 +9,14 @@ from agno.utils.log import log_debug, logger
 class LocalFileSystemTools(Toolkit):
     def __init__(
         self,
-        target_directory: Optional[str] = None,
+        target_directory: str | None = None,
         default_extension: str = "txt",
         **kwargs,
     ):
         """
         Initialize the WriteToLocal toolkit.
         Args:
-            target_directory (Optional[str]): Default directory to write files to. Creates if doesn't exist.
+            target_directory (str | None): Default directory to write files to. Creates if doesn't exist.
             default_extension (str): Default file extension to use if none specified.
         """
         super().__init__(name="write_to_local", **kwargs)
@@ -33,17 +32,17 @@ class LocalFileSystemTools(Toolkit):
     def write_file(
         self,
         content: str,
-        filename: Optional[str] = None,
-        directory: Optional[str] = None,
-        extension: Optional[str] = None,
+        filename: str | None = None,
+        directory: str | None = None,
+        extension: str | None = None,
     ) -> str:
         """
         Write content to a local file.
         Args:
             content (str): Content to write to the file
-            filename (Optional[str]): Name of the file. Defaults to UUID if not provided
-            directory (Optional[str]): Directory to write file to. Uses target_directory if not provided
-            extension (Optional[str]): File extension. Uses default_extension if not provided
+            filename (str | None): Name of the file. Defaults to UUID if not provided
+            directory (str | None): Directory to write file to. Uses target_directory if not provided
+            extension (str | None): File extension. Uses default_extension if not provided
         Returns:
             str: Path to the created file or error message
         """
@@ -70,12 +69,12 @@ class LocalFileSystemTools(Toolkit):
 
             return f"Successfully wrote file to: {file_path}"
 
-        except Exception as e:
-            error_msg = f"Failed to write file: {str(e)}"
+        except OSError as e:
+            error_msg = f"Failed to write file: {e!s}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
 
-    def read_file(self, filename: str, directory: Optional[str] = None) -> str:
+    def read_file(self, filename: str, directory: str | None = None) -> str:
         """
         Read content from a local file.
         """

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,11 +49,11 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")  # noqa: TRY002
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")  # noqa: TRY002
         return True
 
     @property
@@ -156,7 +158,7 @@ class WorkspaceConfig(BaseModel):
                 workspace_dir_path_parts = workspace_dir_path.parts
                 resource_file_parts_after_ws = resource_file_parts[len(workspace_dir_path_parts) :]
                 # Check if file in ignored directory
-                if any([ignored_dir in resource_file_parts_after_ws for ignored_dir in ignored_dirs]):
+                if any(ignored_dir in resource_file_parts_after_ws for ignored_dir in ignored_dirs):
                     logger.debug(f"Skipping file in ignored directory: {resource_file}")
                     continue
                 logger.debug(f"Reading file: {resource_file}")

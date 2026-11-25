@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -16,20 +16,20 @@ class Newspaper4kTools(Toolkit):
     Args:
         read_article (bool): Whether to read an article from a URL.
         include_summary (bool): Whether to include the summary of an article.
-        article_length (Optional[int]): The length of the article to read.
+        article_length (int | None): The length of the article to read.
     """
 
     def __init__(
-        self, read_article: bool = True, include_summary: bool = False, article_length: Optional[int] = None, **kwargs
+        self, read_article: bool = True, include_summary: bool = False, article_length: int | None = None, **kwargs
     ):
         super().__init__(name="newspaper4k_tools", **kwargs)
 
         self.include_summary: bool = include_summary
-        self.article_length: Optional[int] = article_length
+        self.article_length: int | None = article_length
         if read_article:
             self.register(self.read_article)
 
-    def get_article_data(self, url: str) -> Optional[Dict[str, Any]]:
+    def get_article_data(self, url: str) -> dict[str, Any] | None:
         """Read and get article data from a URL.
 
         Args:
@@ -51,11 +51,11 @@ class Newspaper4kTools(Toolkit):
             if self.include_summary and article.summary:
                 article_data["summary"] = article.summary
 
-            try:
-                if article.publish_date:
-                    article_data["publish_date"] = article.publish_date.isoformat() if article.publish_date else None
-            except Exception:
-                pass
+            if article.publish_date:
+                try:
+                    article_data["publish_date"] = article.publish_date.isoformat()
+                except ValueError as e:
+                    logger.warning(f"Error parsing publish_date from {url}: {e}")
 
             return article_data
         except Exception as e:
