@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 try:
     from packaging import version
@@ -225,7 +227,7 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except PineconeApiException:
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -462,7 +464,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.
@@ -474,7 +475,7 @@ class PineconeDb(VectorDb):
         try:
             self.index.delete(delete_all=True, namespace=namespace)
             return True
-        except Exception:
+        except PineconeApiException:
             return False
 
     async def async_drop(self) -> None:

@@ -2,7 +2,7 @@
 
 import base64
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
 import pytest
@@ -37,7 +37,7 @@ def gmail_tools(mock_credentials, mock_gmail_service):
         return tools
 
 
-def create_mock_message(msg_id: str, subject: str, sender: str, date: str, body: str) -> Dict[str, Any]:
+def create_mock_message(msg_id: str, subject: str, sender: str, date: str, body: str) -> dict[str, Any]:
     """Helper function to create mock message data."""
     return {
         "id": msg_id,
@@ -116,11 +116,10 @@ def test_auth_with_expired_credentials():
 
         tools = GmailTools(creds=mock_creds)
 
-        with patch.object(mock_creds, "refresh") as mock_refresh:
-            with patch("pathlib.Path.exists") as mock_exists:
-                mock_exists.return_value = False  # Force refresh path
-                tools._auth()
-                mock_refresh.assert_called_once()
+        with patch.object(mock_creds, "refresh") as mock_refresh, patch("pathlib.Path.exists") as mock_exists:
+            mock_exists.return_value = False  # Force refresh path
+            tools._auth()
+            mock_refresh.assert_called_once()
 
 
 def test_auth_with_custom_paths():
@@ -128,12 +127,13 @@ def test_auth_with_custom_paths():
     custom_creds_path = "custom_creds.json"
     custom_token_path = "custom_token.json"
 
-    with patch("pathlib.Path.exists") as mock_exists:
+    with patch("pathlib.Path.exists") as mock_exists, patch(
+        "agno.tools.gmail.Credentials.from_authorized_user_file"
+    ) as mock_from_file:
         mock_exists.return_value = True
-        with patch("agno.tools.gmail.Credentials.from_authorized_user_file") as mock_from_file:
-            tools = GmailTools(credentials_path=custom_creds_path, token_path=custom_token_path)
-            tools._auth()
-            mock_from_file.assert_called_once_with(custom_token_path, tools.scopes)
+        tools = GmailTools(credentials_path=custom_creds_path, token_path=custom_token_path)
+        tools._auth()
+        mock_from_file.assert_called_once_with(custom_token_path, tools.scopes)
 
 
 def test_get_latest_emails(gmail_tools, mock_gmail_service):
@@ -221,7 +221,7 @@ def test_get_emails_by_date(gmail_tools, mock_gmail_service):
     mock_gmail_service.users().messages().list().execute.return_value = mock_messages
     mock_gmail_service.users().messages().get().execute.return_value = mock_message_data
 
-    start_date = int(datetime(2024, 1, 1).timestamp())
+    start_date = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp())
     result = gmail_tools.get_emails_by_date(start_date, range_in_days=1)
 
     assert "Date Email" in result
@@ -298,7 +298,7 @@ def test_message_with_attachments(gmail_tools, mock_gmail_service):
             "parts": [
                 {
                     "mimeType": "text/plain",
-                    "body": {"data": base64.urlsafe_b64encode("Message with attachment".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"Message with attachment").decode()},
                 },
                 {"filename": "test.pdf", "mimeType": "application/pdf"},
             ],
@@ -421,11 +421,11 @@ def test_multipart_complex_message(gmail_tools, mock_gmail_service):
             "parts": [
                 {
                     "mimeType": "text/plain",
-                    "body": {"data": base64.urlsafe_b64encode("Plain text version".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"Plain text version").decode()},
                 },
                 {
                     "mimeType": "text/html",
-                    "body": {"data": base64.urlsafe_b64encode("<p>HTML version</p>".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"<p>HTML version</p>").decode()},
                 },
                 {"filename": "test.pdf", "mimeType": "application/pdf"},
             ],
@@ -494,7 +494,7 @@ def test_send_email_with_single_attachment(gmail_tools, mock_gmail_service):
     """Test sending email with a single attachment."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -516,7 +516,7 @@ def test_send_email_with_multiple_attachments(gmail_tools, mock_gmail_service):
     """Test sending email with multiple attachments."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -538,7 +538,7 @@ def test_create_draft_with_attachment(gmail_tools, mock_gmail_service):
     """Test creating draft email with attachment."""
     mock_draft_response = {"id": "draft123", "message": {"id": "msg123"}}
     mock_gmail_service.users().drafts().create().execute.return_value = mock_draft_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -560,7 +560,7 @@ def test_send_email_reply_with_attachment(gmail_tools, mock_gmail_service):
     """Test sending email reply with attachment."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -619,22 +619,21 @@ def test_send_email_mixed_attachment_existence(gmail_tools, mock_gmail_service):
     class MockPath:
         def __init__(self, path):
             self.path = str(path)
-        
+
         def exists(self):
             return self.path.endswith("exists.pdf")
 
-    with patch("agno.tools.gmail.Path", MockPath):
-        with pytest.raises(ValueError, match="Attachment file not found"):
-            gmail_tools.send_email(
-                to="recipient@test.com", subject="Test", body="Test body", attachments=["exists.pdf", "missing.pdf"]
-            )
+    with patch("agno.tools.gmail.Path", MockPath), pytest.raises(ValueError, match="Attachment file not found"):
+        gmail_tools.send_email(
+            to="recipient@test.com", subject="Test", body="Test body", attachments=["exists.pdf", "missing.pdf"]
+        )
 
 
 def test_attachment_mime_type_guessing(gmail_tools, mock_gmail_service):
     """Test MIME type guessing for different file types."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -657,7 +656,7 @@ def test_attachment_with_encoding(gmail_tools, mock_gmail_service):
     """Test attachment handling when MIME type has encoding."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -680,7 +679,7 @@ def test_empty_attachments_list(gmail_tools, mock_gmail_service):
     """Test sending email with empty attachments list."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 
@@ -696,7 +695,7 @@ def test_attachment_filename_extraction(gmail_tools, mock_gmail_service):
     """Test that attachment filenames are properly extracted from paths."""
     mock_send_response = {"id": "msg123", "labelIds": ["SENT"]}
     mock_gmail_service.users().messages().send().execute.return_value = mock_send_response
-    
+
     # Reset mock to clear any setup calls
     mock_gmail_service.reset_mock()
 

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -99,7 +101,7 @@ class OpenWeatherTools(Toolkit):
                 return json.dumps({"error": f"No location found for '{location}'"})
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error geocoding location: {e}")
             return json.dumps({"error": str(e)})
 
@@ -139,7 +141,7 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting current weather: {e}")
             return json.dumps({"error": str(e)})
 
@@ -186,7 +188,7 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting forecast: {e}")
             return json.dumps({"error": str(e)})
 
@@ -226,6 +228,6 @@ class OpenWeatherTools(Toolkit):
                 result["country"] = loc_data.get("country", "")
 
             return json.dumps(result, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting air pollution data: {e}")
             return json.dumps({"error": str(e)})

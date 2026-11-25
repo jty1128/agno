@@ -17,7 +17,7 @@ provides high-quality transcription capabilities.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -87,7 +87,7 @@ class MLXTranscribeTools(Toolkit):
                 return "No audio file path provided"
 
             log_info(f"Transcribing audio file {audio_file_path}")
-            transcription_kwargs: Dict[str, Any] = {
+            transcription_kwargs: dict[str, Any] = {
                 "path_or_hf_repo": self.path_or_hf_repo,
             }
             if self.verbose is not None:

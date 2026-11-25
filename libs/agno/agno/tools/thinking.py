@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Union
 
 from agno.agent import Agent
 from agno.team.team import Team
@@ -68,6 +70,6 @@ class ThinkingTools(Toolkit):
                 """
             ).strip()
             return formatted_thoughts
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error recording thought: {e}")
             return f"Error recording thought: {e}"

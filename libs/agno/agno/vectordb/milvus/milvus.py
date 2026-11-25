@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 try:
     import asyncio
 
     from pymilvus import AsyncMilvusClient, MilvusClient  # type: ignore
-except ImportError:
-    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
+except ImportError as e:
+    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.") from e
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -105,7 +107,7 @@ class Milvus(VectorDb):
             )
         return self._async_client
 
-    def _get_sparse_vector(self, text: str) -> Dict[int, float]:
+    def _get_sparse_vector(self, text: str) -> dict[int, float]:
         """
         Convert text into a sparse vector representation using a simple TF-IDF-like scoring.
 
@@ -193,7 +195,7 @@ class Milvus(VectorDb):
 
     def _prepare_document_data(
         self, document: Document, include_vectors: bool = True
-    ) -> Dict[str, Union[str, List[float], Dict[int, float], None]]:
+    ) -> dict[str, str | list[float] | dict[int, float] | None]:
         """
         Prepare document data for insertion.
 
@@ -202,8 +204,8 @@ class Milvus(VectorDb):
             include_vectors: Whether to include vector data
 
         Returns:
-            Dictionary with document data where values can be strings, vectors (List[float]),
-            sparse vectors (Dict[int, float]), or None
+            Dictionary with document data where values can be strings, vectors (list[float]),
+            sparse vectors (dict[int, float]), or None
         """
         # Ensure document is embedded if vectors are needed
         if include_vectors and document.embedding is None:
@@ -218,7 +220,7 @@ class Milvus(VectorDb):
         meta_data_str = json.dumps(document.meta_data) if document.meta_data else "{}"
         usage_str = json.dumps(document.usage) if document.usage else "{}"
 
-        data: Dict[str, Union[str, List[float], Dict[int, float], None]] = {
+        data: dict[str, str | list[float] | dict[int, float] | None] = {
             "id": doc_id,
             "text": cleaned_content,
             "name": document.name,
@@ -231,12 +233,12 @@ class Milvus(VectorDb):
             if self.search_type == SearchType.hybrid:
                 data.update(
                     {
-                        "dense_vector": document.embedding,  # List[float] or None # Dict[int, float]
+                        "dense_vector": document.embedding,
                         "sparse_vector": self._get_sparse_vector(cleaned_content),
                     }
                 )
             else:
-                vector_data: Optional[List[float]] = document.embedding
+                vector_data: Optional[list[float]] = document.embedding
                 data["vector"] = vector_data
 
         return data
@@ -707,9 +709,8 @@ class Milvus(VectorDb):
             await self.async_client.drop_collection(self.collection)
 
     def exists(self) -> bool:
-        if self.client:
-            if self.client.has_collection(self.collection):
-                return True
+        if self.client and self.client.has_collection(self.collection):
+            return True
         return False
 
     async def async_exists(self) -> bool:
@@ -755,7 +756,7 @@ class Milvus(VectorDb):
                 expr = f'meta_data["{k}"] is null'
             else:
                 # For other types, convert to string
-                expr = f'meta_data["{k}"] == "{str(v)}"'
+                expr = f'meta_data["{k}"] == "{v!s}"'
 
             expressions.append(expr)
 

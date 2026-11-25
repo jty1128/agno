@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -63,8 +65,8 @@ class VisualizationTools(Toolkit):
             self.register(self.create_histogram)
 
     def _normalize_data_for_charts(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]], List[Any], str]
-    ) -> Dict[str, Union[int, float]]:
+        self, data: Union[dict[str, Any], list[dict[str, Any]], list[Any], str]
+    ) -> dict[str, Union[int, float]]:
         """
         Normalize various data formats into a simple dictionary format for charts.
 
@@ -78,32 +80,32 @@ class VisualizationTools(Toolkit):
             # Already in the right format, just ensure values are numeric
             return {str(k): float(v) if isinstance(v, (int, float)) else 0 for k, v in data.items()}
 
+        elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            # List of dictionaries - try to find key-value pairs
+            result = {}
+            for item in data:
+                if isinstance(item, dict):
+                    # Look for common key patterns
+                    keys = list(item.keys())
+                    if len(keys) >= 2:
+                        # Use first key as label, second as value
+                        label_key = keys[0]
+                        value_key = keys[1]
+                        result[str(item[label_key])] = (
+                            float(item[value_key]) if isinstance(item[value_key], (int, float)) else 0
+                        )
+            return result
+
         elif isinstance(data, list) and len(data) > 0:
-            if isinstance(data[0], dict):
-                # List of dictionaries - try to find key-value pairs
-                result = {}
-                for item in data:
-                    if isinstance(item, dict):
-                        # Look for common key patterns
-                        keys = list(item.keys())
-                        if len(keys) >= 2:
-                            # Use first key as label, second as value
-                            label_key = keys[0]
-                            value_key = keys[1]
-                            result[str(item[label_key])] = (
-                                float(item[value_key]) if isinstance(item[value_key], (int, float)) else 0
-                            )
-                return result
-            else:
-                # List of values - create numbered keys
-                return {f"Item {i + 1}": float(v) if isinstance(v, (int, float)) else 0 for i, v in enumerate(data)}
+            # List of values - create numbered keys
+            return {f"Item {i + 1}": float(v) if isinstance(v, (int, float)) else 0 for i, v in enumerate(data)}
 
         # Fallback
         return {"Data": 1.0}
 
     def create_bar_chart(
         self,
-        data: Union[Dict[str, Union[int, float]], List[Dict[str, Any]], str],
+        data: Union[dict[str, Union[int, float]], list[dict[str, Any]], str],
         title: str = "Bar Chart",
         x_label: str = "Categories",
         y_label: str = "Values",
@@ -170,12 +172,12 @@ class VisualizationTools(Toolkit):
             )
 
         except Exception as e:
-            logger.error(f"Error creating bar chart: {str(e)}")
+            logger.error(f"Error creating bar chart: {e!s}")
             return json.dumps({"chart_type": "bar_chart", "error": str(e), "status": "error"})
 
     def create_line_chart(
         self,
-        data: Union[Dict[str, Union[int, float]], List[Dict[str, Any]], str],
+        data: Union[dict[str, Union[int, float]], list[dict[str, Any]], str],
         title: str = "Line Chart",
         x_label: str = "X-axis",
         y_label: str = "Y-axis",
@@ -243,12 +245,12 @@ class VisualizationTools(Toolkit):
             )
 
         except Exception as e:
-            logger.error(f"Error creating line chart: {str(e)}")
+            logger.error(f"Error creating line chart: {e!s}")
             return json.dumps({"chart_type": "line_chart", "error": str(e), "status": "error"})
 
     def create_pie_chart(
         self,
-        data: Union[Dict[str, Union[int, float]], List[Dict[str, Any]], str],
+        data: Union[dict[str, Union[int, float]], list[dict[str, Any]], str],
         title: str = "Pie Chart",
         filename: Optional[str] = None,
     ) -> str:
@@ -308,21 +310,21 @@ class VisualizationTools(Toolkit):
             )
 
         except Exception as e:
-            logger.error(f"Error creating pie chart: {str(e)}")
+            logger.error(f"Error creating pie chart: {e!s}")
             return json.dumps({"chart_type": "pie_chart", "error": str(e), "status": "error"})
 
     def create_scatter_plot(
         self,
-        x_data: Optional[List[Union[int, float]]] = None,
-        y_data: Optional[List[Union[int, float]]] = None,
+        x_data: Optional[list[Union[int, float]]] = None,
+        y_data: Optional[list[Union[int, float]]] = None,
         title: str = "Scatter Plot",
         x_label: str = "X-axis",
         y_label: str = "Y-axis",
         filename: Optional[str] = None,
         # Alternative parameter names that agents might use
-        x: Optional[List[Union[int, float]]] = None,
-        y: Optional[List[Union[int, float]]] = None,
-        data: Optional[Union[List[List[Union[int, float]]], Dict[str, List[Union[int, float]]]]] = None,
+        x: Optional[list[Union[int, float]]] = None,
+        y: Optional[list[Union[int, float]]] = None,
+        data: Optional[Union[list[list[Union[int, float]]], dict[str, list[Union[int, float]]]]] = None,
     ) -> str:
         """
         Create a scatter plot from the provided data.
@@ -354,11 +356,10 @@ class VisualizationTools(Toolkit):
                     if "x" in data and "y" in data:
                         x_data = data["x"]
                         y_data = data["y"]
-                elif isinstance(data, list) and len(data) > 0:
-                    if isinstance(data[0], list) and len(data[0]) == 2:
-                        # List of [x,y] pairs
-                        x_data = [point[0] for point in data]
-                        y_data = [point[1] for point in data]
+                elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], list) and len(data[0]) == 2:
+                    # List of [x,y] pairs
+                    x_data = [point[0] for point in data]
+                    y_data = [point[1] for point in data]
 
             # Validate that we have data
             if x_data is None or y_data is None:
@@ -397,12 +398,12 @@ class VisualizationTools(Toolkit):
             )
 
         except Exception as e:
-            logger.error(f"Error creating scatter plot: {str(e)}")
+            logger.error(f"Error creating scatter plot: {e!s}")
             return json.dumps({"chart_type": "scatter_plot", "error": str(e), "status": "error"})
 
     def create_histogram(
         self,
-        data: List[Union[int, float]],
+        data: list[Union[int, float]],
         bins: int = 10,
         title: str = "Histogram",
         x_label: str = "Values",
@@ -472,5 +473,5 @@ class VisualizationTools(Toolkit):
             )
 
         except Exception as e:
-            logger.error(f"Error creating histogram: {str(e)}")
+            logger.error(f"Error creating histogram: {e!s}")
             return json.dumps({"chart_type": "histogram", "error": str(e), "status": "error"})

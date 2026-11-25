@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from daytona_sdk import Daytona
 
@@ -30,8 +32,8 @@ class DaytonaTools(Toolkit):
         sandbox_target_region: Optional[SandboxTargetRegion] = None,
         sandbox_os: Optional[str] = None,
         sandbox_os_user: Optional[str] = None,
-        sandbox_env_vars: Optional[Dict[str, str]] = None,
-        sandbox_labels: Optional[Dict[str, str]] = None,
+        sandbox_env_vars: Optional[dict[str, str]] = None,
+        sandbox_labels: Optional[dict[str, str]] = None,
         sandbox_public: Optional[bool] = None,
         sandbox_auto_stop_interval: Optional[int] = None,
         organization_id: Optional[str] = None,
@@ -93,14 +95,14 @@ class DaytonaTools(Toolkit):
             )
             daytona = Daytona(self.config)
             self.sandbox: Sandbox = daytona.create(params)
-        except Exception as e:
+        except DaytonaError as e:
             logger.error(f"Error creating Daytona sandbox: {e}")
             raise e
 
         # Last execution result for reference
         self.last_execution: Optional[ExecuteResponse] = None
 
-        tools: List[Any] = []
+        tools: list[Any] = []
 
         if self.sandbox_language == CodeLanguage.PYTHON:
             tools.append(self.run_python_code)
@@ -120,7 +122,7 @@ class DaytonaTools(Toolkit):
             self.result: str = execution.result
             return self.result
         except Exception as e:
-            return json.dumps({"status": "error", "message": f"Error executing code: {str(e)}"})
+            return json.dumps({"status": "error", "message": f"Error executing code: {e!s}"})
 
     def run_code(self, code: str) -> str:
         """General function to run non-Python code in the contextual Daytona sandbox."""
@@ -131,4 +133,4 @@ class DaytonaTools(Toolkit):
             self.result: str = response.result
             return self.result
         except Exception as e:
-            return json.dumps({"status": "error", "message": f"Error executing code: {str(e)}"})
+            return json.dumps({"status": "error", "message": f"Error executing code: {e!s}"})

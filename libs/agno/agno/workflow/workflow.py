@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import AsyncGenerator, AsyncIterator
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -78,20 +79,20 @@ class Workflow:
     def __init__(
         self,
         *,
-        name: Optional[str] = None,
-        workflow_id: Optional[str] = None,
-        description: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        session_name: Optional[str] = None,
-        session_state: Optional[Dict[str, Any]] = None,
-        memory: Optional[Union[WorkflowMemory, Memory]] = None,
-        storage: Optional[Storage] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
+        name: str | None = None,
+        workflow_id: str | None = None,
+        description: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        session_name: str | None = None,
+        session_state: dict[str, Any] | None = None,
+        memory: WorkflowMemory | Memory | None = None,
+        storage: Storage | None = None,
+        extra_data: dict[str, Any] | None = None,
         debug_mode: bool = False,
         monitoring: bool = False,
         telemetry: bool = True,
-        app_id: Optional[str] = None,
+        app_id: str | None = None,
     ):
         self.name = name or self.__class__.__name__
         self.workflow_id = workflow_id
@@ -102,7 +103,7 @@ class Workflow:
 
         self.session_id = session_id
         self.session_name = session_name
-        self.session_state: Dict[str, Any] = session_state or {}
+        self.session_state: dict[str, Any] = session_state or {}
 
         self.memory = memory
         self.storage = storage
@@ -119,15 +120,15 @@ class Workflow:
         self.videos = None
         self.audio = None
 
-        self.workflow_session: Optional[WorkflowSession] = None
+        self.workflow_session: WorkflowSession | None = None
 
         # Private attributes to store the run method and its parameters
         # The run function provided by the subclass
-        self._subclass_run: Optional[Callable] = None
+        self._subclass_run: Callable | None = None
         # Parameters of the run function
-        self._run_parameters: Optional[Dict[str, Any]] = None
+        self._run_parameters: dict[str, Any] | None = None
         # Return type of the run function
-        self._run_return_type: Optional[str] = None
+        self._run_return_type: str | None = None
 
         self.update_run_method()
 
@@ -140,7 +141,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -358,7 +358,6 @@ class Workflow:
     async def arun(self, **kwargs: Any):
         """Async version of run() that calls arun_workflow()"""
         logger.error(f"{self.__class__.__name__}.arun() method not implemented.")
-        return
 
     def set_storage_mode(self):
         if self.storage is not None:
@@ -464,7 +463,7 @@ class Workflow:
         # use dataclasses.fields() to iterate through fields
         for f in fields(self):
             field_type = f.type
-            if isinstance(field_type, Agent):
+            if isinstance(field_type, type) and issubclass(field_type, Agent):
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
@@ -604,16 +603,16 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     log_warning(f"Failed to load runs from memory: {e}")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
@@ -757,11 +756,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -769,11 +768,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -802,7 +801,7 @@ class Workflow:
             )
 
             log_debug(f"Registered workflow: {self.name} (ID: {self.workflow_id})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to register workflow: {e}")
 
     def register_workflow(self, force: bool = False) -> None:
@@ -831,17 +830,17 @@ class Workflow:
             )
 
             log_debug(f"Registered workflow: {self.name} (ID: {self.workflow_id})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_warning(f"Failed to register workflow: {e}")
 
-    def to_config_dict(self) -> Dict[str, Any]:
+    def to_config_dict(self) -> dict[str, Any]:
         """Convert the workflow to a config dictionary including all agents and teams.
 
         Returns:
-            Dict[str, Any]: Dictionary representation of the workflow config.
+            dict[str, Any]: Dictionary representation of the workflow config.
         """
         # Basic workflow information
-        config: Dict[str, Any] = {
+        config: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "type": "workflow",
@@ -851,8 +850,8 @@ class Workflow:
             },
         }
 
-        agents: List[Dict[str, Any]] = []
-        teams: List[Dict[str, Any]] = []
+        agents: list[dict[str, Any]] = []
+        teams: list[dict[str, Any]] = []
 
         for attr_name in dir(self.__class__):
             # Skip private/special attributes and methods

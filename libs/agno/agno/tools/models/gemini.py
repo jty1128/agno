@@ -108,7 +108,7 @@ class GeminiTools(Toolkit):
                 log_debug(f"Successfully generated image {media_id} with model {self.image_model}")
             return "Image generated successfully"
 
-        except Exception as e:
+        except (AttributeError, ValueError, RuntimeError) as e:
             log_error(f"Failed to generate image: Client or method not available ({e})")
             return f"Failed to generate image: Client or method not available ({e})"
 

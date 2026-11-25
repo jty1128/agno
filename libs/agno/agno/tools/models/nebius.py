@@ -103,6 +103,6 @@ class NebiusTools(Toolkit):
                 )
                 return "Image generated successfully."
             return "Failed to generate image: No content received from API."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate image using {self.image_model}: {e}")
             return f"Failed to generate image: {e}"

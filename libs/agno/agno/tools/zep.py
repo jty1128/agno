@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from os import getenv
 from textwrap import dedent
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_error, log_warning
@@ -120,13 +122,13 @@ class ZepTools(Toolkit):
             try:
                 self.zep_client.memory.add_session(session_id=self.session_id, user_id=self.user_id)
                 log_debug(f"Created session {self.session_id} for user {self.user_id}")
-            except Exception as e:
+            except BadRequestError as e:
                 log_debug(f"Session may already exist: {e}")
 
             self._initialized = True
             return True
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             log_error(f"Failed to initialize ZepTools: {e}")
             self.zep_client = None
             self._initialized = False
@@ -162,7 +164,7 @@ class ZepTools(Toolkit):
                 ignore_roles=ignore_roles_list,
             )
             return f"Message from '{role}' added successfully to session {self.session_id}."
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             error_msg = f"Failed to add message to Zep session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error adding message: {e}"
@@ -201,7 +203,7 @@ class ZepTools(Toolkit):
                 log_warning(warning_msg)
                 return warning_msg
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             log_error(f"Failed to get Zep memory for session {self.session_id}: {e}")
             return f"Error getting memory for session {self.session_id}"
 
@@ -237,7 +239,7 @@ class ZepTools(Toolkit):
             else:
                 return f"No {search_scope} found for query: {query}"
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             log_error(f"Failed to search Zep graph for user {self.user_id}: {e}")
             return f"Error searching graph: {e}"
 
@@ -330,13 +332,13 @@ class ZepAsyncTools(Toolkit):
             try:
                 await self.zep_client.memory.add_session(session_id=self.session_id, user_id=self.user_id)  # type: ignore
                 log_debug(f"Created session {self.session_id} for user {self.user_id}")
-            except Exception as e:
+            except BadRequestError as e:
                 log_debug(f"Session may already exist: {e}")
 
             self._initialized = True
             return True
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             log_error(f"Failed to initialize ZepTools: {e}")
             self.zep_client = None
             self._initialized = False
@@ -375,7 +377,7 @@ class ZepAsyncTools(Toolkit):
                 ignore_roles=ignore_roles_list,
             )
             return f"Message from '{role}' added successfully to session {self.session_id}."
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             error_msg = f"Failed to add message to Zep session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error adding message: {e}"
@@ -416,7 +418,7 @@ class ZepAsyncTools(Toolkit):
                 log_warning(warning_msg)
                 return memory_data.context or "No context available."
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             error_msg = f"Failed to get Zep memory for session {self.session_id}: {e}"
             log_error(error_msg)
             return f"Error getting memory: {e}"
@@ -457,6 +459,6 @@ class ZepAsyncTools(Toolkit):
             else:
                 return f"No {scope} found for query: {query}"
 
-        except Exception as e:
+        except (APIError, AuthError, NotFoundError, BadRequestError) as e:
             log_error(f"Failed to search Zep graph for user {self.user_id}: {e}")
             return f"Error searching graph: {e}"

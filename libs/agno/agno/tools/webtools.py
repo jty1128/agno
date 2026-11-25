@@ -8,13 +8,13 @@ class WebTools(Toolkit):
     """
     A toolkit for working with web-related tools.
     """
+
     def __init__(self, retries: int = 3):
         super().__init__(name="web_tools")
 
         self.retries = retries
 
         self.register(self.expand_url)
-
 
     def expand_url(self, url: str) -> str:
         """
@@ -31,7 +31,7 @@ class WebTools(Toolkit):
                 final_url = response.url
                 logger.info(f"expand_url: {url} expanded to {final_url} on attempt {attempt}")
                 return str(final_url)
-            except Exception as e:
+            except httpx.RequestError as e:
                 logger.error(f"Error expanding URL {url} on attempt {attempt}: {e}")
 
         return url
