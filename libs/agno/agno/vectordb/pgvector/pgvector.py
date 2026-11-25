@@ -1,7 +1,7 @@
 import asyncio
 from hashlib import md5
 from math import sqrt
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Optional, Union, cast
 
 try:
     from sqlalchemy.dialects import postgresql
@@ -83,7 +83,7 @@ class PgVector(VectorDb):
                 raise ValueError("Must provide 'db_url' if 'db_engine' is None.")
             try:
                 db_engine = create_engine(db_url)
-            except Exception as e:
+            except SQLAlchemyError as e:
                 logger.error(f"Failed to create engine from 'db_url': {e}")
                 raise
 
@@ -187,7 +187,7 @@ class PgVector(VectorDb):
         log_debug(f"Checking if table '{self.table.fullname}' exists.")
         try:
             return inspect(self.db_engine).has_table(self.table_name, schema=self.schema)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error checking if table exists: {e}")
             return False
 
@@ -225,7 +225,7 @@ class PgVector(VectorDb):
                 stmt = select(1).where(column == value).limit(1)
                 result = sess.execute(stmt).first()
                 return result is not None
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error checking if record exists: {e}")
             return False
 
@@ -331,7 +331,7 @@ class PgVector(VectorDb):
                                     "content_hash": content_hash,
                                 }
                                 batch_records.append(record)
-                            except Exception as e:
+                            except SQLAlchemyError as e:
                                 logger.error(f"Error processing document '{doc.name}': {e}")
 
                         # Insert the batch of records
@@ -339,11 +339,11 @@ class PgVector(VectorDb):
                         sess.execute(insert_stmt, batch_records)
                         sess.commit()  # Commit batch independently
                         log_info(f"Inserted batch of {len(batch_records)} documents.")
-                    except Exception as e:
+                    except SQLAlchemyError as e:
                         logger.error(f"Error with batch starting at index {i}: {e}")
                         sess.rollback()  # Rollback the current batch if there's an error
                         raise
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error inserting documents: {e}")
             raise
 
@@ -521,7 +521,7 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except SQLAlchemyError as e:
                 logger.error(f"Error performing semantic search: {e}")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
@@ -547,7 +547,7 @@ class PgVector(VectorDb):
 
             log_info(f"Found {len(search_results)} documents")
             return search_results
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error during vector search: {e}")
             return []
 
@@ -618,7 +618,7 @@ class PgVector(VectorDb):
             try:
                 with self.Session() as sess, sess.begin():
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except SQLAlchemyError as e:
                 logger.error(f"Error performing keyword search: {e}")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
@@ -641,7 +641,7 @@ class PgVector(VectorDb):
 
             log_info(f"Found {len(search_results)} documents")
             return search_results
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error during keyword search: {e}")
             return []
 
@@ -744,7 +744,7 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except SQLAlchemyError as e:
                 logger.error(f"Error performing hybrid search: {e}")
                 return []
 

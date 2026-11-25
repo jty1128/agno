@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Optional
 
 from agno.tools import Toolkit
 
@@ -13,14 +12,14 @@ except ImportError:
 class ScrapeGraphTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         smartscraper: bool = True,
         markdownify: bool = False,
         **kwargs,
     ):
         super().__init__(name="scrapegraph_tools", **kwargs)
 
-        self.api_key: Optional[str] = api_key or os.getenv("SGAI_API_KEY")
+        self.api_key: str | None = api_key or os.getenv("SGAI_API_KEY")
         self.client = Client(api_key=self.api_key)
 
         # Start with smartscraper by default
@@ -44,7 +43,7 @@ class ScrapeGraphTools(Toolkit):
 
         try:
             response = self.client.smartscraper(website_url=url, user_prompt=prompt)
-            return json.dumps(response["result"])
+            return json.dumps(response["result"], default=str)
         except Exception as e:
             return json.dumps({"error": str(e)})
 
@@ -60,4 +59,4 @@ class ScrapeGraphTools(Toolkit):
             response = self.client.markdownify(website_url=url)
             return response["result"]
         except Exception as e:
-            return f"Error converting to markdown: {str(e)}"
+            return f"Error converting to markdown: {e!s}"

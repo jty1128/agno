@@ -1,6 +1,6 @@
 import os
+from collections.abc import Iterable, Iterator
 from os import getenv
-from typing import Iterable, Iterator, Optional, Union
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -20,10 +20,10 @@ except ImportError:
 class ReplicateTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "minimax/video-01",
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(name="replicate_toolkit", **kwargs)
         self.api_key = api_key or getenv("REPLICATE_API_TOKEN")
         if not self.api_key:
@@ -31,7 +31,7 @@ class ReplicateTools(Toolkit):
         self.model = model
         self.register(self.generate_media)
 
-    def generate_media(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def generate_media(self, agent: Agent | Team, prompt: str) -> str:
         """
         Use this function to generate an image or a video using a replicate model.
         Args:
@@ -62,7 +62,7 @@ class ReplicateTools(Toolkit):
             results.append(result)
         return "\n".join(results)
 
-    def _parse_output(self, agent: Union[Agent, Team], output: FileOutput) -> str:
+    def _parse_output(self, agent: Agent | Team, output: FileOutput) -> str:
         """
         Parse the outputs from the replicate model.
         """

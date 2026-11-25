@@ -1,6 +1,6 @@
 import json
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from agno.agent import Agent
 from agno.tools.toolkit import Toolkit
@@ -15,7 +15,7 @@ except ImportError:
 class Mem0Tools(Toolkit):
     def __init__(
         self,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
         api_key: Optional[str] = None,
         user_id: Optional[str] = None,
         **kwargs,
@@ -44,9 +44,9 @@ class Mem0Tools(Toolkit):
             else:
                 log_debug("Initializing Mem0 with default settings.")
                 self.client = Memory()
-        except Exception as e:
-            log_error(f"Failed to initialize Mem0 client: {e}")
-            raise ConnectionError("Failed to initialize Mem0 client. Ensure API keys/config are set.") from e
+        except Exception:
+            log_error("Failed to initialize Mem0 client")
+            raise ConnectionError("Failed to initialize Mem0 client. Ensure API keys/config are set.")
 
     def _get_user_id(
         self,
@@ -56,12 +56,9 @@ class Mem0Tools(Toolkit):
         """Resolve the user ID"""
         resolved_user_id = self.user_id
         if not resolved_user_id and agent is not None:
-            try:
-                session_state = getattr(agent, "session_state", None)
-                if isinstance(session_state, dict):
-                    resolved_user_id = session_state.get("current_user_id")
-            except Exception:
-                pass
+            session_state = getattr(agent, "session_state", None)
+            if isinstance(session_state, dict):
+                resolved_user_id = session_state.get("current_user_id")
         if not resolved_user_id:
             error_msg = f"Error in {method_name}: A user_id must be provided in the method call."
             log_error(error_msg)
@@ -71,11 +68,11 @@ class Mem0Tools(Toolkit):
     def add_memory(
         self,
         agent: Agent,
-        content: Union[str, Dict[str, str]],
+        content: Union[str, dict[str, str]],
     ) -> str:
         """Add facts to the user's memory.
         Args:
-            content(Union[str, Dict[str, str]]): The facts that should be stored.
+            content(Union[str, dict[str, str]]): The facts that should be stored.
             Example:
                 content = "I live in NYC"
                 content = {"Name": "John", "Age": 30, "Location": "New York"}
@@ -99,9 +96,9 @@ class Mem0Tools(Toolkit):
                 user_id=resolved_user_id,
             )
             return json.dumps(result)
-        except Exception as e:
-            log_error(f"Error adding memory: {e}")
-            return f"Error adding memory: {e}"
+        except Exception:
+            log_error("Error adding memory")
+            return "Error adding memory"
 
     def search_memory(
         self,
@@ -131,9 +128,9 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
-            log_error(f"Error searching memory: {e}")
-            return f"Error searching memory: {e}"
+        except Exception:
+            log_error("Error searching memory")
+            return "Error searching memory"
 
     def get_all_memories(self, agent: Agent) -> str:
         """Return **all** memories for the current user as a JSON string."""
@@ -157,9 +154,9 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
-            log_error(f"Error getting all memories: {e}")
-            return f"Error getting all memories: {e}"
+        except Exception:
+            log_error("Error getting all memories")
+            return "Error getting all memories"
 
     def delete_all_memories(self, agent: Agent) -> str:
         """Delete *all* memories associated with the current user"""
@@ -172,6 +169,6 @@ class Mem0Tools(Toolkit):
         try:
             self.client.delete_all(user_id=resolved_user_id)
             return f"Successfully deleted all memories for user_id: {resolved_user_id}."
-        except Exception as e:
-            log_error(f"Error deleting all memories: {e}")
-            return f"Error deleting all memories: {e}"
+        except Exception:
+            log_error("Error deleting all memories")
+            return "Error deleting all memories"

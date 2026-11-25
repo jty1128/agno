@@ -11,10 +11,11 @@ Prerequisites:
 
 """
 
+from __future__ import annotations
+
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 
@@ -100,8 +101,8 @@ class GoogleMapTools(Toolkit):
 
             return json.dumps(places)
 
-        except Exception as e:
-            print(f"Error searching Google Maps: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error searching Google Maps: {e!s}")
             return str([])
 
     def get_directions(
@@ -128,8 +129,8 @@ class GoogleMapTools(Toolkit):
         try:
             result = self.client.directions(origin, destination, mode=mode, departure_time=departure_time, avoid=avoid)
             return str(result)
-        except Exception as e:
-            print(f"Error getting directions: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error getting directions: {e!s}")
             return str([])
 
     def validate_address(
@@ -152,8 +153,8 @@ class GoogleMapTools(Toolkit):
                 [address], regionCode=region_code, locality=locality, enableUspsCass=enable_usps_cass
             )
             return str(result)
-        except Exception as e:
-            print(f"Error validating address: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error validating address: {e!s}")
             return str({})
 
     def geocode_address(self, address: str, region: Optional[str] = None) -> str:
@@ -170,8 +171,8 @@ class GoogleMapTools(Toolkit):
         try:
             result = self.client.geocode(address, region=region)
             return str(result)
-        except Exception as e:
-            print(f"Error geocoding address: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error geocoding address: {e!s}")
             return str([])
 
     def reverse_geocode(
@@ -192,8 +193,8 @@ class GoogleMapTools(Toolkit):
         try:
             result = self.client.reverse_geocode((lat, lng), result_type=result_type, location_type=location_type)
             return str(result)
-        except Exception as e:
-            print(f"Error reverse geocoding: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error reverse geocoding: {e!s}")
             return str([])
 
     def get_distance_matrix(
@@ -222,8 +223,8 @@ class GoogleMapTools(Toolkit):
                 origins, destinations, mode=mode, departure_time=departure_time, avoid=avoid
             )
             return str(result)
-        except Exception as e:
-            print(f"Error getting distance matrix: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error getting distance matrix: {e!s}")
             return str({})
 
     def get_elevation(self, lat: float, lng: float) -> str:
@@ -240,8 +241,8 @@ class GoogleMapTools(Toolkit):
         try:
             result = self.client.elevation((lat, lng))
             return str(result)
-        except Exception as e:
-            print(f"Error getting elevation: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error getting elevation: {e!s}")
             return str([])
 
     def get_timezone(self, lat: float, lng: float, timestamp: Optional[datetime] = None) -> str:
@@ -258,10 +259,10 @@ class GoogleMapTools(Toolkit):
         """
         try:
             if timestamp is None:
-                timestamp = datetime.now()
+                timestamp = datetime.now(timezone.utc)
 
             result = self.client.timezone(location=(lat, lng), timestamp=timestamp)
             return str(result)
-        except Exception as e:
-            print(f"Error getting timezone: {str(e)}")
+        except (googlemaps.ApiError, ValueError) as e:
+            print(f"Error getting timezone: {e!s}")
             return str({})

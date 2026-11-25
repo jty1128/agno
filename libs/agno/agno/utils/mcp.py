@@ -14,7 +14,7 @@ except (ImportError, ModuleNotFoundError):
 from agno.media import ImageArtifact
 
 
-def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
+def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession) -> Callable:
     """
     Return an entrypoint for an MCP tool.
 
@@ -34,7 +34,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
 
             # Return an error if the tool call failed
             if result.isError:
-                raise Exception(f"Error from MCP tool '{tool_name}': {result.content}")
+                raise ToolError(f"Error from MCP tool '{tool_name}': {result.content}")
 
             # Process the result content
             response_str = ""
