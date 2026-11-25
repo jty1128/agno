@@ -50,18 +50,20 @@ def workflow_storage(mock_engine, mock_session):
 def test_agent_storage_initialization():
     """Test PostgresStorage initialization with different parameters."""
     # Test with db_url
-    with patch("agno.storage.postgres.create_engine") as mock_create_engine:
-        with patch("agno.storage.postgres.scoped_session"):
-            with patch("agno.storage.postgres.inspect"):
-                mock_engine = MagicMock()
-                mock_create_engine.return_value = mock_engine
+    with (
+        patch("agno.storage.postgres.create_engine") as mock_create_engine,
+        patch("agno.storage.postgres.scoped_session"),
+        patch("agno.storage.postgres.inspect"),
+    ):
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+        storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
 
-                mock_create_engine.assert_called_once_with("postgresql://user:pass@localhost/db")
-                assert storage.table_name == "test_table"
-                assert storage.schema == "ai"  # Default value
-                assert storage.mode == "agent"  # Default value
+        mock_create_engine.assert_called_once_with("postgresql://user:pass@localhost/db")
+        assert storage.table_name == "test_table"
+        assert storage.schema == "ai"  # Default value
+        assert storage.mode == "agent"  # Default value
 
     # Test with missing db_url and db_engine
     with pytest.raises(ValueError, match="Must provide either db_url or db_engine"):
@@ -260,15 +262,14 @@ def test_drop_table(agent_storage):
 
 def test_mode_switching():
     """Test switching between agent and workflow modes."""
-    with patch("agno.storage.postgres.scoped_session"):
-        with patch("agno.storage.postgres.inspect"):
-            with patch("agno.storage.postgres.create_engine"):
-                # Create storage in agent mode
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
-                assert storage.mode == "agent"
+    with patch("agno.storage.postgres.scoped_session"), patch("agno.storage.postgres.inspect"):
+        with patch("agno.storage.postgres.create_engine"):
+            # Create storage in agent mode
+            storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+            assert storage.mode == "agent"
 
-                # Switch to workflow mode
-                with patch.object(storage, "get_table") as mock_get_table:
-                    storage.mode = "workflow"
-                    assert storage.mode == "workflow"
-                    mock_get_table.assert_called_once()
+            # Switch to workflow mode
+            with patch.object(storage, "get_table") as mock_get_table:
+                storage.mode = "workflow"
+                assert storage.mode == "workflow"
+                mock_get_table.assert_called_once()

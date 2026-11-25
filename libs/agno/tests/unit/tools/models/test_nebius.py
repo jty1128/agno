@@ -81,17 +81,16 @@ def test_nebius_tools_init_with_env_var():
             return env_api_key
         return None
 
-    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv:
-        with patch("agno.tools.models.nebius.Nebius") as mock_nebius_cls:
-            mock_nebius_instance = MagicMock()
-            mock_client_instance = MagicMock()
-            mock_nebius_instance.get_client.return_value = mock_client_instance
-            mock_nebius_cls.return_value = mock_nebius_instance
+    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv, patch("agno.tools.models.nebius.Nebius") as mock_nebius_cls:
+        mock_nebius_instance = MagicMock()
+        mock_client_instance = MagicMock()
+        mock_nebius_instance.get_client.return_value = mock_client_instance
+        mock_nebius_cls.return_value = mock_nebius_instance
 
-            nebius_tools = NebiusTools()
+        nebius_tools = NebiusTools()
 
-            assert nebius_tools.api_key == env_api_key
-            assert nebius_tools._nebius_client is None
+        assert nebius_tools.api_key == env_api_key
+        assert nebius_tools._nebius_client is None
             assert mock_getenv.called
 
 
@@ -101,9 +100,8 @@ def test_nebius_tools_init_no_api_key():
     def mock_getenv_side_effect(var_name):
         return None
 
-    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv:
-        with pytest.raises(ValueError, match="NEBIUS_API_KEY not set"):
-            NebiusTools()
+    with patch("agno.tools.models.nebius.getenv", side_effect=mock_getenv_side_effect) as mock_getenv, pytest.raises(ValueError, match="NEBIUS_API_KEY not set"):
+        NebiusTools()
 
         assert mock_getenv.called
 

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 from agno.tools.function import Function
 from agno.utils.log import log_debug, logger
@@ -9,7 +9,7 @@ class Toolkit:
     def __init__(
         self,
         name: str = "toolkit",
-        tools: List[Callable] = [],
+        tools: Optional[list[Callable]] = None,
         instructions: Optional[str] = None,
         add_instructions: bool = False,
         include_tools: Optional[list[str]] = None,
@@ -18,8 +18,8 @@ class Toolkit:
         cache_ttl: int = 3600,
         cache_dir: Optional[str] = None,
         auto_register: bool = True,
-        stop_after_tool_call_tools: Optional[List[str]] = None,
-        show_result_tools: Optional[List[str]] = None,
+        stop_after_tool_call_tools: Optional[list[str]] = None,
+        show_result_tools: Optional[list[str]] = None,
     ):
         """Initialize a new Toolkit.
 
@@ -34,19 +34,21 @@ class Toolkit:
             cache_ttl (int): Time-to-live for cached results in seconds.
             cache_dir (Optional[str]): Directory to store cache files. Defaults to system temp dir.
             auto_register (bool): Whether to automatically register all methods in the class.
-            stop_after_tool_call_tools (Optional[List[str]]): List of function names that should stop the agent after execution.
-            show_result_tools (Optional[List[str]]): List of function names whose results should be shown.
+            stop_after_tool_call_tools (Optional[list[str]]): List of function names that should stop the agent after execution.
+            show_result_tools (Optional[list[str]]): List of function names whose results should be shown.
         """
         self.name: str = name
-        self.tools: List[Callable] = tools
-        self.functions: Dict[str, Function] = OrderedDict()
+        self.tools: list[Callable] = tools or []
+        self.functions: dict[str, Function] = OrderedDict()
         self.instructions: Optional[str] = instructions
         self.add_instructions: bool = add_instructions
         self.stop_after_tool_call_tools = stop_after_tool_call_tools or []
         self.show_result_tools = show_result_tools or []
 
         self._check_tools_filters(
-            available_tools=[tool.__name__ for tool in tools], include_tools=include_tools, exclude_tools=exclude_tools
+            available_tools=[tool.__name__ for tool in self.tools],
+            include_tools=include_tools,
+            exclude_tools=exclude_tools,
         )
 
         self.include_tools = include_tools
@@ -113,7 +115,7 @@ class Toolkit:
             )
             self.functions[f.name] = f
             log_debug(f"Function: {f.name} registered with {self.name}")
-        except Exception as e:
+        except ValueError as e:
             logger.warning(f"Failed to create Function for: {function.__name__}")
             raise e
 

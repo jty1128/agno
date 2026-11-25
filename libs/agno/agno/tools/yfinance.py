@@ -77,6 +77,7 @@ class YFinanceTools(Toolkit):
             current_price = stock.info.get("regularMarketPrice", stock.info.get("currentPrice"))
             return f"{current_price:.4f}" if current_price else f"Could not fetch current price for {symbol}"
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching current price for {symbol}: {e}"
 
     def get_company_info(self, symbol: str) -> str:
@@ -128,6 +129,7 @@ class YFinanceTools(Toolkit):
             }
             return json.dumps(company_info_cleaned, indent=2)
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching company profile for {symbol}: {e}"
 
     def get_historical_stock_prices(self, symbol: str, period: str = "1mo", interval: str = "1d") -> str:
@@ -150,6 +152,7 @@ class YFinanceTools(Toolkit):
             historical_price = stock.history(period=period, interval=interval)
             return historical_price.to_json(orient="index")
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching historical prices for {symbol}: {e}"
 
     def get_stock_fundamentals(self, symbol: str) -> str:
@@ -194,6 +197,7 @@ class YFinanceTools(Toolkit):
             }
             return json.dumps(fundamentals, indent=2)
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error getting fundamentals for {symbol}: {e}"
 
     def get_income_statements(self, symbol: str) -> str:
@@ -211,6 +215,7 @@ class YFinanceTools(Toolkit):
             financials = stock.financials
             return financials.to_json(orient="index")
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching income statements for {symbol}: {e}"
 
     def get_key_financial_ratios(self, symbol: str) -> str:
@@ -228,6 +233,7 @@ class YFinanceTools(Toolkit):
             key_ratios = stock.info
             return json.dumps(key_ratios, indent=2)
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching key financial ratios for {symbol}: {e}"
 
     def get_analyst_recommendations(self, symbol: str) -> str:
@@ -245,6 +251,7 @@ class YFinanceTools(Toolkit):
             recommendations = stock.recommendations
             return recommendations.to_json(orient="index")
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching analyst recommendations for {symbol}: {e}"
 
     def get_company_news(self, symbol: str, num_stories: int = 3) -> str:
@@ -262,6 +269,7 @@ class YFinanceTools(Toolkit):
             news = yf.Ticker(symbol).news
             return json.dumps(news[:num_stories], indent=2)
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching company news for {symbol}: {e}"
 
     def get_technical_indicators(self, symbol: str, period: str = "3mo") -> str:
@@ -280,4 +288,5 @@ class YFinanceTools(Toolkit):
             indicators = yf.Ticker(symbol).history(period=period)
             return indicators.to_json(orient="index")
         except Exception as e:
+            log_debug(f"Exception: {e}")
             return f"Error fetching technical indicators for {symbol}: {e}"

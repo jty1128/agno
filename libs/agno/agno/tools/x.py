@@ -143,9 +143,9 @@ class XTools(Toolkit):
                     f"Unable to send message to '{recipient}'. The user may have restricted who can send them messages."
                 )
             return json.dumps({"error": error_message}, indent=2)
-        except Exception as e:
-            logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+        except Exception:
+            logger.exception("Unexpected error sending DM")
+            return json.dumps({"error": "An unexpected error occurred"}, indent=2)
 
     def get_my_info(self) -> str:
         """

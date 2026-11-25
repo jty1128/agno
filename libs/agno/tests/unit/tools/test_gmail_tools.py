@@ -1,8 +1,8 @@
 """Unit tests for GmailTools class."""
 
 import base64
-from datetime import datetime
-from typing import Any, Dict
+from datetime import datetime, timezone
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -116,11 +116,10 @@ def test_auth_with_expired_credentials():
 
         tools = GmailTools(creds=mock_creds)
 
-        with patch.object(mock_creds, "refresh") as mock_refresh:
-            with patch("pathlib.Path.exists") as mock_exists:
-                mock_exists.return_value = False  # Force refresh path
-                tools._auth()
-                mock_refresh.assert_called_once()
+        with patch.object(mock_creds, "refresh") as mock_refresh, patch("pathlib.Path.exists") as mock_exists:
+            mock_exists.return_value = False  # Force refresh path
+            tools._auth()
+            mock_refresh.assert_called_once()
 
 
 def test_auth_with_custom_paths():
@@ -128,12 +127,13 @@ def test_auth_with_custom_paths():
     custom_creds_path = "custom_creds.json"
     custom_token_path = "custom_token.json"
 
-    with patch("pathlib.Path.exists") as mock_exists:
+    with patch("pathlib.Path.exists") as mock_exists, patch(
+        "agno.tools.gmail.Credentials.from_authorized_user_file"
+    ) as mock_from_file:
         mock_exists.return_value = True
-        with patch("agno.tools.gmail.Credentials.from_authorized_user_file") as mock_from_file:
-            tools = GmailTools(credentials_path=custom_creds_path, token_path=custom_token_path)
-            tools._auth()
-            mock_from_file.assert_called_once_with(custom_token_path, tools.scopes)
+        tools = GmailTools(credentials_path=custom_creds_path, token_path=custom_token_path)
+        tools._auth()
+        mock_from_file.assert_called_once_with(custom_token_path, tools.scopes)
 
 
 def test_get_latest_emails(gmail_tools, mock_gmail_service):
@@ -221,7 +221,7 @@ def test_get_emails_by_date(gmail_tools, mock_gmail_service):
     mock_gmail_service.users().messages().list().execute.return_value = mock_messages
     mock_gmail_service.users().messages().get().execute.return_value = mock_message_data
 
-    start_date = int(datetime(2024, 1, 1).timestamp())
+    start_date = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp())
     result = gmail_tools.get_emails_by_date(start_date, range_in_days=1)
 
     assert "Date Email" in result
@@ -298,7 +298,7 @@ def test_message_with_attachments(gmail_tools, mock_gmail_service):
             "parts": [
                 {
                     "mimeType": "text/plain",
-                    "body": {"data": base64.urlsafe_b64encode("Message with attachment".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"Message with attachment").decode()},
                 },
                 {"filename": "test.pdf", "mimeType": "application/pdf"},
             ],
@@ -421,11 +421,11 @@ def test_multipart_complex_message(gmail_tools, mock_gmail_service):
             "parts": [
                 {
                     "mimeType": "text/plain",
-                    "body": {"data": base64.urlsafe_b64encode("Plain text version".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"Plain text version").decode()},
                 },
                 {
                     "mimeType": "text/html",
-                    "body": {"data": base64.urlsafe_b64encode("<p>HTML version</p>".encode()).decode()},
+                    "body": {"data": base64.urlsafe_b64encode(b"<p>HTML version</p>").decode()},
                 },
                 {"filename": "test.pdf", "mimeType": "application/pdf"},
             ],
@@ -445,31 +445,32 @@ def test_invalid_email_parameters():
     """Test handling of invalid email parameters."""
     tools = GmailTools(creds=Mock(spec=Credentials, valid=True))
 
-    with patch("agno.tools.gmail.build") as mock_build:
+    with patch("agno.tools.gmail.build") as mock_build, pytest.raises(
+        ValueError, match="Invalid recipient email format"
+    ):
         mock_service = MagicMock()
         mock_build.return_value = mock_service
         tools.service = mock_service  # Set service to avoid authentication
 
-        with pytest.raises(ValueError, match="Invalid recipient email format"):
-            tools.send_email(
-                to="invalid-email",  # Invalid email format
-                subject="Test",
-                body="Test body",
-            )
+        tools.send_email(
+            to="invalid-email",  # Invalid email format
+            subject="Test",
+            body="Test body",
+        )
 
-        with pytest.raises(ValueError, match="Subject cannot be empty"):
-            tools.send_email(
-                to="valid@email.com",
-                subject="",  # Empty subject
-                body="Test body",
-            )
+    with pytest.raises(ValueError, match="Subject cannot be empty"):
+        tools.send_email(
+            to="valid@email.com",
+            subject="",  # Empty subject
+            body="Test body",
+        )
 
-        with pytest.raises(ValueError, match="Email body cannot be None"):
-            tools.send_email(
-                to="valid@email.com",
-                subject="Test",
-                body=None,  # None body
-            )
+    with pytest.raises(ValueError, match="Email body cannot be None"):
+        tools.send_email(
+            to="valid@email.com",
+            subject="Test",
+            body=None,  # None body
+        )
 
 
 def test_service_initialization():

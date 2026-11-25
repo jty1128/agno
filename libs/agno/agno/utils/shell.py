@@ -1,5 +1,3 @@
-from typing import List
-
 from agno.utils.log import log_debug, log_info, logger
 
 

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -38,20 +40,19 @@ class WorkspaceConfig(BaseModel):
 
     @property
     def workspace_dir_path(self) -> Optional[Path]:
-        if self._workspace_dir_path is None:
-            if self.ws_root_path is not None:
-                from agno.workspace.helpers import get_workspace_dir_path
+        if self._workspace_dir_path is None and self.ws_root_path is not None:
+            from agno.workspace.helpers import get_workspace_dir_path
 
-                self._workspace_dir_path = get_workspace_dir_path(self.ws_root_path)
+            self._workspace_dir_path = get_workspace_dir_path(self.ws_root_path)
         return self._workspace_dir_path
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise TypeError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
@@ -77,11 +78,11 @@ class WorkspaceConfig(BaseModel):
                 if isinstance(obj, WorkspaceSettings):
                     if self.validate_workspace_settings(obj):
                         self._workspace_settings = obj
-                        if self.ws_schema is not None and self._workspace_settings is not None:
+                        if self.ws_schema is not None:
                             self._workspace_settings.ws_schema = self.ws_schema
                             logger.debug("Added WorkspaceSchema to WorkspaceSettings")
-        except Exception:
-            logger.warning(f"Error in {ws_settings_file}")
+        except Exception as e:
+            logger.warning(f"Error in {ws_settings_file}: {e}")
             raise
         return self._workspace_settings
 
@@ -168,7 +169,7 @@ class WorkspaceConfig(BaseModel):
                             logger.debug(f"Found: {obj.__class__.__module__}: {obj_name}")
                             if self.validate_workspace_settings(obj):
                                 self._workspace_settings = obj
-                                if self.ws_schema is not None and self._workspace_settings is not None:
+                                if self.ws_schema is not None:
                                     self._workspace_settings.ws_schema = self.ws_schema
                                     logger.debug("Added WorkspaceSchema to WorkspaceSettings")
                         elif isinstance(obj, InfraResources):
@@ -177,8 +178,8 @@ class WorkspaceConfig(BaseModel):
                                 logger.debug(f"Skipping {obj_name}: disabled")
                                 continue
                             workspace_objects[obj_name] = obj
-                except Exception:
-                    logger.warning(f"Error in {resource_file}")
+                except Exception as e:
+                    logger.warning(f"Error in {resource_file}: {e}")
                     raise
             logger.debug(f"workspace_objects: {workspace_objects}")
         logger.debug("**--> WorkspaceConfig loaded")
@@ -219,11 +220,9 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
+        infra_resources_list: List[InfraResources] = [
+            resource for resource in filtered_infra_objects_by_env.values() if isinstance(resource, InfraResources)
+        ]
 
         return infra_resources_list
 
@@ -274,8 +273,8 @@ class WorkspaceConfig(BaseModel):
                         logger.debug(f"Skipping {obj_name}: disabled")
                         continue
                     infra_objects[obj_name] = obj
-        except Exception:
-            logger.error(f"Error reading: {resource_file}")
+        except Exception as e:
+            logger.error(f"Error reading: {resource_file}: {e}")
             raise
 
         # Filter resources by infra
@@ -311,12 +310,9 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(temporary_ws_config._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
-            # Otherwise, get the InfraResources object from the resource
+        infra_resources_list: List[InfraResources] = [
+            resource for resource in filtered_infra_objects_by_env.values() if isinstance(resource, InfraResources)
+        ]
             else:
                 _infra_resources = resource.get_infra_resources()
                 if _infra_resources is not None and isinstance(_infra_resources, InfraResources):

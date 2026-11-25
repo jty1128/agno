@@ -1,8 +1,6 @@
-from typing import Optional
-
 import pytest
 
-from agno.agent import Agent, RunResponse  # noqa
+from agno.agent import Agent, RunResponse
 from agno.models.deepseek import DeepSeek
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.exa import ExaTools
@@ -23,7 +21,7 @@ def test_tool_use():
     response = agent.run("What is the current price of TSLA?")
 
     # Verify tool usage
-    assert any(msg.tool_calls for msg in response.messages)
+    assert any(msg.tool_calls for msg in response.messages if msg.role == "assistant")
     assert response.content is not None
     assert "TSLA" in response.content
 
@@ -173,14 +171,14 @@ def test_tool_call_custom_tool_no_parameters():
     response = agent.run("What is the weather in Tokyo?")
 
     # Verify tool usage
-    assert any(msg.tool_calls for msg in response.messages)
+    assert any(msg.tool_calls for msg in response.messages if msg.role == "assistant")
     assert response.content is not None
     assert "70" in response.content
 
 
 @pytest.mark.skip(reason="Deepseek is too slow with tool use")
 def test_tool_call_custom_tool_optional_parameters():
-    def get_the_weather(city: Optional[str] = None):
+    def get_the_weather(city: str | None = None):
         """
         Get the weather in a city
 
@@ -204,7 +202,7 @@ def test_tool_call_custom_tool_optional_parameters():
     response = agent.run("What is the weather in Paris?")
 
     # Verify tool usage
-    assert any(msg.tool_calls for msg in response.messages)
+    assert any(msg.tool_calls for msg in response.messages if msg.role == "assistant")
     assert response.content is not None
     assert "70" in response.content
 
@@ -226,7 +224,7 @@ def test_tool_call_list_parameters():
     )
 
     # Verify tool usage
-    assert any(msg.tool_calls for msg in response.messages)
+    assert any(msg.tool_calls for msg in response.messages if msg.role == "assistant")
     tool_calls = []
     for msg in response.messages:
         if msg.tool_calls:
