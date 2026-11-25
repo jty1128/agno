@@ -100,7 +100,7 @@ class PDFReader(BasePDFReader):
                 doc_name = pdf.replace("/", "_").replace(" ", "_")
             else:
                 # Use the full path for file objects as well
-                doc_name = pdf.name.replace("/", "_").replace(" ", "_")
+                doc_name = pdf.name.split(".")[0].replace("/", "_").replace(" ", "_")
         except Exception:
             doc_name = "pdf"
 
@@ -133,7 +133,7 @@ class PDFReader(BasePDFReader):
                 doc_name = pdf.replace("/", "_").replace(" ", "_")
             else:
                 # Use the full path for file objects as well
-                doc_name = pdf.name.replace("/", "_").replace(" ", "_")
+                doc_name = pdf.name.split(".")[0].replace("/", "_").replace(" ", "_")
         except Exception:
             doc_name = "pdf"
 

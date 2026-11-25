@@ -82,8 +82,8 @@ webex = ["webexpythonsdk"]
 mcp = ["mcp"]
 browserbase = ["browserbase", "playwright"]
 agentql = ["agentql"]
-confluence = ["atlassian-python-api"]
-zep = ["zep-cloud"]
+confluence = ["atlassian-python-api<4"]
+zep = ["zep-cloud==2.22.1"]
 
 # Dependencies for Storage
 sql = ["sqlalchemy"]
