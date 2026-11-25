@@ -1,7 +1,7 @@
 import asyncio
+from collections.abc import List
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -10,7 +10,6 @@ from agno.document.base import Document
 from agno.document.reader.text_reader import TextReader
 
 
-@pytest.fixture
 def test_read_text_file_path(tmp_path):
     # Create a temporary text file
     text_path = tmp_path / "test.txt"

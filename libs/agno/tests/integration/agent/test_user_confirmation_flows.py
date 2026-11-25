@@ -61,8 +61,8 @@ def test_tool_call_requires_confirmation_stream():
     assert found_confirmation, "No tools were found to require confirmation"
 
     found_confirmation = False
-    for response in agent.continue_run(response, stream=True):
-        if response.is_paused:
+    for resp in agent.continue_run(response, stream=True):
+        if resp.is_paused:
             found_confirmation = True
     assert found_confirmation is False, "Some tools still require confirmation"
 

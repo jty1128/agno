@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 from collections import ChainMap, defaultdict, deque
+from collections.abc import AsyncIterator, Iterator, Sequence
 from dataclasses import asdict, dataclass
 from os import getenv
 from textwrap import dedent
 from typing import (
     Any,
-    AsyncIterator,
     Callable,
     Dict,
-    Iterator,
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Type,
     Union,
@@ -248,8 +246,8 @@ class Agent:
 
     # --- Agent Team ---
     # The team of agents that this agent can transfer tasks to.
-    team: Optional[List[Agent]] = None
-    team_data: Optional[Dict[str, Any]] = None
+    team: Optional[list[Agent]] = None
+    team_data: Optional[dict[str, Any]] = None
     # --- If this Agent is part of a team ---
     # If this Agent is part of a team, this is the role of the agent in the team
     role: Optional[str] = None
@@ -267,7 +265,7 @@ class Agent:
     # Optional team ID. Indicates this agent is part of a team.
     team_id: Optional[str] = None
     # Optional team session state. Set by the team leader agent.
-    team_session_state: Optional[Dict[str, Any]] = None
+    team_session_state: Optional[dict[str, Any]] = None
 
     # --- Debug & Monitoring ---
     # Enable debug logs
@@ -288,8 +286,8 @@ class Agent:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         session_name: Optional[str] = None,
-        session_state: Optional[Dict[str, Any]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        session_state: Optional[dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
         add_context: bool = False,
         resolve_context: bool = True,
         memory: Optional[Union[AgentMemory, Memory]] = None,
@@ -302,18 +300,18 @@ class Agent:
         num_history_responses: Optional[int] = None,
         num_history_runs: int = 3,
         knowledge: Optional[AgentKnowledge] = None,
-        knowledge_filters: Optional[Dict[str, Any]] = None,
+        knowledge_filters: Optional[dict[str, Any]] = None,
         enable_agentic_knowledge_filters: Optional[bool] = None,
         add_references: bool = False,
-        retriever: Optional[Callable[..., Optional[List[Dict]]]] = None,
+        retriever: Optional[Callable[..., Optional[list[dict]]]] = None,
         references_format: Literal["json", "yaml"] = "json",
         storage: Optional[Storage] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
-        tools: Optional[List[Union[Toolkit, Callable, Function, Dict]]] = None,
+        extra_data: Optional[dict[str, Any]] = None,
+        tools: Optional[list[Union[Toolkit, Callable, Function, dict]]] = None,
         show_tool_calls: bool = True,
         tool_call_limit: Optional[int] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-        tool_hooks: Optional[List[Callable]] = None,
+        tool_choice: Optional[Union[str, dict[str, Any]]] = None,
+        tool_hooks: Optional[list[Callable]] = None,
         reasoning: bool = False,
         reasoning_model: Optional[Model] = None,
         reasoning_agent: Optional[Agent] = None,
@@ -329,7 +327,7 @@ class Agent:
         description: Optional[str] = None,
         goal: Optional[str] = None,
         success_criteria: Optional[str] = None,
-        instructions: Optional[Union[str, List[str], Callable]] = None,
+        instructions: Optional[Union[str, list[str], Callable]] = None,
         expected_output: Optional[str] = None,
         additional_context: Optional[str] = None,
         markdown: bool = False,
@@ -337,8 +335,8 @@ class Agent:
         add_datetime_to_instructions: bool = False,
         timezone_identifier: Optional[str] = None,
         add_state_in_messages: bool = False,
-        add_messages: Optional[List[Union[Dict, Message]]] = None,
-        user_message: Optional[Union[List, Dict, str, Callable, Message]] = None,
+        add_messages: Optional[list[Union[dict, Message]]] = None,
+        user_message: Optional[Union[list, dict, str, Callable, Message]] = None,
         user_message_role: str = "user",
         create_default_user_message: bool = True,
         retries: int = 0,
@@ -351,8 +349,8 @@ class Agent:
         save_response_to_file: Optional[str] = None,
         stream: Optional[bool] = None,
         stream_intermediate_steps: bool = False,
-        team: Optional[List[Agent]] = None,
-        team_data: Optional[Dict[str, Any]] = None,
+        team: Optional[list[Agent]] = None,
+        team_data: Optional[dict[str, Any]] = None,
         role: Optional[str] = None,
         respond_directly: bool = False,
         add_transfer_instructions: bool = True,
@@ -465,22 +463,22 @@ class Agent:
         self.session_metrics: Optional[SessionMetrics] = None
 
         self.run_id: Optional[str] = None
-        self.run_input: Optional[Union[str, List, Dict, Message]] = None
+        self.run_input: Optional[Union[str, list, dict, Message]] = None
         self.run_messages: Optional[RunMessages] = None
         self.run_response: Optional[RunResponse] = None
 
         # Images generated during this session
-        self.images: Optional[List[ImageArtifact]] = None
+        self.images: Optional[list[ImageArtifact]] = None
         # Audio generated during this session
-        self.audio: Optional[List[AudioArtifact]] = None
+        self.audio: Optional[list[AudioArtifact]] = None
         # Videos generated during this session
-        self.videos: Optional[List[VideoArtifact]] = None
+        self.videos: Optional[list[VideoArtifact]] = None
         # Agent session
         self.agent_session: Optional[AgentSession] = None
 
-        self._tool_instructions: Optional[List[str]] = None
-        self._tools_for_model: Optional[List[Dict[str, Any]]] = None
-        self._functions_for_model: Optional[Dict[str, Function]] = None
+        self._tool_instructions: Optional[list[str]] = None
+        self._tools_for_model: Optional[list[dict[str, Any]]] = None
+        self._functions_for_model: Optional[dict[str, Function]] = None
 
         self._formatter: Optional[SafeFormatter] = None
 
@@ -944,7 +942,7 @@ class Agent:
                     )
                     return response
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -1321,7 +1319,7 @@ class Agent:
                         messages=messages,
                     )
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -1545,7 +1543,7 @@ class Agent:
                     )
                     return response
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -1903,7 +1901,7 @@ class Agent:
                         messages=messages,
                     )
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -3003,7 +3001,7 @@ class Agent:
                     elif isinstance(_im, dict):
                         try:
                             parsed_messages.append(Message(**_im))
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to validate message: {e}")
                     else:
                         log_warning(f"Unsupported message type: {type(_im)}")
@@ -3047,7 +3045,7 @@ class Agent:
                     elif isinstance(_im, dict):
                         try:
                             parsed_messages.append(Message(**_im))
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to validate message: {e}")
                     else:
                         log_warning(f"Unsupported message type: {type(_im)}")
@@ -3517,26 +3515,26 @@ class Agent:
                             self.memory.runs = []
                             for run in session.memory["runs"]:
                                 self.memory.runs.append(AgentRun.model_validate(run))
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to load runs from memory: {e}")
                     if "messages" in session.memory:
                         try:
                             self.memory.messages = [Message.model_validate(m) for m in session.memory["messages"]]
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to load messages from memory: {e}")
                     if "summary" in session.memory:
                         from agno.memory.summary import SessionSummary
 
                         try:
                             self.memory.summary = SessionSummary.model_validate(session.memory["summary"])
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to load session summary from memory: {e}")
                     if "memories" in session.memory:
                         from agno.memory.memory import Memory as UserMemory
 
                         try:
                             self.memory.memories = [UserMemory.model_validate(m) for m in session.memory["memories"]]
-                        except Exception as e:
+                        except (TypeError, ValueError, ValidationError) as e:
                             log_warning(f"Failed to load user memories: {e}")
                     if self.memory.create_user_memories:
                         if self.user_id is not None and self.memory.user_id is None:
@@ -3698,9 +3696,7 @@ class Agent:
         if self.model is not None:
             self.model.clear()
         if self.memory is not None:
-            if isinstance(self.memory, AgentMemory):
-                self.memory.clear()
-            elif isinstance(self.memory, Memory):
+            if isinstance(self.memory, AgentMemory) or isinstance(self.memory, Memory):
                 self.memory.clear()
         self.session_id = str(uuid4())
         self.load_session(force=True)
@@ -3767,7 +3763,7 @@ class Agent:
 
         # 3. Build and return the default system message for the Agent.
         # 3.1 Build the list of instructions for the system message
-        instructions: List[str] = []
+        instructions: list[str] = []
         if self.instructions is not None:
             _instructions = self.instructions
             if callable(self.instructions):
@@ -3783,7 +3779,7 @@ class Agent:
             instructions.extend(_model_instructions)
 
         # 3.2 Build a list of additional information for the system message
-        additional_information: List[str] = []
+        additional_information: list[str] = []
         # 3.2.1 Add instructions for using markdown
         if self.markdown and self.response_model is None:
             additional_information.append("Use markdown to format your answers.")
@@ -3798,10 +3794,10 @@ class Agent:
                     from zoneinfo import ZoneInfo
 
                     tz = ZoneInfo(self.timezone_identifier)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     log_warning("Invalid timezone identifier")
 
-            time = datetime.now(tz) if tz else datetime.now()
+            time = datetime.now(tz) if tz else datetime.now(timezone.utc)
 
             additional_information.append(f"The current time is {time}.")
         # 3.2.3 Add agent name if provided
@@ -4005,7 +4001,7 @@ class Agent:
     def get_user_message(
         self,
         *,
-        message: Optional[Union[str, List]],
+        message: Optional[Union[str, list]],
         audio: Optional[Sequence[Audio]] = None,
         images: Optional[Sequence[Image]] = None,
         videos: Optional[Sequence[Video]] = None,
@@ -4123,14 +4119,14 @@ class Agent:
     def get_run_messages(
         self,
         *,
-        message: Optional[Union[str, List, Dict, Message]] = None,
+        message: Optional[Union[str, list, dict, Message]] = None,
         session_id: str,
         user_id: Optional[str] = None,
         audio: Optional[Sequence[Audio]] = None,
         images: Optional[Sequence[Image]] = None,
         videos: Optional[Sequence[Video]] = None,
         files: Optional[Sequence[File]] = None,
-        messages: Optional[Sequence[Union[Dict, Message]]] = None,
+        messages: Optional[Sequence[Union[dict, Message]]] = None,
         **kwargs: Any,
     ) -> RunMessages:
         """This function returns a RunMessages object with the following attributes:
@@ -4169,7 +4165,7 @@ class Agent:
 
         # 2. Add extra messages to run_messages if provided
         if self.add_messages is not None:
-            messages_to_add_to_run_response: List[Message] = []
+            messages_to_add_to_run_response: list[Message] = []
             if run_messages.extra_messages is None:
                 run_messages.extra_messages = []
 
@@ -4184,7 +4180,7 @@ class Agent:
                         messages_to_add_to_run_response.append(_m_parsed)
                         run_messages.messages.append(_m_parsed)
                         run_messages.extra_messages.append(_m_parsed)
-                    except Exception as e:
+                    except (TypeError, ValueError, ValidationError) as e:
                         log_warning(f"Failed to validate message: {e}")
             # Add the extra messages to the run_response
             if len(messages_to_add_to_run_response) > 0:
@@ -4201,7 +4197,7 @@ class Agent:
         if self.add_history_to_messages:
             from copy import deepcopy
 
-            history: List[Message] = []
+            history: list[Message] = []
             if isinstance(self.memory, AgentMemory):
                 history = self.memory.get_messages_from_last_n_runs(
                     last_n=self.num_history_runs, skip_role=self.system_message_role
@@ -4236,7 +4232,7 @@ class Agent:
         elif isinstance(message, dict):
             try:
                 user_message = Message.model_validate(message)
-            except Exception as e:
+            except (TypeError, ValueError, ValidationError) as e:
                 log_warning(f"Failed to validate message: {e}")
         # Add user message to run_messages
         if user_message is not None:
@@ -4257,7 +4253,7 @@ class Agent:
                         if run_messages.extra_messages is None:
                             run_messages.extra_messages = []
                         run_messages.extra_messages.append(Message.model_validate(_m))
-                    except Exception as e:
+                    except (TypeError, ValueError, ValidationError) as e:
                         log_warning(f"Failed to validate message: {e}")
 
         return run_messages
@@ -4454,18 +4450,7 @@ class Agent:
             return field_value.deep_copy()
 
         # For storage, model and reasoning_model, use a deep copy
-        elif field_name in ("storage", "model", "reasoning_model"):
-            try:
-                return deepcopy(field_value)
-            except Exception:
-                try:
-                    return copy(field_value)
-                except Exception as e:
-                    log_warning(f"Failed to copy field: {field_name} - {e}")
-                    return field_value
-
-        # For compound types, attempt a deep copy
-        elif isinstance(field_value, (list, dict, set)):
+        elif field_name in ("storage", "model", "reasoning_model") or isinstance(field_value, (list, dict, set)):
             try:
                 return deepcopy(field_value)
             except Exception:
@@ -4613,8 +4598,8 @@ class Agent:
         return ""
 
     def get_relevant_docs_from_knowledge(
-        self, query: str, num_documents: Optional[int] = None, filters: Optional[Dict[str, Any]] = None, **kwargs
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, query: str, num_documents: Optional[int] = None, filters: Optional[dict[str, Any]] = None, **kwargs
+    ) -> Optional[list[dict[str, Any]]]:
         """Get relevant docs from the knowledge base to answer a query.
 
         Args:
@@ -4648,7 +4633,7 @@ class Agent:
 
             try:
                 sig = signature(self.retriever)
-                retriever_kwargs: Dict[str, Any] = {}
+                retriever_kwargs: dict[str, Any] = {}
                 if "agent" in sig.parameters:
                     retriever_kwargs = {"agent": self}
                 if "filters" in sig.parameters:
@@ -4671,7 +4656,7 @@ class Agent:
                 num_documents = self.knowledge.num_documents
 
             log_debug(f"Searching knowledge base with filters: {filters}")
-            relevant_docs: List[Document] = self.knowledge.search(
+            relevant_docs: list[Document] = self.knowledge.search(
                 query=query, num_documents=num_documents, filters=filters
             )
 
@@ -4685,8 +4670,8 @@ class Agent:
             return None
 
     async def aget_relevant_docs_from_knowledge(
-        self, query: str, num_documents: Optional[int] = None, filters: Optional[Dict[str, Any]] = None, **kwargs
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, query: str, num_documents: Optional[int] = None, filters: Optional[dict[str, Any]] = None, **kwargs
+    ) -> Optional[list[dict[str, Any]]]:
         """Get relevant documents from knowledge base asynchronously."""
         from agno.document import Document
 
@@ -4709,7 +4694,7 @@ class Agent:
 
             try:
                 sig = signature(self.retriever)
-                retriever_kwargs: Dict[str, Any] = {}
+                retriever_kwargs: dict[str, Any] = {}
                 if "agent" in sig.parameters:
                     retriever_kwargs = {"agent": self}
                 if "filters" in sig.parameters:
@@ -4737,7 +4722,7 @@ class Agent:
                 num_documents = self.knowledge.num_documents
 
             log_debug(f"Searching knowledge base with filters: {filters}")
-            relevant_docs: List[Document] = await self.knowledge.async_search(
+            relevant_docs: list[Document] = await self.knowledge.async_search(
                 query=query, num_documents=num_documents, filters=filters
             )
 
@@ -4750,7 +4735,7 @@ class Agent:
             log_warning(f"Error searching knowledge base: {e}")
             return None
 
-    def convert_documents_to_string(self, docs: List[Dict[str, Any]]) -> str:
+    def convert_documents_to_string(self, docs: list[dict[str, Any]]) -> str:
         if docs is None or len(docs) == 0:
             return ""
 
@@ -4763,7 +4748,7 @@ class Agent:
 
         return json.dumps(docs, indent=2, ensure_ascii=False)
 
-    def convert_context_to_string(self, context: Dict[str, Any]) -> str:
+    def convert_context_to_string(self, context: dict[str, Any]) -> str:
         """Convert the context dictionary to a string representation.
 
         Args:
@@ -4788,7 +4773,7 @@ class Agent:
                     # Try to serialize each value individually
                     json.dumps({key: value}, default=str)
                     sanitized_context[key] = value
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # If serialization fails, convert to string representation
                     sanitized_context[key] = str(value)
 
@@ -4799,7 +4784,7 @@ class Agent:
                 return str(context)
 
     def save_run_response_to_file(
-        self, message: Optional[Union[str, List, Dict, Message]] = None, session_id: Optional[str] = None
+        self, message: Optional[Union[str, list, dict, Message]] = None, session_id: Optional[str] = None
     ) -> None:
         if self.save_response_to_file is not None and self.run_response is not None:
             message_str = None
@@ -4831,7 +4816,7 @@ class Agent:
                 log_warning(f"Failed to save output to file: {e}")
 
     def update_run_response_with_reasoning(
-        self, reasoning_steps: List[ReasoningStep], reasoning_agent_messages: List[Message]
+        self, reasoning_steps: list[ReasoningStep], reasoning_agent_messages: list[Message]
     ) -> None:
         self.run_response = cast(RunResponse, self.run_response)
         if self.run_response.extra_data is None:
@@ -4870,8 +4855,8 @@ class Agent:
         else:
             self.run_response.reasoning_content += reasoning_content
 
-    def aggregate_metrics_from_messages(self, messages: List[Message]) -> Dict[str, Any]:
-        aggregated_metrics: Dict[str, Any] = defaultdict(list)
+    def aggregate_metrics_from_messages(self, messages: list[Message]) -> dict[str, Any]:
+        aggregated_metrics: dict[str, Any] = defaultdict(list)
         assistant_message_role = self.model.assistant_message_role if self.model is not None else "assistant"
         for m in messages:
             if m.role == assistant_message_role and m.metrics is not None and m.from_history is False:
@@ -4884,7 +4869,7 @@ class Agent:
             aggregated_metrics = dict(aggregated_metrics)
         return aggregated_metrics
 
-    def calculate_metrics(self, messages: List[Message]) -> SessionMetrics:
+    def calculate_metrics(self, messages: list[Message]) -> SessionMetrics:
         session_metrics = SessionMetrics()
         assistant_message_role = self.model.assistant_message_role if self.model is not None else "assistant"
         for m in messages:
@@ -4892,7 +4877,7 @@ class Agent:
                 session_metrics += m.metrics
         return session_metrics
 
-    def rename(self, name: str, session_id: Optional[str] = None) -> None:
+    def rename(self, name: str, session_id: Optional[str] = None) -> None:  # noqa: UP045
         """Rename the Agent and save to storage"""
 
         if self.session_id is None and session_id is None:
@@ -4909,7 +4894,7 @@ class Agent:
         # -*- Log Agent session
         self._log_agent_session(user_id=self.user_id, session_id=session_id)  # type: ignore
 
-    def rename_session(self, session_name: str, session_id: Optional[str] = None) -> None:
+    def rename_session(self, session_name: str, session_id: Optional[str] = None) -> None:  # noqa: UP045
         """Rename the current session and save to storage"""
 
         if self.session_id is None and session_id is None:
@@ -4962,7 +4947,7 @@ class Agent:
         if content is None:
             log_error("Generated name is None. Trying again.")
             return self.generate_session_name(session_id=session_id)
-        if len(content.split()) > 15:
+        if len(content.split()) > 5:
             log_error("Generated name is too long. Trying again.")
             return self.generate_session_name(session_id=session_id)
         return content.replace('"', "").strip()
@@ -4993,8 +4978,10 @@ class Agent:
         self.storage.delete_session(session_id=session_id)
 
     def get_messages_for_session(
-        self, session_id: Optional[str] = None, user_id: Optional[str] = None
-    ) -> List[Message]:
+        self,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,  # noqa: UP045
+    ) -> list[Message]:
         """Get messages for a session"""
         _session_id = session_id or self.session_id
         _user_id = user_id or self.user_id
@@ -5316,7 +5303,7 @@ class Agent:
             if self.stream_intermediate_steps:
                 yield self.create_run_response(
                     content=ReasoningSteps(reasoning_steps=all_reasoning_steps),
-                    content_type=ReasoningSteps.__class__.__name__,
+                    content_type=ReasoningSteps.__name__,
                     event=RunEvent.reasoning_completed,
                     session_id=session_id,
                 )
@@ -6849,7 +6836,7 @@ class Agent:
         return response_panel
 
     def update_reasoning_content_from_tool_call(
-        self, tool_name: str, tool_args: Dict[str, Any]
+        self, tool_name: str, tool_args: dict[str, Any]
     ) -> Optional[ReasoningStep]:
         """Update reasoning_content based on tool calls that look like thinking or reasoning tools."""
 
@@ -6982,9 +6969,9 @@ class Agent:
             # Log the error but don't crash
             from agno.utils.log import log_error
 
-            log_error(f"Failed to add reasoning metrics to extra_data: {str(e)}")
+            log_error(f"Failed to add reasoning metrics to extra_data: {e!s}")
 
-    def _get_effective_filters(self, knowledge_filters: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _get_effective_filters(self, knowledge_filters: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
         """
         Determine which knowledge filters to use, with priority to run-level filters.
 

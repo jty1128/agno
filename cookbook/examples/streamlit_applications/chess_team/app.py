@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, List
 
 import chess
 import nest_asyncio
@@ -35,7 +34,7 @@ st.set_page_config(
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
-def get_legal_moves_with_descriptions(board: ChessBoard) -> List[Dict]:
+def get_legal_moves_with_descriptions(board: ChessBoard) -> list[dict]:
     """
     Get all legal moves with descriptions for the current player.
 
@@ -425,7 +424,7 @@ Do not include any other text in your response.""",
                     st.rerun()
 
             except Exception as e:
-                logger.error(f"Error processing move: {str(e)}")
+                logger.error(f"Error processing move: {e!s}")
                 st.rerun()
     else:
         st.info("👈 Press 'Start Game' to begin!")

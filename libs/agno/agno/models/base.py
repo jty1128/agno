@@ -1,9 +1,10 @@
 import asyncio
 import collections.abc
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, AsyncIterator, Iterator
 from dataclasses import dataclass, field
 from types import AsyncGeneratorType, GeneratorType
-from typing import Any, AsyncGenerator, AsyncIterator, Dict, Iterator, List, Literal, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -272,7 +273,6 @@ class Model(ABC):
         Returns:
             ModelResponse: Parsed response data
         """
-        pass
 
     @abstractmethod
     def parse_provider_response_delta(self, response: Any) -> ModelResponse:
@@ -285,15 +285,14 @@ class Model(ABC):
         Returns:
             ModelResponse: Parsed response delta
         """
-        pass
 
     def response(
         self,
-        messages: List[Message],
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        functions: Optional[Dict[str, Function]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        messages: list[Message],
+        response_format: dict | Type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        functions: dict[str, Function] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
         tool_call_limit: Optional[int] = None,
     ) -> ModelResponse:
         """
@@ -325,7 +324,7 @@ class Model(ABC):
                     model_response=model_response,
                     functions=functions,
                 )
-                function_call_results: List[Message] = []
+                function_call_results: list[Message] = []
 
                 # Execute function calls
                 for function_call_response in self.run_function_calls(
@@ -383,11 +382,11 @@ class Model(ABC):
 
     async def aresponse(
         self,
-        messages: List[Message],
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        functions: Optional[Dict[str, Function]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        messages: list[Message],
+        response_format: dict | Type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        functions: dict[str, Function] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
         tool_call_limit: Optional[int] = None,
     ) -> ModelResponse:
         """
@@ -418,7 +417,7 @@ class Model(ABC):
                     model_response=model_response,
                     functions=functions,
                 )
-                function_call_results: List[Message] = []
+                function_call_results: list[Message] = []
 
                 # Execute function calls
                 async for function_call_response in self.arun_function_calls(
@@ -475,11 +474,11 @@ class Model(ABC):
 
     def _process_model_response(
         self,
-        messages: List[Message],
+        messages: list[Message],
         model_response: ModelResponse,
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        response_format: dict | Type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
     ) -> Tuple[Message, bool]:
         """
         Process a single model response and return the assistant message and whether to continue.
@@ -748,10 +747,10 @@ class Model(ABC):
             # Handle tool calls if present
             if assistant_message.tool_calls is not None:
                 # Prepare function calls
-                function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
+                function_calls_to_run: list[FunctionCall] = self.get_function_calls_to_run(
                     assistant_message, messages, functions
                 )
-                function_call_results: List[Message] = []
+                function_call_results: list[Message] = []
 
                 # Execute function calls
                 for function_call_response in self.run_function_calls(
@@ -794,12 +793,12 @@ class Model(ABC):
 
     async def aprocess_response_stream(
         self,
-        messages: List[Message],
+        messages: list[Message],
         assistant_message: Message,
         stream_data: MessageData,
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        response_format: dict | Type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
     ) -> AsyncIterator[ModelResponse]:
         """
         Process a streaming response from the model.
@@ -818,11 +817,11 @@ class Model(ABC):
 
     async def aresponse_stream(
         self,
-        messages: List[Message],
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        functions: Optional[Dict[str, Function]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        messages: list[Message],
+        response_format: dict | Type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        functions: dict[str, Function] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
         tool_call_limit: Optional[int] = None,
     ) -> AsyncIterator[ModelResponse]:
         """
@@ -872,10 +871,10 @@ class Model(ABC):
             # Handle tool calls if present
             if assistant_message.tool_calls is not None:
                 # Prepare function calls
-                function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
+                function_calls_to_run: list[FunctionCall] = self.get_function_calls_to_run(
                     assistant_message, messages, functions
                 )
-                function_call_results: List[Message] = []
+                function_call_results: list[Message] = []
 
                 # Execute function calls
                 async for function_call_response in self.arun_function_calls(
@@ -996,7 +995,7 @@ class Model(ABC):
         if should_yield:
             yield model_response_delta
 
-    def parse_tool_calls(self, tool_calls_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def parse_tool_calls(self, tool_calls_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Parse the tool calls from the model provider into a list of tool calls.
         """
@@ -1212,16 +1211,13 @@ class Model(ABC):
 
         try:
             if (
-                iscoroutinefunction(function_call.function.entrypoint)
-                or isasyncgenfunction(function_call.function.entrypoint)
-                or iscoroutine(function_call.function.entrypoint)
-            ):
-                result = await function_call.aexecute()
-                success = result.status == "success"
-
-            # If any of the hooks are async, we need to run the function call asynchronously
-            elif function_call.function.tool_hooks is not None and any(
-                iscoroutinefunction(f) for f in function_call.function.tool_hooks
+                (
+                    iscoroutinefunction(function_call.function.entrypoint)
+                    or isasyncgenfunction(function_call.function.entrypoint)
+                    or iscoroutine(function_call.function.entrypoint)
+                )
+                or function_call.function.tool_hooks is not None
+                and any(iscoroutinefunction(f) for f in function_call.function.tool_hooks)
             ):
                 result = await function_call.aexecute()
                 success = result.status == "success"

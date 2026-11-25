@@ -67,6 +67,6 @@ class HackerNewsTools(Toolkit):
                 "total_items_submitted": len(user.get("submitted", [])),
             }
             return json.dumps(user_details)
-        except Exception as e:
-            logger.exception(e)
-            return f"Error getting user details: {e}"
+        except Exception:
+            logger.exception("Error getting user details")
+            return "Error getting user details"

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Optional, Union, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +136,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -166,7 +166,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -329,8 +329,8 @@ class Workflow:
                 field_value = getattr(self, f.name)
                 field_value.session_id = self.session_id
 
-    def get_workflow_data(self) -> Dict[str, Any]:
-        workflow_data: Dict[str, Any] = {}
+    def get_workflow_data(self) -> dict[str, Any]:
+        workflow_data: dict[str, Any] = {}
         if self.name is not None:
             workflow_data["name"] = self.name
         if self.workflow_id is not None:
@@ -339,8 +339,8 @@ class Workflow:
             workflow_data["description"] = self.description
         return workflow_data
 
-    def get_session_data(self) -> Dict[str, Any]:
-        session_data: Dict[str, Any] = {}
+    def get_session_data(self) -> dict[str, Any]:
+        session_data: dict[str, Any] = {}
         if self.session_name is not None:
             session_data["session_name"] = self.session_name
         if self.session_state and len(self.session_state) > 0:
@@ -427,21 +427,21 @@ class Workflow:
             # Get images, videos, and audios from the database
             if "images" in session.session_data:
                 images_from_db = session.session_data.get("images")
+                if images_from_db is not None and isinstance(images_from_db, list) and self.images is None:
+                    self.images = []
                 if images_from_db is not None and isinstance(images_from_db, list):
-                    if self.images is None:
-                        self.images = []
                     self.images.extend([ImageArtifact.model_validate(img) for img in images_from_db])
             if "videos" in session.session_data:
                 videos_from_db = session.session_data.get("videos")
+                if videos_from_db is not None and isinstance(videos_from_db, list) and self.videos is None:
+                    self.videos = []
                 if videos_from_db is not None and isinstance(videos_from_db, list):
-                    if self.videos is None:
-                        self.videos = []
                     self.videos.extend([VideoArtifact.model_validate(vid) for vid in videos_from_db])
             if "audio" in session.session_data:
                 audio_from_db = session.session_data.get("audio")
+                if audio_from_db is not None and isinstance(audio_from_db, list) and self.audio is None:
+                    self.audio = []
                 if audio_from_db is not None and isinstance(audio_from_db, list):
-                    if self.audio is None:
-                        self.audio = []
                     self.audio.extend([AudioArtifact.model_validate(aud) for aud in audio_from_db])
 
         # Read extra_data from the database
@@ -465,16 +465,16 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
+                except (TypeError, KeyError, ValueError) as e:
                     log_warning(f"Failed to load runs from memory: {e}")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
+                        except (TypeError, KeyError, ValueError) as e:
                             logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
+                except (TypeError, KeyError, ValueError) as e:
                     logger.warning(f"Failed to load WorkflowMemory: {e}")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
@@ -510,9 +510,13 @@ class Workflow:
         """
         # If a workflow_session is already loaded, return the session_id from the workflow_session
         #   if the session_id matches the session_id from the workflow_session
-        if self.workflow_session is not None and not force:
-            if self.session_id is not None and self.workflow_session.session_id == self.session_id:
-                return self.workflow_session.session_id
+        if (
+            self.workflow_session is not None
+            and not force
+            and self.session_id is not None
+            and self.workflow_session.session_id == self.session_id
+        ):
+            return self.workflow_session.session_id
 
         # Load an existing session or create a new session
         if self.storage is not None:
@@ -618,11 +622,11 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return copy(field_value)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 
@@ -630,11 +634,11 @@ class Workflow:
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     logger.warning(f"Failed to copy field: {field_name} - {e}")
                     return field_value
 

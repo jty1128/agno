@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from time import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -57,7 +59,7 @@ class RunResponseExtraData:
         return _dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RunResponseExtraData":
+    def from_dict(cls, data: Dict[str, Any]) -> RunResponseExtraData:
         add_messages = data.pop("add_messages", None)
         add_messages = [Message.model_validate(message) for message in add_messages] if add_messages else None
 
@@ -185,14 +187,14 @@ class RunResponse:
 
         try:
             _dict = self.to_dict()
-        except Exception:
+        except Exception as e:
             logger.error("Failed to convert response to json", exc_info=True)
-            raise
+            raise e
 
         return json.dumps(_dict, indent=2)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RunResponse":
+    def from_dict(cls, data: Dict[str, Any]) -> RunResponse:
         messages = data.pop("messages", None)
         messages = [Message.model_validate(message) for message in messages] if messages else None
 

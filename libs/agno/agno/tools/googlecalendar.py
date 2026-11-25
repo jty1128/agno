@@ -92,7 +92,7 @@ class GoogleCalendarTools(Toolkit):
         self.register(self.create_event)
 
     @authenticated
-    def list_events(self, limit: int = 10, date_from: str = datetime.date.today().isoformat()) -> str:
+    def list_events(self, limit: int = 10, date_from: Optional[str] = None) -> str:
         """
         List events from the user's primary calendar.
 
@@ -137,7 +137,7 @@ class GoogleCalendarTools(Toolkit):
         description: Optional[str] = None,
         location: Optional[str] = None,
         timezone: Optional[str] = None,
-        attendees: List[str] = [],
+        attendees: Optional[List[str]] = None,
         send_updates: Optional[str] = "all",
         add_google_meet_link: Optional[bool] = False,
     ) -> str:

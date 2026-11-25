@@ -1,5 +1,3 @@
-from typing import List, Set, Union
-
 from agno.exceptions import RunCancelledException
 from agno.models.message import Message
 from agno.models.response import ToolExecution
@@ -17,7 +15,7 @@ def create_panel(content, title, border_style="blue"):
     )
 
 
-def escape_markdown_tags(content: str, tags: Set[str]) -> str:
+def escape_markdown_tags(content: str, tags: set[str]) -> str:
     """Escape special tags in markdown content."""
     escaped_content = content
     for tag in tags:
@@ -34,9 +32,9 @@ def check_if_run_cancelled(run_response: Union[RunResponse, TeamRunResponse]):
 
 
 def update_run_response_with_reasoning(
-    run_response: Union[RunResponse, TeamRunResponse],
-    reasoning_steps: List[ReasoningStep],
-    reasoning_agent_messages: List[Message],
+    run_response: RunResponse | TeamRunResponse,
+    reasoning_steps: list[ReasoningStep],
+    reasoning_agent_messages: list[Message],
 ) -> None:
     if run_response.extra_data is None:
         run_response.extra_data = RunResponseExtraData()
@@ -54,14 +52,14 @@ def update_run_response_with_reasoning(
         run_response.extra_data.reasoning_messages.extend(reasoning_agent_messages)
 
 
-def format_tool_calls(tool_calls: List[ToolExecution]) -> List[str]:
+def format_tool_calls(tool_calls: list[ToolExecution]) -> list[str]:
     """Format tool calls for display in a readable format.
 
     Args:
         tool_calls: List of tool call dictionaries containing tool_name and tool_args
 
     Returns:
-        List[str]: List of formatted tool call strings
+        list[str]: List of formatted tool call strings
     """
     formatted_tool_calls = []
     for tool_call in tool_calls:

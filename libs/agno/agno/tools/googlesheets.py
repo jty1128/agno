@@ -79,10 +79,10 @@ def authenticate(func):
 
 class GoogleSheetsTools(Toolkit):
     # Default scopes for Google Sheets API access
-    DEFAULT_SCOPES = {
-        "read": "https://www.googleapis.com/auth/spreadsheets.readonly",
-        "write": "https://www.googleapis.com/auth/spreadsheets",
-    }
+    DEFAULT_SCOPES = (
+        "https://www.googleapis.com/auth/spreadsheets.readonly",
+        "https://www.googleapis.com/auth/spreadsheets",
+    )
 
     service: Optional[Resource]
 
@@ -126,23 +126,19 @@ class GoogleSheetsTools(Toolkit):
         if scopes is None:
             self.scopes = []
             if read:
-                self.scopes.append(self.DEFAULT_SCOPES["read"])
+                self.scopes.append(self.DEFAULT_SCOPES[0])
             if create or update or duplicate:
-                self.scopes.append(self.DEFAULT_SCOPES["write"])
+                self.scopes.append(self.DEFAULT_SCOPES[1])
             # Remove duplicates while preserving order
             self.scopes = list(dict.fromkeys(self.scopes))
         else:
             self.scopes = scopes
             # Validate that required scopes are present for requested operations
-            if (create or update or duplicate) and self.DEFAULT_SCOPES["write"] not in self.scopes:
-                raise ValueError(f"The scope {self.DEFAULT_SCOPES['write']} is required for write operations")
-            if (
-                read
-                and self.DEFAULT_SCOPES["read"] not in self.scopes
-                and self.DEFAULT_SCOPES["write"] not in self.scopes
-            ):
+            if (create or update or duplicate) and self.DEFAULT_SCOPES[1] not in self.scopes:
+                raise ValueError(f"The scope {self.DEFAULT_SCOPES[1]} is required for write operations")
+            if read and self.DEFAULT_SCOPES[0] not in self.scopes and self.DEFAULT_SCOPES[1] not in self.scopes:
                 raise ValueError(
-                    f"Either {self.DEFAULT_SCOPES['read']} or {self.DEFAULT_SCOPES['write']} is required for read operations"
+                    f"Either {self.DEFAULT_SCOPES[0]} or {self.DEFAULT_SCOPES[1]} is required for read operations"
                 )
 
         if read:
@@ -215,7 +211,7 @@ class GoogleSheetsTools(Toolkit):
             result = self.service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()  # type: ignore
             return json.dumps(result.get("values", []))
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error reading Google Sheet: {e}"
 
     @authenticate
@@ -240,7 +236,7 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Spreadsheet created: https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error creating Google Sheet: {e}"
 
     @authenticate
@@ -277,7 +273,7 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Sheet updated successfully: {spreadsheet_id}"
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error updating Google Sheet: {e}"
 
     @authenticate
@@ -346,5 +342,5 @@ class GoogleSheetsTools(Toolkit):
                     ).execute()
 
             return f"Spreadsheet duplicated successfully: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
-        except Exception as e:
+        except HttpError as e:
             return f"Error duplicating spreadsheet via Drive API: {e}"

@@ -1,26 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import json
 from collections import ChainMap, defaultdict, deque
+from collections.abc import AsyncIterator, Callable, Iterator, Sequence
 from dataclasses import asdict, dataclass, replace
 from os import getenv
 from textwrap import dedent
-from typing import (
-    Any,
-    AsyncIterator,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-    overload,
-)
+from typing import Any, Literal, cast, overload
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -75,7 +62,7 @@ class Team:
     A class representing a team of agents.
     """
 
-    members: List[Union[Agent, "Team"]]
+    members: list[Union[Agent, Team]]
 
     mode: Literal["route", "coordinate", "collaborate"] = "coordinate"
 
@@ -102,7 +89,7 @@ class Team:
     # Session name
     session_name: Optional[str] = None
     # Session state (stored in the database to persist across runs)
-    session_state: Optional[Dict[str, Any]] = None
+    session_state: Optional[dict[str, Any]] = None
     # If True, add the session state variables in the user and system messages
     add_state_in_messages: bool = False
 
@@ -110,7 +97,7 @@ class Team:
     # A description of the Team that is added to the start of the system message.
     description: Optional[str] = None
     # List of instructions for the team.
-    instructions: Optional[Union[str, List[str], Callable]] = None
+    instructions: Optional[Union[str, list[str], Callable]] = None
     # Provide the expected output from the Team.
     expected_output: Optional[str] = None
     # Additional context added to the end of the system message.
@@ -129,14 +116,14 @@ class Team:
 
     # --- User provided context ---
     # User provided context
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[dict[str, Any]] = None
     # If True, add the context to the user prompt
     add_context: bool = False
 
     # --- Agent Knowledge ---
     knowledge: Optional[AgentKnowledge] = None
     # Add knowledge_filters to the Agent class attributes
-    knowledge_filters: Optional[Dict[str, Any]] = None
+    knowledge_filters: Optional[dict[str, Any]] = None
     # Let the agent choose the knowledge filters
     enable_agentic_knowledge_filters: Optional[bool] = False
     # Retrieval function to get references
@@ -144,7 +131,7 @@ class Team:
     # Signature:
     # def retriever(team: Team, query: str, num_documents: Optional[int], **kwargs) -> Optional[list[dict]]:
     #     ...
-    retriever: Optional[Callable[..., Optional[List[Dict]]]] = None
+    retriever: Optional[Callable[..., Optional[list[dict]]]] = None
     references_format: Literal["json", "yaml"] = "json"
 
     # --- Tools ---
@@ -164,7 +151,7 @@ class Team:
     # --- Team Tools ---
     # A list of tools provided to the Model.
     # Tools are functions the model may generate JSON inputs for.
-    tools: Optional[List[Union[Toolkit, Callable, Function, Dict]]] = None
+    tools: Optional[list[Union[Toolkit, Callable, Function, dict]]] = None
     # Show tool calls in Team response. This sets the default for the team.
     show_tool_calls: bool = True
     # Controls which (if any) tool is called by the team model.
@@ -173,15 +160,15 @@ class Team:
     # Specifying a particular function via {"type: "function", "function": {"name": "my_function"}}
     #   forces the model to call that tool.
     # "none" is the default when no tools are present. "auto" is the default if tools are present.
-    tool_choice: Optional[Union[str, Dict[str, Any]]] = None
+    tool_choice: Optional[Union[str, dict[str, Any]]] = None
     # Maximum number of tool calls allowed.
     tool_call_limit: Optional[int] = None
     # A list of hooks to be called before and after the tool call
-    tool_hooks: Optional[List[Callable]] = None
+    tool_hooks: Optional[list[Callable]] = None
 
     # --- Structured output ---
     # Response model for the team response
-    response_model: Optional[Type[BaseModel]] = None
+    response_model: Optional[type[BaseModel]] = None
     # If `response_model` is set, sets the response mode of the model, i.e. if the model should explicitly respond with a JSON object instead of a Pydantic model
     use_json_mode: bool = False
     # If True, parse the response
@@ -212,7 +199,7 @@ class Team:
     # --- Team Storage ---
     storage: Optional[Storage] = None
     # Extra data stored with this team
-    extra_data: Optional[Dict[str, Any]] = None
+    extra_data: Optional[dict[str, Any]] = None
 
     # --- Team Reasoning ---
     reasoning: bool = False
@@ -233,7 +220,7 @@ class Team:
 
     def __init__(
         self,
-        members: List[Union[Agent, "Team"]],
+        members: List[Union[Agent, Team]],
         mode: Literal["route", "coordinate", "collaborate"] = "coordinate",
         model: Optional[Model] = None,
         name: Optional[str] = None,
@@ -421,7 +408,7 @@ class Team:
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 
-    def _initialize_member(self, member: Union["Team", Agent], session_id: Optional[str] = None) -> None:
+    def _initialize_member(self, member: Union[Team, Agent], session_id: Optional[str] = None) -> None:
         # Set debug mode for all members
         if self.debug_mode:
             member.debug_mode = True
@@ -457,8 +444,8 @@ class Team:
         if self.model is None:
             try:
                 from agno.models.openai import OpenAIChat
-            except ModuleNotFoundError as e:
-                log_exception(e)
+            except ModuleNotFoundError:
+                log_exception()
                 log_error(
                     "Agno agents use `openai` as the default model provider. "
                     "Please provide a `model` or install `openai`."
@@ -801,7 +788,7 @@ class Team:
             except ModelProviderError as e:
                 import time
 
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
 
                 last_exception = e
                 if attempt < num_attempts - 1:
@@ -1248,7 +1235,7 @@ class Team:
                     return self.run_response
 
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 last_exception = e
                 if attempt < num_attempts - 1:
                     await asyncio.sleep(2**attempt)
@@ -3750,7 +3737,7 @@ class Team:
 
         return session_metrics
 
-    def _calculate_full_team_session_metrics(self, messages: List[Message], session_id: str) -> SessionMetrics:
+    def _calculate_full_team_session_metrics(self, messages: list[Message], session_id: str) -> SessionMetrics:
         current_session_metrics = self.session_metrics or self._calculate_session_metrics(messages)
         current_session_metrics = replace(current_session_metrics)
         assistant_message_role = self.model.assistant_message_role if self.model is not None else "assistant"
@@ -3765,8 +3752,8 @@ class Team:
                             current_session_metrics += m.metrics
         return current_session_metrics
 
-    def _aggregate_metrics_from_messages(self, messages: List[Message]) -> Dict[str, Any]:
-        aggregated_metrics: Dict[str, Any] = defaultdict(list)
+    def _aggregate_metrics_from_messages(self, messages: list[Message]) -> dict[str, Any]:
+        aggregated_metrics: dict[str, Any] = defaultdict(list)
         assistant_message_role = self.model.assistant_message_role if self.model is not None else "assistant"
         for m in messages:
             if m.role == assistant_message_role and m.metrics is not None:
@@ -3912,8 +3899,8 @@ class Team:
 
             step_count = 1
             next_action = NextAction.CONTINUE
-            reasoning_messages: List[Message] = []
-            all_reasoning_steps: List[ReasoningStep] = []
+            reasoning_messages: list[Message] = []
+            all_reasoning_steps: list[ReasoningStep] = []
             log_debug("Starting Reasoning", center=True, symbol="=")
             while next_action == NextAction.CONTINUE and step_count < self.reasoning_max_steps:
                 log_debug(f"Step {step_count}", center=True, symbol="-")
@@ -3931,7 +3918,7 @@ class Team:
                         log_warning("Reasoning error. Reasoning steps are empty, continuing regular session...")
                         break
 
-                    reasoning_steps: List[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
+                    reasoning_steps: list[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
                     all_reasoning_steps.extend(reasoning_steps)
                     # Yield reasoning steps
                     if stream_intermediate_steps:
@@ -3967,8 +3954,8 @@ class Team:
                     next_action = get_next_action(reasoning_steps[-1])
                     if next_action == NextAction.FINAL_ANSWER:
                         break
-                except Exception as e:
-                    log_error(f"Reasoning error: {e}")
+                except Exception:
+                    log_error("Reasoning error")
                     break
 
             log_debug(f"Total Reasoning steps: {len(all_reasoning_steps)}")
@@ -4093,8 +4080,8 @@ class Team:
 
             step_count = 1
             next_action = NextAction.CONTINUE
-            reasoning_messages: List[Message] = []
-            all_reasoning_steps: List[ReasoningStep] = []
+            reasoning_messages: list[Message] = []
+            all_reasoning_steps: list[ReasoningStep] = []
             log_debug("Starting Reasoning", center=True, symbol="=")
             while next_action == NextAction.CONTINUE and step_count < self.reasoning_max_steps:
                 log_debug(f"Step {step_count}", center=True, symbol="-")
@@ -4112,7 +4099,7 @@ class Team:
                         log_warning("Reasoning error. Reasoning steps are empty, continuing regular session...")
                         break
 
-                    reasoning_steps: List[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
+                    reasoning_steps: list[ReasoningStep] = reasoning_agent_response.content.reasoning_steps
                     all_reasoning_steps.extend(reasoning_steps)
                     # Yield reasoning steps
                     if stream_intermediate_steps:
@@ -4148,8 +4135,8 @@ class Team:
                     next_action = get_next_action(reasoning_steps[-1])
                     if next_action == NextAction.FINAL_ANSWER:
                         break
-                except Exception as e:
-                    log_error(f"Reasoning error: {e}")
+                except Exception:
+                    log_error("Reasoning error")
                     break
 
             log_debug(f"Total Reasoning steps: {len(all_reasoning_steps)}")
@@ -4177,15 +4164,15 @@ class Team:
         content_type: Optional[str] = None,
         thinking: Optional[str] = None,
         event: RunEvent = RunEvent.run_response,
-        tools: Optional[List[ToolExecution]] = None,
+        tools: Optional[list[ToolExecution]] = None,
         reasoning_content: Optional[str] = None,
-        audio: Optional[List[AudioArtifact]] = None,
-        images: Optional[List[ImageArtifact]] = None,
-        videos: Optional[List[VideoArtifact]] = None,
+        audio: Optional[list[AudioArtifact]] = None,
+        images: Optional[list[ImageArtifact]] = None,
+        videos: Optional[list[VideoArtifact]] = None,
         response_audio: Optional[AudioResponse] = None,
         citations: Optional[Citations] = None,
         model: Optional[str] = None,
-        messages: Optional[List[Message]] = None,
+        messages: Optional[list[Message]] = None,
         created_at: Optional[int] = None,
         from_run_response: Optional[TeamRunResponse] = None,
     ) -> TeamRunResponse:
@@ -4259,7 +4246,7 @@ class Team:
             else:
                 log_warning("Context is not a dict")
 
-    def determine_tools_for_model(self, model: Model, tools: List[Union[Function, Callable, Toolkit, Dict]]) -> None:
+    def determine_tools_for_model(self, model: Model, tools: list[Union[Function, Callable, Toolkit, dict]]) -> None:
         if self._tools_for_model is None:
             self._functions_for_model = {}
             self._tools_for_model = []
@@ -4278,7 +4265,7 @@ class Team:
                     strict = True
 
                 for tool in tools:
-                    if isinstance(tool, Dict):
+                    if isinstance(tool, dict):
                         # If a dict is passed, it is a builtin tool
                         # that is run by the model provider and not the Agent
                         self._tools_for_model.append(tool)
@@ -4385,7 +4372,7 @@ class Team:
         # 1. Build and return the default system message for the Team.
         # 1.1 Build the list of instructions for the system message
         self.model = cast(Model, self.model)
-        instructions: List[str] = []
+        instructions: list[str] = []
         if self.instructions is not None:
             _instructions = self.instructions
             if callable(self.instructions):
@@ -4402,15 +4389,15 @@ class Team:
             instructions.extend(_model_instructions)
 
         # 1.3 Build a list of additional information for the system message
-        additional_information: List[str] = []
+        additional_information: list[str] = []
         # 1.3.1 Add instructions for using markdown
         if self.markdown and self.response_model is None:
             additional_information.append("Use markdown to format your answers.")
         # 1.3.2 Add the current datetime
         if self.add_datetime_to_instructions:
-            from datetime import datetime
+            from datetime import datetime, timezone
 
-            additional_information.append(f"The current time is {datetime.now()}")
+            additional_information.append(f"The current time is {datetime.now(timezone.utc)}")
 
         if self.knowledge is not None and self.enable_agentic_knowledge_filters:
             valid_filters = getattr(self.knowledge, "valid_metadata_filters", None)
@@ -4767,15 +4754,15 @@ class Team:
                     # Try to serialize each value individually
                     json.dumps({key: value}, default=str)
                     sanitized_context[key] = value
-                except Exception as e:
-                    log_error(f"Failed to serialize to JSON: {e}")
+                except Exception:
+                    log_error("Failed to serialize to JSON")
                     # If serialization fails, convert to string representation
                     sanitized_context[key] = str(value)
 
             try:
                 return json.dumps(sanitized_context, indent=2)
-            except Exception as e:
-                log_error(f"Failed to convert sanitized context to JSON: {e}")
+            except Exception:
+                log_error("Failed to convert sanitized context to JSON")
                 return str(context)
 
     def _get_json_output_prompt(self) -> str:
@@ -4828,7 +4815,7 @@ class Team:
                     if len(response_model_properties) > 0:
                         json_output_prompt += "\n<json_fields>"
                         json_output_prompt += (
-                            f"\n{json.dumps([key for key in response_model_properties.keys() if key != '$defs'])}"
+                            f"\n{json.dumps([key for key in response_model_properties if key != '$defs'])}"
                         )
                         json_output_prompt += "\n</json_fields>"
                         json_output_prompt += "\n\nHere are the properties for each field:"
@@ -4927,7 +4914,7 @@ class Team:
             """
             import json
 
-            history: List[Dict[str, Any]] = []
+            history: list[dict[str, Any]] = []
             if isinstance(self.memory, TeamMemory):
                 team_chats = self.memory.get_all_messages()
 
@@ -4983,7 +4970,7 @@ class Team:
 
         return set_shared_context
 
-    def _update_team_session_state(self, member_agent: Union[Agent, "Team"]) -> None:
+    def _update_team_session_state(self, member_agent: Union[Agent, Team]) -> None:
         if isinstance(member_agent, Agent) and member_agent.team_session_state is not None:
             if self.session_state is None:
                 self.session_state = member_agent.team_session_state
@@ -5108,14 +5095,14 @@ class Team:
                         try:
                             yield f"Agent {member_agent.name}: {member_agent_run_response.content.model_dump_json(indent=2)}"  # type: ignore
                         except Exception as e:
-                            yield f"Agent {member_agent.name}: Error - {str(e)}"
+                            yield f"Agent {member_agent.name}: Error - {e!s}"
                     else:
                         try:
                             import json
 
                             yield f"Agent {member_agent.name}: {json.dumps(member_agent_run_response.content, indent=2)}"
                         except Exception as e:
-                            yield f"Agent {member_agent.name}: Error - {str(e)}"
+                            yield f"Agent {member_agent.name}: Error - {e!s}"
 
                 # Update the memory
                 member_name = member_agent.name if member_agent.name else f"agent_{member_agent_index}"
@@ -5260,14 +5247,14 @@ class Team:
                         try:
                             return f"Agent {member_name}: {response.content.model_dump_json(indent=2)}"  # type: ignore
                         except Exception as e:
-                            return f"Agent {member_name}: Error - {str(e)}"
+                            return f"Agent {member_name}: Error - {e!s}"
                     else:
                         try:
                             import json
 
                             return f"Agent {member_name}: {json.dumps(response.content, indent=2)}"
                         except Exception as e:
-                            return f"Agent {member_name}: Error - {str(e)}"
+                            return f"Agent {member_name}: Error - {e!s}"
 
                     return f"Agent {member_name}: No Response"
 
@@ -5680,7 +5667,7 @@ class Team:
 
         return transfer_func
 
-    def _get_member_id(self, member: Union[Agent, "Team"]) -> str:
+    def _get_member_id(self, member: Union[Agent, Team]) -> str:
         """
         Get the ID of a member
         """
@@ -5694,7 +5681,7 @@ class Team:
             url_safe_member_id = None
         return url_safe_member_id
 
-    def _find_member_by_id(self, member_id: str) -> Optional[Tuple[int, Union[Agent, "Team"]]]:
+    def _find_member_by_id(self, member_id: str) -> Optional[Tuple[int, Union[Agent, Team]]]:
         """
         Recursively search through team members and subteams to find an agent by name.
 
@@ -6252,8 +6239,8 @@ class Team:
                                 }
                                 for user_id, user_session_summaries in session.memory["summaries"].items()
                             }
-                        except Exception as e:
-                            log_warning(f"Failed to load session summaries: {e}")
+                        except Exception:
+                            log_warning("Failed to load session summaries")
         log_debug(f"-*- TeamSession loaded: {session.session_id}")
 
     def load_session(self, force: bool = False) -> Optional[str]:
@@ -6293,7 +6280,7 @@ class Team:
 
     def get_messages_for_session(
         self, session_id: Optional[str] = None, user_id: Optional[str] = None
-    ) -> List[Message]:
+    ) -> list[Message]:
         """Get messages for a session"""
         _session_id = session_id or self.session_id
         _user_id = user_id or self.user_id
@@ -6379,17 +6366,17 @@ class Team:
                 self.run_response.audio = []
             self.run_response.audio.append(audio)
 
-    def get_images(self) -> Optional[List[ImageArtifact]]:
+    def get_images(self) -> Optional[list[ImageArtifact]]:
         return self.images
 
-    def get_videos(self) -> Optional[List[VideoArtifact]]:
+    def get_videos(self) -> Optional[list[VideoArtifact]]:
         return self.videos
 
-    def get_audio(self) -> Optional[List[AudioArtifact]]:
+    def get_audio(self) -> Optional[list[AudioArtifact]]:
         return self.audio
 
     def update_reasoning_content_from_tool_call(
-        self, run_response: TeamRunResponse, tool_name: str, tool_args: Dict[str, Any]
+        self, run_response: TeamRunResponse, tool_name: str, tool_args: dict[str, Any]
     ) -> Optional[ReasoningStep]:
         """Update reasoning_content based on tool calls that look like thinking or reasoning tools."""
 
@@ -6515,8 +6502,8 @@ class Team:
 
             # Add the metrics message to the reasoning_messages
             run_response.extra_data.reasoning_messages.append(metrics_message)
-        except Exception as e:
-            log_error(f"Failed to add reasoning metrics to extra_data: {str(e)}")
+        except Exception:
+            log_error("Failed to add reasoning metrics to extra_data")
 
     ###########################################################################
     # Knowledge
@@ -6555,8 +6542,8 @@ class Team:
                     retriever_kwargs["filters"] = filters
                 retriever_kwargs.update({"query": query, "num_documents": num_documents, **kwargs})
                 return self.retriever(**retriever_kwargs)
-            except Exception as e:
-                log_warning(f"Retriever failed: {e}")
+            except Exception:
+                log_warning("Retriever failed")
                 return None
         try:
             if self.knowledge is None or self.knowledge.vector_db is None:
@@ -6575,8 +6562,8 @@ class Team:
                 return None
 
             return [doc.to_dict() for doc in relevant_docs]
-        except Exception as e:
-            log_warning(f"Error searching knowledge base: {e}")
+        except Exception:
+            log_warning("Error searching knowledge base")
             return None
 
     async def aget_relevant_docs_from_knowledge(
@@ -6613,8 +6600,8 @@ class Team:
                     retriever_kwargs["filters"] = filters
                 retriever_kwargs.update({"query": query, "num_documents": num_documents, **kwargs})
                 return self.retriever(**retriever_kwargs)
-            except Exception as e:
-                log_warning(f"Retriever failed: {e}")
+            except Exception:
+                log_warning("Retriever failed")
                 return None
 
         try:
@@ -6634,11 +6621,11 @@ class Team:
                 return None
 
             return [doc.to_dict() for doc in relevant_docs]
-        except Exception as e:
-            log_warning(f"Error searching knowledge base: {e}")
+        except Exception:
+            log_warning("Error searching knowledge base")
             return None
 
-    def convert_documents_to_string(self, docs: List[Dict[str, Any]]) -> str:
+    def convert_documents_to_string(self, docs: list[dict[str, Any]]) -> str:
         if docs is None or len(docs) == 0:
             return ""
 
@@ -6887,7 +6874,7 @@ class Team:
         return session_data
 
     def _get_team_session(self, session_id: str, user_id: Optional[str] = None) -> TeamSession:
-        from time import time
+        from datetime import datetime, timezone
 
         """Get an TeamMemory object, which can be saved to the database"""
         memory_dict = None
@@ -6913,7 +6900,7 @@ class Team:
             team_data=self._get_team_data(),
             session_data=self._get_session_data(),
             extra_data=self.extra_data,
-            created_at=int(time()),
+            created_at=int(datetime.now(timezone.utc).timestamp()),
         )
 
     def _log_team_run(self, session_id: str, user_id: Optional[str] = None) -> None:
@@ -6938,8 +6925,8 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
-            log_debug(f"Could not create team event: {e}")
+        except Exception:
+            log_debug("Could not create team event")
 
     async def _alog_team_run(self, session_id: str, user_id: Optional[str] = None) -> None:
         if not self.telemetry and not self.monitoring:
@@ -6962,8 +6949,8 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
-            log_debug(f"Could not create team event: {e}")
+        except Exception:
+            log_debug("Could not create team event")
 
     def _log_team_session(self, session_id: str, user_id: Optional[str] = None):
         if not (self.telemetry or self.monitoring):
@@ -6982,8 +6969,8 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
-            log_debug(f"Could not create team monitor: {e}")
+        except Exception:
+            log_debug("Could not create team monitor")
 
     def _get_agentic_or_user_search_filters(
         self, filters: Optional[Dict[str, Any]], effective_filters: Optional[Dict[str, Any]]

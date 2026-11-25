@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -115,11 +117,11 @@ class TwilioTools(Toolkit):
                 return "Error: Message body cannot be empty"
 
             message = self.client.messages.create(to=to, from_=from_, body=body)
-            log_info(f"SMS sent. SID: {message.sid}, to: {to}")
-            return f"Message sent successfully. SID: {message.sid}"
+            log_info(f"SMS sent. SID: {message.sid!s}, to: {to!s}")
+            return f"Message sent successfully. SID: {message.sid!s}"
         except TwilioRestException as e:
-            logger.error(f"Failed to send SMS to {to}: {e}")
-            return f"Error sending message: {str(e)}"
+            logger.error(f"Failed to send SMS to {to!s}: {e!s}")
+            return f"Error sending message: {e!s}"
 
     def get_call_details(self, call_sid: str) -> Dict[str, Any]:
         """

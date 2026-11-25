@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from agno.agent import Agent
 from agno.tools.toolkit import Toolkit
@@ -15,9 +17,9 @@ except ImportError:
 class Mem0Tools(Toolkit):
     def __init__(
         self,
-        config: Optional[Dict[str, Any]] = None,
-        api_key: Optional[str] = None,
-        user_id: Optional[str] = None,
+        config: dict[str, Any] | None = None,
+        api_key: str | None = None,
+        user_id: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -32,7 +34,7 @@ class Mem0Tools(Toolkit):
         )
         self.api_key = api_key or getenv("MEM0_API_KEY")
         self.user_id = user_id
-        self.client: Union[Memory, MemoryClient]
+        self.client: Memory | MemoryClient
 
         try:
             if self.api_key:
@@ -44,14 +46,14 @@ class Mem0Tools(Toolkit):
             else:
                 log_debug("Initializing Mem0 with default settings.")
                 self.client = Memory()
-        except Exception as e:
+        except (ImportError, RuntimeError, ValueError, TypeError) as e:
             log_error(f"Failed to initialize Mem0 client: {e}")
             raise ConnectionError("Failed to initialize Mem0 client. Ensure API keys/config are set.") from e
 
     def _get_user_id(
         self,
         method_name: str,
-        agent: Optional[Agent] = None,
+        agent: Agent | None = None,
     ) -> str:
         """Resolve the user ID"""
         resolved_user_id = self.user_id
@@ -60,7 +62,7 @@ class Mem0Tools(Toolkit):
                 session_state = getattr(agent, "session_state", None)
                 if isinstance(session_state, dict):
                     resolved_user_id = session_state.get("current_user_id")
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
         if not resolved_user_id:
             error_msg = f"Error in {method_name}: A user_id must be provided in the method call."
@@ -71,11 +73,11 @@ class Mem0Tools(Toolkit):
     def add_memory(
         self,
         agent: Agent,
-        content: Union[str, Dict[str, str]],
+        content: str | dict[str, str],
     ) -> str:
         """Add facts to the user's memory.
         Args:
-            content(Union[str, Dict[str, str]]): The facts that should be stored.
+            content(str | dict[str, str]): The facts that should be stored.
             Example:
                 content = "I live in NYC"
                 content = {"Name": "John", "Age": 30, "Location": "New York"}
@@ -90,6 +92,8 @@ class Mem0Tools(Toolkit):
             if isinstance(content, dict):
                 log_debug("Wrapping dict message into content string")
                 content = json.dumps(content)
+            elif not isinstance(content, str):
+                content = str(content)
             messages_list = [{"role": "user", "content": content}]
 
             result = self.client.add(
@@ -98,7 +102,7 @@ class Mem0Tools(Toolkit):
                 output_format="v1.1",  # Added to avoid deprecation warning
             )
             return json.dumps(result)
-        except Exception as e:
+        except (TypeError, ValueError, RuntimeError) as e:
             log_error(f"Error adding memory: {e}")
             return f"Error adding memory: {e}"
 
@@ -130,7 +134,7 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
+        except (TypeError, RuntimeError) as e:
             log_error(f"Error searching memory: {e}")
             return f"Error searching memory: {e}"
 
@@ -156,7 +160,7 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
+        except (TypeError, RuntimeError) as e:
             log_error(f"Error getting all memories: {e}")
             return f"Error getting all memories: {e}"
 
@@ -171,6 +175,6 @@ class Mem0Tools(Toolkit):
         try:
             self.client.delete_all(user_id=resolved_user_id)
             return f"Successfully deleted all memories for user_id: {resolved_user_id}."
-        except Exception as e:
+        except (TypeError, ValueError, RuntimeError) as e:
             log_error(f"Error deleting all memories: {e}")
             return f"Error deleting all memories: {e}"

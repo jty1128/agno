@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from os import getenv
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -30,7 +32,7 @@ class AccuracyEvaluation:
     score: int
     reason: str
 
-    def print_eval(self, console: Optional["Console"] = None):
+    def print_eval(self, console: Optional[Console] = None):
         from rich.box import ROUNDED
         from rich.console import Console
         from rich.markdown import Markdown
@@ -50,14 +52,14 @@ class AccuracyEvaluation:
         results_table.add_row("Input", self.input)
         results_table.add_row("Output", self.output)
         results_table.add_row("Expected Output", self.expected_output)
-        results_table.add_row("Accuracy Score", f"{str(self.score)}/10")
+        results_table.add_row("Accuracy Score", f"{self.score!s}/10")
         results_table.add_row("Accuracy Reason", Markdown(self.reason))
         console.print(results_table)
 
 
 @dataclass
 class AccuracyResult:
-    results: List[AccuracyEvaluation] = field(default_factory=list)
+    results: list[AccuracyEvaluation] = field(default_factory=list)
     avg_score: float = field(init=False)
     mean_score: float = field(init=False)
     min_score: float = field(init=False)
@@ -78,7 +80,7 @@ class AccuracyResult:
             self.max_score = max(_results)
             self.std_dev_score = statistics.stdev(_results) if len(_results) > 1 else 0
 
-    def print_summary(self, console: Optional["Console"] = None):
+    def print_summary(self, console: Optional[Console] = None):
         from rich.box import ROUNDED
         from rich.console import Console
         from rich.table import Table
@@ -102,7 +104,7 @@ class AccuracyResult:
         summary_table.add_row("Standard Deviation", f"{self.std_dev_score:.2f}")
         console.print(summary_table)
 
-    def print_results(self, console: Optional["Console"] = None):
+    def print_results(self, console: Optional[Console] = None):
         from rich.box import ROUNDED
         from rich.console import Console
         from rich.table import Table
@@ -122,7 +124,7 @@ class AccuracyResult:
             results_table.add_row("Input", result.input)
             results_table.add_row("Output", result.output)
             results_table.add_row("Expected Output", result.expected_output)
-            results_table.add_row("Accuracy Score", f"{str(result.score)}/10")
+            results_table.add_row("Accuracy Score", f"{result.score!s}/10")
             results_table.add_row("Accuracy Reason", result.reason)
         console.print(results_table)
 

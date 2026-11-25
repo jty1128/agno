@@ -1,7 +1,9 @@
 import time
 import uuid
 from os import getenv
-from typing import Any, Dict, Literal, Optional, TypedDict
+from typing import Dict, Literal, Optional, TypedDict
+
+from typing_extensions import Any
 
 from agno.agent import Agent
 from agno.media import VideoArtifact

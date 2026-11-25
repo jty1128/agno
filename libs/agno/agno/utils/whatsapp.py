@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import httpx
 import requests
@@ -21,7 +20,7 @@ def get_phone_number_id() -> str:
     return phone_number_id
 
 
-def get_media(media_id: str) -> dict:
+def get_media(media_id: str) -> dict[str, Any]:
     """
     Sends a GET request to the Facebook Graph API to retrieve media information.
 
@@ -51,7 +50,7 @@ def get_media(media_id: str) -> dict:
         return {"error": str(e)}
 
 
-async def get_media_async(media_id: str) -> dict:
+async def get_media_async(media_id: str) -> dict[str, Any]:
     """
     Sends a GET request to the Facebook Graph API to retrieve media information.
 
@@ -116,8 +115,6 @@ def upload_media(media_data: bytes, mime_type: str, filename: str = "file"):
         return media_id
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 async def upload_media_async(media_data: bytes, mime_type: str, filename: str = "file"):
@@ -154,14 +151,12 @@ async def upload_media_async(media_data: bytes, mime_type: str, filename: str = 
             return media_id
     except httpx.HTTPStatusError as e:
         return {"error": str(e)}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 async def send_image_message_async(
     media_id: str,
     recipient: str,
-    text: Optional[str] = None,
+    text: str | None = None,
 ):
     """Send an image message to a WhatsApp user (asynchronous version).
 
@@ -203,15 +198,12 @@ async def send_image_message_async(
         log_error(f"Failed to send WhatsApp image message: {e}")
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
         raise
-    except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
-        raise
 
 
 def send_image_message(
     media_id: str,
     recipient: str,
-    text: Optional[str] = None,
+    text: str | None = None,
 ):
     """Send an image message to a WhatsApp user (synchronous version).
 
@@ -250,7 +242,4 @@ def send_image_message(
     except requests.exceptions.RequestException as e:
         log_error(f"Failed to send WhatsApp image message: {e}")
         log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
-        raise
-    except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
         raise

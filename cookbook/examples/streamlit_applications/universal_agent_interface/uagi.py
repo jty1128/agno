@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional
 
 from agents import get_agent
 from agno.agent import Agent
@@ -35,8 +34,8 @@ KNOWLEDGE_PATH = tmp_dir.joinpath("uagi_knowledge")
 class UAgIConfig:
     user_id: str
     model_id: str = "anthropic:claude-3-7-sonnet-latest"
-    tools: Optional[List[str]] = None
-    agents: Optional[List[str]] = None
+    tools: list[str] | None = None
+    agents: list[str] | None = None
 
 
 uagi_memory = Memory(
@@ -54,7 +53,7 @@ uagi_knowledge = AgentKnowledge(
 
 
 def create_uagi(
-    config: UAgIConfig, session_id: Optional[str] = None, debug_mode: bool = True
+    config: UAgIConfig, session_id: str | None = None, debug_mode: bool = True
 ) -> Team:
     """Returns an instance of the Universal Agent Interface (UAgI)
 
@@ -81,7 +80,7 @@ def create_uagi(
     if model is None:
         raise ValueError(f"Failed to create model instance for {config.model_id}")
 
-    tools: List[Toolkit] = [ReasoningTools(add_instructions=True)]
+    tools: list[Toolkit] = [ReasoningTools(add_instructions=True)]
     if config.tools:
         for tool_name in config.tools:
             tool = get_toolkit(tool_name)
@@ -90,7 +89,7 @@ def create_uagi(
             else:
                 logger.warning(f"Tool {tool_name} not found")
 
-    agents: List[Agent] = []
+    agents: list[Agent] = []
     if config.agents:
         for agent_name in config.agents:
             agent = get_agent(agent_name, model, uagi_memory, uagi_knowledge)
@@ -107,7 +106,7 @@ def create_uagi(
     You are able to handle easy conversations as well as complex requests by delegating tasks to the appropriate team members.
     You are also capable of handling errors and edge cases and are able to provide helpful feedback to the user.\
     """)
-    instructions: List[str] = [
+    instructions: list[str] = [
         "Your goal is to coordinate the team to assist the user in the best way possible.",
         "If the user sends a conversational message like 'Hello', 'Hi', 'How are you', 'What is your name', etc., you should respond in a friendly and engaging manner.",
         "If the user asks for something simple, like updating memory, you can do it directly without Thinking and Analyzing.",
