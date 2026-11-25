@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import base64
 import os
 from os import getenv
-from typing import Optional
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -68,11 +69,11 @@ class GroqTools(Toolkit):
                         response_format="text",
                     )
             log_debug(f"Transcript Generated: {transcription_text}")
-            return str(transcription_text)
+            return f"{transcription_text}"
 
-        except Exception as e:
-            log_error(f"Failed to transcribe audio source '{audio_source}' with Groq: {str(e)}")
-            return f"Failed to transcribe audio source '{audio_source}' with Groq: {str(e)}"
+        except GroqError as e:
+            log_error(f"Failed to transcribe audio source '{audio_source}' with Groq: {e}")
+            return f"Failed to transcribe audio source '{audio_source}' with Groq: {e}"
 
     def translate_audio(self, audio_source: str) -> str:
         """Translate audio file or URL to English using Groq's Whisper API.
@@ -99,11 +100,11 @@ class GroqTools(Toolkit):
                         response_format="text",
                     )
             log_debug(f"Groq Translation: {translation}")
-            return str(translation)
+            return f"{translation}"
 
-        except Exception as e:
-            log_error(f"Failed to translate audio source '{audio_source}' with Groq: {str(e)}")
-            return f"Failed to translate audio source '{audio_source}' with Groq: {str(e)}"
+        except GroqError as e:
+            log_error(f"Failed to translate audio source '{audio_source}' with Groq: {e}")
+            return f"Failed to translate audio source '{audio_source}' with Groq: {e}"
 
     def generate_speech(
         self,
@@ -146,6 +147,6 @@ class GroqTools(Toolkit):
             log_debug(f"Successfully generated speech artifact with ID: {media_id}")
             return f"Speech generated successfully with ID: {media_id}"
 
-        except Exception as e:
-            log_error(f"Failed to generate speech with Groq: {str(e)}")
-            return f"Failed to generate speech with Groq: {str(e)}"
+        except GroqError as e:
+            log_error(f"Failed to generate speech with Groq: {e}")
+            return f"Failed to generate speech with Groq: {e}"

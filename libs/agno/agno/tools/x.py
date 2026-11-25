@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -45,7 +45,7 @@ class XTools(Toolkit):
             access_token_secret=self.access_token_secret,
         )
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.create_post)
         tools.append(self.reply_to_post)
         tools.append(self.send_dm)
@@ -144,9 +144,9 @@ class XTools(Toolkit):
                     f"Unable to send message to '{recipient}'. The user may have restricted who can send them messages."
                 )
             return json.dumps({"error": error_message}, indent=2)
-        except Exception as e:
+        except (TypeError, KeyError, ValueError) as e:
             logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+            return json.dumps({"error": f"An unexpected error occurred: {e!s}"}, indent=2)
 
     def get_my_info(self) -> str:
         """

@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Optional
 
 
-def load_env(env: Optional[Dict[str, str]] = None, dotenv_dir: Optional[Path] = None) -> None:
+def load_env(env: dict[str, str] | None = None, dotenv_dir: Path | None = None) -> None:
     from os import environ
 
     if dotenv_dir is not None:

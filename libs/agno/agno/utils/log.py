@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from os import getenv
 from typing import Any, Optional
@@ -28,14 +30,13 @@ class ColoredRichHandler(RichHandler):
 
     def get_level_text(self, record: logging.LogRecord) -> Text:
         # Return empty Text if message is empty
-        if not record.msg:
+        if record.msg == "":
             return Text("")
 
         level_name = record.levelname.lower()
-        if self.source_type and self.source_type in LOG_STYLES:
-            if level_name in LOG_STYLES[self.source_type]:
-                color = LOG_STYLES[self.source_type][level_name]
-                return Text(record.levelname, style=color)
+        if self.source_type and self.source_type in LOG_STYLES and level_name in LOG_STYLES[self.source_type]:
+            color = LOG_STYLES[self.source_type][level_name]
+            return Text(record.levelname, style=color)
         return super().get_level_text(record)
 
 
@@ -116,7 +117,7 @@ def center_header(message: str, symbol: str = "*") -> str:
         import shutil
 
         terminal_width = shutil.get_terminal_size().columns
-    except Exception:
+    except Exception:  # noqa: BLE001
         terminal_width = 80  # fallback width
 
     header = f" {message} "

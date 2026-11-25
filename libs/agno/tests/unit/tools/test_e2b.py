@@ -29,7 +29,7 @@ def mock_agent():
 def mock_e2b_tools():
     """Create a mocked E2BTools instance with patched methods."""
     # First, create a mock for the Sandbox class
-    with patch("agno.tools.e2b.Sandbox") as mock_sandbox_class:
+    with patch("agno.tools.e2b.Sandbox") as mock_sandbox_class, patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
         # Set up our mock sandbox instance
         mock_sandbox = Mock()
         mock_sandbox_class.return_value = mock_sandbox
@@ -41,43 +41,40 @@ def mock_e2b_tools():
         mock_sandbox.kill = Mock()
 
         # Create the E2BTools instance with our patched Sandbox
-        with patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
-            tools = E2BTools()
+        tools = E2BTools()
 
-            # Set the sandbox attribute explicitly
+        # Set the sandbox attribute explicitly
 
-            # Mock the methods we'll test with return values matching actual implementation
-            tools.run_python_code = Mock(return_value='["Logs:\\nHello, World!"]')
-            tools.upload_file = Mock(return_value="/sandbox/file.txt")
-            tools.download_png_result = Mock(return_value="Image added as artifact with ID test-image-id")
-            tools.download_chart_data = Mock(
-                return_value="Interactive bar chart data saved to /local/output.json\nTitle: Sample Chart\nX-axis: Categories\nY-axis: Values\n"
-            )
-            tools.download_file_from_sandbox = Mock(return_value="/local/output.txt")
-            tools.list_files = Mock(
-                return_value="Contents of /:\n- file1.txt (File, 100 bytes)\n- dir1 (Directory, Unknown size)\n"
-            )
-            tools.read_file_content = Mock(return_value="file content")
-            tools.write_file_content = Mock(return_value="/sandbox/file.txt")
-            tools.get_public_url = Mock(return_value="http://example.com")
-            tools.run_server = Mock(return_value="http://example.com")
-            tools.set_sandbox_timeout = Mock(return_value="600")
-            tools.get_sandbox_status = Mock(return_value="sandbox-id-12345")
-            tools.shutdown_sandbox = Mock(
-                return_value='{"status": "success", "message": "Sandbox shut down successfully"}'
-            )
-            tools.run_command = Mock(return_value='["STDOUT:\\ncommand output"]')
-            tools.stream_command = Mock(return_value='["STDOUT: command output", "STDERR: some warning"]')
-            tools.run_background_command = Mock(return_value=Mock())
-            tools.kill_background_command = Mock(return_value="Background command terminated successfully.")
-            tools.watch_directory = Mock(
-                return_value='{"status": "success", "message": "Changes detected in /dir over 1 seconds:\\nmodified - /dir/file1.txt\\ncreated - /dir/file2.txt"}'
-            )
-            tools.list_running_sandboxes = Mock(
-                return_value='{"status": "success", "message": "Found 2 running sandboxes", "sandboxes": [{"sandbox_id": "sb-123", "started_at": "2023-01-01T12:00:00", "template_id": "tmpl-123", "metadata": {}}]}'
-            )
+        # Mock the methods we'll test with return values matching actual implementation
+        tools.run_python_code = Mock(return_value='["Logs:\\nHello, World!"]')
+        tools.upload_file = Mock(return_value="/sandbox/file.txt")
+        tools.download_png_result = Mock(return_value="Image added as artifact with ID test-image-id")
+        tools.download_chart_data = Mock(
+            return_value="Interactive bar chart data saved to /local/output.json\nTitle: Sample Chart\nX-axis: Categories\nY-axis: Values\n"
+        )
+        tools.download_file_from_sandbox = Mock(return_value="/local/output.txt")
+        tools.list_files = Mock(
+            return_value="Contents of /:\n- file1.txt (File, 100 bytes)\n- dir1 (Directory, Unknown size)\n"
+        )
+        tools.read_file_content = Mock(return_value="file content")
+        tools.write_file_content = Mock(return_value="/sandbox/file.txt")
+        tools.get_public_url = Mock(return_value="http://example.com")
+        tools.run_server = Mock(return_value="http://example.com")
+        tools.set_sandbox_timeout = Mock(return_value="600")
+        tools.get_sandbox_status = Mock(return_value="sandbox-id-12345")
+        tools.shutdown_sandbox = Mock(return_value='{"status": "success", "message": "Sandbox shut down successfully"}')
+        tools.run_command = Mock(return_value='["STDOUT:\\ncommand output"]')
+        tools.stream_command = Mock(return_value='["STDOUT: command output", "STDERR: some warning"]')
+        tools.run_background_command = Mock(return_value=Mock())
+        tools.kill_background_command = Mock(return_value="Background command terminated successfully.")
+        tools.watch_directory = Mock(
+            return_value='{"status": "success", "message": "Changes detected in /dir over 1 seconds:\\nmodified - /dir/file1.txt\\ncreated - /dir/file2.txt"}'
+        )
+        tools.list_running_sandboxes = Mock(
+            return_value='{"status": "success", "message": "Found 2 running sandboxes", "sandboxes": [{"sandbox_id": "sb-123", "started_at": "2023-01-01T12:00:00", "template_id": "tmpl-123", "metadata": {}}]}'
+        )
 
-            return tools
+        return tools
 
 
 def test_init_with_api_key():
@@ -90,44 +87,41 @@ def test_init_with_api_key():
 
 def test_init_with_env_var():
     """Test initialization with environment variable."""
-    with patch("agno.tools.e2b.Sandbox"):
-        with patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
-            tools = E2BTools()
-            # Instead of checking if the mock was called, just verify the API key is set
-            assert tools.api_key == TEST_API_KEY
+    with patch("agno.tools.e2b.Sandbox"), patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
+        tools = E2BTools()
+        # Instead of checking if the mock was called, just verify the API key is set
+        assert tools.api_key == TEST_API_KEY
 
 
 def test_init_without_api_key():
     """Test initialization without API key raises error."""
-    with patch.dict("os.environ", clear=True):
-        with pytest.raises(ValueError, match="E2B_API_KEY not set"):
-            E2BTools()
+    with patch.dict("os.environ", clear=True), pytest.raises(ValueError, match="E2B_API_KEY not set"):
+        E2BTools()
 
 
 def test_init_with_selective_tools():
     """Test initialization with only selected tools enabled."""
-    with patch("agno.tools.e2b.Sandbox"):
-        with patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
-            tools = E2BTools(
-                run_code=True,
-                upload_file=False,
-                download_result=False,
-                filesystem=True,
-                internet_access=False,
-                sandbox_management=False,
-                command_execution=True,
-            )
+    with patch("agno.tools.e2b.Sandbox"), patch.dict("os.environ", {"E2B_API_KEY": TEST_API_KEY}):
+        tools = E2BTools(
+            run_code=True,
+            upload_file=False,
+            download_result=False,
+            filesystem=True,
+            internet_access=False,
+            sandbox_management=False,
+            command_execution=True,
+        )
 
-            # Check enabled functions
-            function_names = [func.name for func in tools.functions.values()]
-            assert "run_python_code" in function_names
-            assert "list_files" in function_names
-            assert "run_command" in function_names
+        # Check enabled functions
+        function_names = [func.name for func in tools.functions.values()]
+        assert "run_python_code" in function_names
+        assert "list_files" in function_names
+        assert "run_command" in function_names
 
-            # Check disabled functions
-            assert "upload_file" not in function_names
-            assert "download_png_result" not in function_names
-            assert "get_public_url" not in function_names
+        # Check disabled functions
+        assert "upload_file" not in function_names
+        assert "download_png_result" not in function_names
+        assert "get_public_url" not in function_names
 
 
 def test_run_python_code(mock_e2b_tools):

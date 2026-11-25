@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
@@ -23,7 +23,7 @@ class MockDataclass:
     name: str
     age: int
     is_active: bool = True
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 # Nested Pydantic models
@@ -44,7 +44,7 @@ class UserProfileModel(BaseModel):
     name: str
     age: int
     contact_info: ContactInfoModel
-    preferences: Dict[str, Any] = field(default_factory=dict)
+    preferences: dict[str, Any] = field(default_factory=dict)
 
 
 # Nested dataclasses
@@ -68,7 +68,7 @@ class UserProfileDataclass:
     name: str
     age: int
     contact_info: ContactInfoDataclass
-    preferences: Dict[str, Any] = field(default_factory=dict)
+    preferences: dict[str, Any] = field(default_factory=dict)
 
 
 # Test cases for get_json_type_for_py_type
@@ -100,11 +100,11 @@ def test_get_json_schema_for_arg_basic_types():
 
 def test_get_json_schema_for_arg_collections():
     # Test list type
-    list_schema = get_json_schema_for_arg(List[str])
+    list_schema = get_json_schema_for_arg(list[str])
     assert list_schema == {"type": "array", "items": {"type": "string"}}
 
     # Test dict type
-    dict_schema = get_json_schema_for_arg(Dict[str, int])
+    dict_schema = get_json_schema_for_arg(dict[str, int])
     assert dict_schema == {
         "type": "object",
         "propertyNames": {"type": "string"},
@@ -114,11 +114,11 @@ def test_get_json_schema_for_arg_collections():
 
 def test_get_json_schema_for_arg_union():
     # Test Optional type (Union with None)
-    optional_schema = get_json_schema_for_arg(Optional[str])
+    optional_schema = get_json_schema_for_arg(str | None)
     assert optional_schema == {"anyOf": [{"type": "string"}, {"type": "null"}]}
 
     # Test Union type
-    union_schema = get_json_schema_for_arg(Union[str, int])
+    union_schema = get_json_schema_for_arg(str | int)
     assert "anyOf" in union_schema
     assert len(union_schema["anyOf"]) == 2
 
@@ -183,9 +183,9 @@ def test_get_json_schema_strict():
 
 def test_get_json_schema_with_complex_types():
     type_hints = {
-        "names": List[str],
-        "scores": Dict[str, float],
-        "optional_field": Optional[int],
+        "names": list[str],
+        "scores": dict[str, float],
+        "optional_field": int | None,
     }
     schema = get_json_schema(type_hints)
     assert schema["properties"]["names"]["type"] == "array"

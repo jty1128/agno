@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from os import getenv
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -44,7 +46,7 @@ class vLLM(OpenAILike):
         if self.id == "not-set":
             raise ValueError("Model ID must be set via environment variable or explicit initialization")
 
-        body: Dict[str, Any] = {}
+        body: dict[str, Any] = {}
         if self.top_k is not None:
             body["top_k"] = self.top_k
         if self.enable_thinking is not None:
@@ -53,15 +55,15 @@ class vLLM(OpenAILike):
 
     def get_request_kwargs(
         self,
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        response_format: Union[dict, type[BaseModel]] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: Union[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         request_kwargs = super().get_request_kwargs(
             response_format=response_format, tools=tools, tool_choice=tool_choice
         )
 
-        vllm_body: Dict[str, Any] = {}
+        vllm_body: dict[str, Any] = {}
         if self.top_k is not None:
             vllm_body["top_k"] = self.top_k
         if self.enable_thinking is not None:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import Optional, cast
 
 from rich.prompt import Prompt
 
@@ -20,16 +20,18 @@ from agno.cli.console import (
     print_subheading,
 )
 from agno.infra.resources import InfraResources
+from __future__ import annotations
+
 from agno.utils.common import str_to_int
 from agno.utils.log import logger
 from agno.workspace.config import WorkspaceConfig
 from agno.workspace.enums import WorkspaceStarterTemplate
 
-TEMPLATE_TO_NAME_MAP: Dict[WorkspaceStarterTemplate, str] = {
+TEMPLATE_TO_NAME_MAP: dict[WorkspaceStarterTemplate, str] = {
     WorkspaceStarterTemplate.agent_app: "agent-app",
     WorkspaceStarterTemplate.agent_api: "agent-api",
 }
-TEMPLATE_TO_REPO_MAP: Dict[WorkspaceStarterTemplate, str] = {
+TEMPLATE_TO_REPO_MAP: dict[WorkspaceStarterTemplate, str] = {
     WorkspaceStarterTemplate.agent_app: "https://github.com/agno-agi/agent-app-aws",
     WorkspaceStarterTemplate.agent_api: "https://github.com/agno-agi/agent-api-aws",
 }
@@ -127,7 +129,7 @@ def create_workspace(
             str(ws_root_path),
             progress=GitCloneProgress(),  # type: ignore
         )
-    except Exception as e:
+    except (git.GitError, OSError) as e:
         logger.error(e)
         return None
 
@@ -138,7 +140,7 @@ def create_workspace(
         logger.debug(f"Deleting {_dot_git_folder}")
         try:
             _dot_git_exists = not rmdir_recursive(_dot_git_folder)
-        except Exception as e:
+        except OSError as e:
             logger.warning(f"Failed to delete {_dot_git_folder}: {e}")
             logger.info("Please delete the .git folder manually")
             pass
@@ -156,7 +158,7 @@ def create_workspace(
             str(workspace_example_secrets_dir),
             str(workspace_secrets_dir),
         )
-    except Exception as e:
+    except OSError as e:
         logger.warning(f"Could not create workspace/secrets: {e}")
         logger.warning("Please manually copy workspace/example_secrets to workspace/secrets")
 
@@ -260,7 +262,7 @@ def setup_workspace(ws_root_path: Path) -> Optional[WorkspaceConfig]:
             # We make a call to the api to create a new ws_schema
             logger.debug("Creating ws_schema")
             logger.debug(f"Getting teams for user: {agno_config.user.email}")
-            teams: Optional[List[TeamSchema]] = None
+            teams: Optional[list[TeamSchema]] = None
             selected_team: Optional[TeamSchema] = None
             team_identifier: Optional[TeamIdentifier] = None
             with Live(transient=True) as live_log:
@@ -275,7 +277,7 @@ def setup_workspace(ws_root_path: Path) -> Optional[WorkspaceConfig]:
                 print_info("Which account would you like to create this workspace in?")
                 print_info("  [b][1][/b] Personal (default)")
                 for team_idx, team_schema in enumerate(teams, start=2):
-                    print_info("  [b][{}][/b] {}".format(team_idx, team_schema.name))
+                    print_info(f"  [b][{team_idx}][/b] {team_schema.name}")
 
                 account_choices = ["1"] + [str(idx) for idx, _ in enumerate(teams, start=2)]
                 account_inp_raw = Prompt.ask("Account Number", choices=account_choices, default="1", show_choices=False)
@@ -402,7 +404,7 @@ def start_workspace(
     ws_config.set_local_env()
 
     # Get resource groups to deploy
-    resource_groups_to_create: List[InfraResources] = ws_config.get_resources(
+    resource_groups_to_create: list[InfraResources] = ws_config.get_resources(
         env=target_env,
         infra=target_infra,
         order="create",

@@ -1,14 +1,14 @@
-from typing import Any, Dict
+from typing import Any
 
 
-def merge_dictionaries(a: Dict[str, Any], b: Dict[str, Any]) -> None:
+def merge_dictionaries(a: dict[str, Any], b: dict[str, Any]) -> None:
     """
     Recursively merges two dictionaries.
     If there are conflicting keys, values from 'b' will take precedence.
 
     Args:
-        a (Dict[str, Any]): The first dictionary to be merged.
-        b (Dict[str, Any]): The second dictionary, whose values will take precedence.
+        a (dict[str, Any]): The first dictionary to be merged.
+        b (dict[str, Any]): The second dictionary, whose values will take precedence.
 
     Returns:
         None: The function modifies the first dictionary in place.

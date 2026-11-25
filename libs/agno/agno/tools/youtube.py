@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -78,7 +80,7 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
@@ -122,12 +124,12 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -156,11 +158,11 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:

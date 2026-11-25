@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
 from math import sqrt
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, cast
 
 try:
     from sqlalchemy.dialects import postgresql
@@ -187,7 +189,7 @@ class PgVector(VectorDb):
         log_debug(f"Checking if table '{self.table.fullname}' exists.")
         try:
             return inspect(self.db_engine).has_table(self.table_name, schema=self.schema)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking if table exists: {e}")
             return False
 
@@ -225,7 +227,7 @@ class PgVector(VectorDb):
                 stmt = select(1).where(column == value).limit(1)
                 result = sess.execute(stmt).first()
                 return result is not None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking if record exists: {e}")
             return False
 
@@ -331,7 +333,7 @@ class PgVector(VectorDb):
                                     "content_hash": content_hash,
                                 }
                                 batch_records.append(record)
-                            except Exception as e:
+                            except Exception as e:  # noqa: BLE001
                                 logger.error(f"Error processing document '{doc.name}': {e}")
 
                         # Insert the batch of records
@@ -403,7 +405,7 @@ class PgVector(VectorDb):
                                     "content_hash": content_hash,
                                 }
                                 batch_records.append(record)
-                            except Exception as e:
+                            except Exception as e:  # noqa: BLE001
                                 logger.error(f"Error processing document '{doc.name}': {e}")
 
                         # Upsert the batch of records
@@ -525,7 +527,7 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error performing semantic search: {e}")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
@@ -551,7 +553,7 @@ class PgVector(VectorDb):
 
             log_info(f"Found {len(search_results)} documents")
             return search_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error during vector search: {e}")
             return []
 
@@ -622,7 +624,7 @@ class PgVector(VectorDb):
             try:
                 with self.Session() as sess, sess.begin():
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error performing keyword search: {e}")
                 logger.error("Table might not exist, creating for future use")
                 self.create()
@@ -645,7 +647,7 @@ class PgVector(VectorDb):
 
             log_info(f"Found {len(search_results)} documents")
             return search_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error during keyword search: {e}")
             return []
 
@@ -748,7 +750,7 @@ class PgVector(VectorDb):
                         elif isinstance(self.vector_index, HNSW):
                             sess.execute(text(f"SET LOCAL hnsw.ef_search = {self.vector_index.ef_search}"))
                     results = sess.execute(stmt).fetchall()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error performing hybrid search: {e}")
                 return []
 
@@ -769,7 +771,7 @@ class PgVector(VectorDb):
 
             log_info(f"Found {len(search_results)} documents")
             return search_results
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error during hybrid search: {e}")
             return []
 
@@ -817,7 +819,7 @@ class PgVector(VectorDb):
                 stmt = select(func.count(self.table.c.name)).select_from(self.table)
                 result = sess.execute(stmt).scalar()
                 return int(result) if result is not None else 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting count from table '{self.table.fullname}': {e}")
             return 0
 
