@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 try:
     from upstash_vector import Index, Vector
@@ -104,7 +106,7 @@ class UpstashVectorDb(VectorDb):
             self.index.info()
             return True
         except Exception as e:
-            logger.error(f"Error checking index existence: {str(e)}")
+            logger.error(f"Error checking index existence: {e!s}")
             return False
 
     def create(self) -> None:
@@ -112,16 +114,14 @@ class UpstashVectorDb(VectorDb):
         logger.warning(
             "Indexes can only be created through the Upstash Console or the developer API. Please create an index before using this vector database."
         )
-        pass
 
     def drop(self) -> None:
         """You can drop indexes via Upstash Console."""
         logger.warning(
             "Indexes can only be dropped through the Upstash Console. Make sure you have an existing index before performing operations."
         )
-        pass
 
-    def drop_namespace(self, namespace: Optional[str] = None) -> None:
+    def drop_namespace(self, namespace: str | None = None) -> None:
         """Delete a namespace from the index.
         Args:
             namespace (Optional[str], optional): The namespace to drop. Defaults to None, which uses the instance namespace.
@@ -177,7 +177,7 @@ class UpstashVectorDb(VectorDb):
         return namespace in namespaces
 
     def upsert(
-        self, documents: List[Document], filters: Optional[Dict[str, Any]] = None, namespace: Optional[str] = None
+        self, documents: list[Document], filters: dict[str, Any] | None = None, namespace: str | None = None
     ) -> None:
         """Upsert documents into the index.
 
@@ -305,7 +305,7 @@ class UpstashVectorDb(VectorDb):
 
         return search_results
 
-    def delete(self, namespace: Optional[str] = None, delete_all: bool = False) -> bool:
+    def delete(self, namespace: str | None = None, delete_all: bool = False) -> bool:
         """Clear the index.
         Args:
             namespace (Optional[str], optional): The namespace to clear. Defaults to None, which uses the instance namespace.
@@ -315,7 +315,7 @@ class UpstashVectorDb(VectorDb):
         """
         _namespace = self.namespace if namespace is None else namespace
         response = self.index.reset(namespace=_namespace, all=delete_all)
-        return True if response.lower().strip() == "success" else False
+        return response.lower().strip() == "success"
 
     def get_index_info(self) -> InfoResult:
         """Get information about the index.
@@ -328,7 +328,6 @@ class UpstashVectorDb(VectorDb):
         """Optimize the index.
         This method is empty as Upstash automatically optimizes indexes.
         """
-        pass
 
     async def async_name_exists(self, name: str) -> bool:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")

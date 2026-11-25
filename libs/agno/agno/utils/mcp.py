@@ -34,7 +34,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
 
             # Return an error if the tool call failed
             if result.isError:
-                raise Exception(f"Error from MCP tool '{tool_name}': {result.content}")
+                raise RuntimeError(f"Error from MCP tool '{tool_name}': {result.content}")
 
             # Process the result content
             response_str = ""

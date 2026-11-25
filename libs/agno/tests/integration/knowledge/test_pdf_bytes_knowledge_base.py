@@ -15,8 +15,8 @@ def test_pdf_knowledge_base():
 
     # Read the PDF file as bytes
     file_path = Path(__file__).parent / "data" / "thai_recipes_short.pdf"
-    with open(file_path, "rb") as file:
-        pdf_bytes = file.read()
+    async with aiofiles.open(file_path, "rb") as file:
+        pdf_bytes = await file.read()
 
     # Create knowledge base
     knowledge_base = PDFBytesKnowledgeBase(

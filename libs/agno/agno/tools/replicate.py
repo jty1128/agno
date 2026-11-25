@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
+from collections.abc import Iterable, Iterator
 from os import getenv
-from typing import Any, Iterable, Iterator, List, Optional, Union
+from typing import Any, Optional
 from urllib.parse import urlparse
 from uuid import uuid4
 

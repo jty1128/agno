@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any, Optional
 
 try:
     import psycopg2
@@ -243,5 +245,5 @@ class PostgresTools(Toolkit):
             log_debug(f"Query result: {result_output}")
 
             return result_output
-        except Exception as e:
+        except psycopg2.Error as e:
             return str(e)

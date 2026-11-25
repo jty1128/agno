@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from agno.vectordb.clickhouse.index import HNSW
 
@@ -32,8 +34,10 @@ class Clickhouse(VectorDb):
         asyncclient: Optional[clickhouse_connect.driver.asyncclient.AsyncClient] = None,
         embedder: Optional[Embedder] = None,
         distance: Distance = Distance.cosine,
-        index: Optional[HNSW] = HNSW(),
+        index: Optional[HNSW] = None,
     ):
+        if index is None:
+            index = HNSW()
         # Store connection parameters as instance attributes
         self.host = host
         self.username = username
@@ -105,7 +109,7 @@ class Clickhouse(VectorDb):
                     parameters=parameters,
                 )
             )
-        except Exception as e:
+        except clickhouse_connect.driver.exceptions.DatabaseError as e:
             logger.error(e)
             return False
 
@@ -121,7 +125,7 @@ class Clickhouse(VectorDb):
                 parameters=parameters,
             )
             return bool(result)
-        except Exception as e:
+        except clickhouse_connect.driver.exceptions.DatabaseError as e:
             logger.error(f"Async error checking if table exists: {e}")
             return False
 
@@ -289,17 +293,17 @@ class Clickhouse(VectorDb):
 
     def insert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
     ) -> None:
-        rows: List[List[Any]] = []
+        rows: list[list[Any]] = []
         for document in documents:
             document.embed(embedder=self.embedder)
             cleaned_content = document.content.replace("\x00", "\ufffd")
             content_hash = md5(cleaned_content.encode()).hexdigest()
             _id = document.id or content_hash
 
-            row: List[Any] = [
+            row: list[Any] = [
                 _id,
                 document.name,
                 document.meta_data,
@@ -327,9 +331,9 @@ class Clickhouse(VectorDb):
         )
         log_debug(f"Inserted {len(documents)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Insert documents asynchronously."""
-        rows: List[List[Any]] = []
+        rows: list[list[Any]] = []
         async_client = await self._ensure_async_client()
 
         for document in documents:
@@ -338,7 +342,7 @@ class Clickhouse(VectorDb):
             content_hash = md5(cleaned_content.encode()).hexdigest()
             _id = document.id or content_hash
 
-            row: List[Any] = [
+            row: list[Any] = [
                 _id,
                 document.name,
                 document.meta_data,
@@ -371,8 +375,8 @@ class Clickhouse(VectorDb):
 
     def upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Upsert documents into the database.
@@ -392,7 +396,7 @@ class Clickhouse(VectorDb):
             parameters=parameters,
         )
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         """Upsert documents asynchronously."""
         # We are using ReplacingMergeTree engine in our table, so we need to insert the documents,
         # then call SELECT with FINAL
@@ -404,7 +408,7 @@ class Clickhouse(VectorDb):
             parameters=parameters,
         )
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             logger.error(f"Error getting embedding for Query: {query}")
@@ -441,14 +445,14 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
+        except clickhouse_connect.driver.exceptions.DatabaseError as e:
             logger.error(f"Error searching for documents: {e}")
             logger.error("Table might not exist, creating for future use")
             self.create()
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results.result_rows:
             search_results.append(
                 Document(
@@ -464,8 +468,8 @@ class Clickhouse(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         """Search for documents asynchronously."""
         async_client = await self._ensure_async_client()
 
@@ -505,14 +509,14 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
+        except clickhouse_connect.driver.exceptions.DatabaseError as e:
             logger.error(f"Async error searching for documents: {e}")
             logger.error("Table might not exist, creating for future use")
             await self.async_create()
             return []
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for result in results.result_rows:
             search_results.append(
                 Document(

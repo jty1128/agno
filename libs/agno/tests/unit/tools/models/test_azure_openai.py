@@ -97,11 +97,11 @@ def test_generate_image_success(mock_post, azure_openai_tools, mock_agent):
 
     # Verify the API call
     mock_post.assert_called_once()
-    args, kwargs = mock_post.call_args
+    kwargs = mock_post.call_args.kwargs
     # Check URL with more flexible assertion to accommodate potential double slashes
-    assert "test-endpoint.openai.azure.com" in args[0]
-    assert "openai/deployments/test-deployment/images/generations" in args[0]
-    assert "api-version=" in args[0]
+    assert "test-endpoint.openai.azure.com" in mock_post.call_args.args[0]
+    assert "openai/deployments/test-deployment/images/generations" in mock_post.call_args.args[0]
+    assert "api-version=" in mock_post.call_args.args[0]
     assert kwargs["headers"]["api-key"] == "test_api_key"
 
     # Check the enforced parameters in the JSON payload
@@ -134,11 +134,11 @@ def test_generate_image_with_custom_parameters(mock_post, azure_openai_tools, mo
 
     # Verify the API call uses the correct deployment
     mock_post.assert_called_once()
-    args, kwargs = mock_post.call_args
+    kwargs = mock_post.call_args.kwargs
     # Check URL with more flexible assertion to accommodate potential double slashes
-    assert "test-endpoint.openai.azure.com" in args[0]
-    assert "openai/deployments/test-deployment/images/generations" in args[0]
-    assert "api-version=" in args[0]
+    assert "test-endpoint.openai.azure.com" in mock_post.call_args.args[0]
+    assert "openai/deployments/test-deployment/images/generations" in mock_post.call_args.args[0]
+    assert "api-version=" in mock_post.call_args.args[0]
 
     # Verify all parameters are correctly passed
     assert kwargs["json"]["prompt"] == "A test prompt"
@@ -187,7 +187,7 @@ def test_invalid_parameters(azure_openai_tools, mock_agent):
         azure_openai_tools.generate_image(agent=mock_agent, prompt="A test prompt for size", size="invalid-size")
 
         # Verify the API call used the corrected size
-        args, kwargs = mock_post.call_args
+        kwargs = mock_post.call_args.kwargs
         assert kwargs["json"]["prompt"] == "A test prompt for size"
         assert kwargs["json"]["size"] == "1024x1024"
         assert kwargs["json"]["model"] == "dall-e-3"  # Default model

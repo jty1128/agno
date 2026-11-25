@@ -294,7 +294,7 @@ def test_exists(couchbase_fts, mock_scope):
     assert couchbase_fts.exists() is False
 
     # Test exception handling
-    couchbase_fts._bucket.collections().get_all_scopes.side_effect = Exception("Test error")
+    couchbase_fts._bucket.collections().get_all_scopes.side_effect = RuntimeError("Test error")
     assert couchbase_fts.exists() is False
 
 
@@ -322,7 +322,7 @@ def test_get_count(mock_scope, couchbase_fts):
     assert count == 42
 
     # Test error case
-    mock_search_indexes.get_indexed_documents_count.side_effect = Exception()
+    mock_search_indexes.get_indexed_documents_count.side_effect = RuntimeError()
     count = couchbase_fts.get_count()
     assert count == 0
 
@@ -341,7 +341,7 @@ def test_init_empty_bucket_name():
 
 def test_get_cluster_connection_error():
     with patch("agno.vectordb.couchbase.couchbase.Cluster") as mock_cluster:
-        mock_cluster.side_effect = Exception("Connection failed")
+        mock_cluster.side_effect = RuntimeError("Connection failed")
 
         with pytest.raises(ConnectionError, match="Failed to connect to Couchbase"):
             couchbase_fts = CouchbaseSearch(
@@ -387,10 +387,10 @@ def test_create_scope_collection_exists(couchbase_fts, mock_bucket):
 
 def test_create_scope_error(couchbase_fts, mock_bucket):
     # Then make the create_scope method raise an exception
-    mock_bucket.collections().create_scope.side_effect = Exception("Creation error")
+    mock_bucket.collections().create_scope.side_effect = RuntimeError("Creation error")
 
     # Test that the exception is propagated
-    with pytest.raises(Exception, match="Creation error"):
+    with pytest.raises(RuntimeError, match="Creation error"):
         couchbase_fts._create_collection_and_scope()
 
 
@@ -450,7 +450,7 @@ def test_name_exists(couchbase_fts, mock_scope):
     assert couchbase_fts.name_exists("nonexistent_doc") is False
 
     # Test query error
-    mock_scope.query.side_effect = Exception("Query error")
+    mock_scope.query.side_effect = RuntimeError("Query error")
     assert couchbase_fts.name_exists("test_doc") is False
 
 
@@ -467,7 +467,7 @@ def test_id_exists(couchbase_fts, mock_collection):
     assert couchbase_fts.id_exists("test_id") is False
 
     # Test exception handling
-    mock_collection.exists.side_effect = Exception("Test error")
+    mock_collection.exists.side_effect = RuntimeError("Test error")
     assert couchbase_fts.id_exists("test_id") is False
 
 
@@ -845,7 +845,7 @@ async def test_async_search_scope_level(couchbase_fts, mock_embedder):
         mock_embedder.get_embedding.assert_called_once_with("test query scope kv")
         mock_get_async_scope.assert_called_once()  # For the search part
         mock_scope_inst.search.assert_called_once()
-        search_args, search_kwargs = mock_scope_inst.search.call_args
+        search_kwargs = mock_scope_inst.search.call_args.kwargs
         assert search_kwargs["options"]["limit"] == 5
 
         # __async_get_doc_from_kv will call get_async_collection then .get for each doc
@@ -921,7 +921,7 @@ async def test_async_search_cluster_level(couchbase_fts, mock_embedder):
         mock_embedder.get_embedding.assert_called_once_with("cluster query kv")
         mock_get_async_cluster_for_search.assert_called_once()  # For the search part
         mock_cluster_inst.search.assert_called_once()
-        search_args, search_kwargs = mock_cluster_inst.search.call_args
+        search_kwargs = mock_cluster_inst.search.call_args.kwargs
         assert search_kwargs["options"]["limit"] == 3
 
         mock_get_async_collection_for_kv.assert_called_once()

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import logger
 
 try:
-    from firecrawl import FirecrawlApp, ScrapeOptions  # type: ignore[attr-defined]
+    from firecrawl import FirecrawlApp  # type: ignore[attr-defined]
 except ImportError:
     raise ImportError("`firecrawl-py` not installed. Please install using `pip install firecrawl-py`")
 
@@ -17,8 +19,10 @@ class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         try:
             return super().default(obj)
-        except TypeError:
-            return str(obj)
+        except TypeError as e:
+            if "not JSON serializable" in str(e):
+                return str(obj)
+            raise
 
 
 class FirecrawlTools(Toolkit):

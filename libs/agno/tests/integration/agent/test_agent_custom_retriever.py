@@ -18,7 +18,7 @@ def test_agent_with_custom_retriever():
 
 def test_agent_with_custom_retriever_error():
     def custom_retriever(**kwargs):
-        raise Exception("Test error")
+        raise ValueError("Test error")
 
     agent = Agent(
         model=OpenAIChat(id="gpt-4o"),
@@ -32,7 +32,7 @@ def test_agent_with_custom_retriever_error():
 
 def test_agent_with_custom_retriever_search_knowledge_error():
     def custom_retriever(**kwargs):
-        raise Exception("Test error")
+        raise ValueError("Test error")
 
     agent = Agent(
         model=OpenAIChat(id="gpt-4o"),

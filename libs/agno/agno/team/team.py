@@ -2,19 +2,17 @@ import asyncio
 import json
 import threading
 from collections import ChainMap, defaultdict, deque
+from collections.abc import AsyncIterator, Iterator, Sequence
 from dataclasses import asdict, dataclass, replace
 from os import getenv
 from textwrap import dedent
 from typing import (
     Any,
-    AsyncIterator,
     Callable,
     Dict,
-    Iterator,
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
@@ -480,13 +478,16 @@ class Team:
         if self.model is None:
             try:
                 from agno.models.openai import OpenAIChat
-            except ModuleNotFoundError as e:
+            except ImportError as e:
                 log_exception(e)
                 log_error(
                     "Agno agents use `openai` as the default model provider. "
                     "Please provide a `model` or install `openai`."
                 )
-                exit(1)
+                raise RuntimeError(
+                    "Agno agents use `openai` as the default model provider. "
+                    "Please provide a `model` or install `openai`."
+                ) from e
 
             log_info("Setting default model to OpenAI Chat")
             self.model = OpenAIChat(id="gpt-4o")
@@ -853,7 +854,7 @@ class Team:
             except ModelProviderError as e:
                 import time
 
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
 
                 last_exception = e
                 if attempt < num_attempts - 1:
@@ -939,7 +940,7 @@ class Team:
                         run_response.content_type = self.response_model.__name__
                     else:
                         log_warning("Failed to convert response to response_model")
-                except Exception as e:
+                except (ValueError, TypeError) as e:
                     log_warning(f"Failed to convert response to output model: {e}")
             else:
                 log_warning("Something went wrong. Team run response content is not a string")
@@ -957,7 +958,7 @@ class Team:
                         run_response.content_type = self._member_response_model.__name__
                     else:
                         log_warning("Failed to convert response to response_model")
-                except Exception as e:
+                except (ValueError, TypeError) as e:
                     log_warning(f"Failed to convert response to output model: {e}")
             else:
                 log_warning("Something went wrong. Member run response content is not a string")
@@ -1312,7 +1313,7 @@ class Team:
                     )
 
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 last_exception = e
                 if attempt < num_attempts - 1:
                     await asyncio.sleep(2**attempt)
@@ -2000,7 +2001,7 @@ class Team:
                 try:
                     future.result()
                 except Exception as e:
-                    log_warning(f"Error in memory/summary operation: {str(e)}")
+                    log_warning(f"Error in memory/summary operation: {e!s}")
 
     async def _amake_memories_and_summaries(
         self, run_messages: RunMessages, session_id: str, user_id: Optional[str] = None
@@ -2023,7 +2024,7 @@ class Team:
             try:
                 await asyncio.gather(*tasks)
             except Exception as e:
-                log_warning(f"Error in memory/summary operation: {str(e)}")
+                log_warning(f"Error in memory/summary operation: {e!s}")
 
     def _get_response_format(self) -> Optional[Union[Dict, Type[BaseModel]]]:
         self.model = cast(Model, self.model)
@@ -3762,12 +3763,12 @@ class Team:
         elif isinstance(run_response.content, BaseModel):
             try:
                 return JSON(run_response.content.model_dump_json(exclude_none=True), indent=2)
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 log_warning(f"Failed to convert response to JSON: {e}")
         else:
             try:
                 return JSON(json.dumps(run_response.content), indent=4)
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 log_warning(f"Failed to convert response to JSON: {e}")
 
     def cli_app(
@@ -3855,11 +3856,10 @@ class Team:
         # Get metrics of the team-agent's messages
         for member in self.members:
             # Only members that ran has memory
-            if member.memory is not None:
-                if isinstance(member.memory, AgentMemory):
-                    for m in member.memory.messages:
-                        if m.role == assistant_message_role and m.metrics is not None:
-                            current_session_metrics += m.metrics
+            if member.memory is not None and isinstance(member.memory, AgentMemory):
+                for m in member.memory.messages:
+                    if m.role == assistant_message_role and m.metrics is not None:
+                        current_session_metrics += m.metrics
         return current_session_metrics
 
     def _aggregate_metrics_from_messages(self, messages: List[Message]) -> Dict[str, Any]:
@@ -4064,7 +4064,7 @@ class Team:
                     next_action = get_next_action(reasoning_steps[-1])
                     if next_action == NextAction.FINAL_ANSWER:
                         break
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     log_error(f"Reasoning error: {e}")
                     break
 
@@ -4245,7 +4245,7 @@ class Team:
                     next_action = get_next_action(reasoning_steps[-1])
                     if next_action == NextAction.FINAL_ANSWER:
                         break
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     log_error(f"Reasoning error: {e}")
                     break
 
@@ -4349,7 +4349,7 @@ class Team:
                                 resolved_ctx_value = ctx_value()
                             if resolved_ctx_value is not None:
                                 self.context[ctx_key] = resolved_ctx_value
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             log_warning(f"Failed to resolve context for {ctx_key}: {e}")
                     else:
                         self.context[ctx_key] = ctx_value
@@ -4435,7 +4435,7 @@ class Team:
                             self._functions_for_model[func.name] = func
                             self._tools_for_model.append({"type": "function", "function": func.to_dict()})
                             log_debug(f"Added tool {func.name}")
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             log_warning(f"Could not add tool {tool}: {e}")
 
     def get_members_system_message_content(self, indent: int = 0) -> str:
@@ -4815,10 +4815,8 @@ class Team:
             message_str: str
             if isinstance(message, str):
                 message_str = message
-            elif callable(message):
-                message_str = message(agent=self)
             else:
-                raise Exception("message must be a string or a callable when add_references is True")
+                raise ValueError("message must be a string when add_references is True")
 
             try:
                 retrieval_timer = Timer()
@@ -4838,7 +4836,7 @@ class Team:
                     self.run_response.extra_data.references.append(references)
                 retrieval_timer.stop()
                 log_debug(f"Time to get references: {retrieval_timer.elapsed:.4f}s")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Failed to get references: {e}")
 
         # Build user message if message is None, str or list
@@ -4908,7 +4906,7 @@ class Team:
         elif isinstance(message, dict):
             try:
                 return Message.model_validate(message)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 log_warning(f"Failed to validate message: {e}")
 
     def _format_message_with_state_variables(self, message: str, user_id: Optional[str] = None) -> Any:
@@ -4948,14 +4946,14 @@ class Team:
                     # Try to serialize each value individually
                     json.dumps({key: value}, default=str)
                     sanitized_context[key] = value
-                except Exception as e:
+                except (TypeError, ValueError, OverflowError) as e:
                     log_error(f"Failed to serialize to JSON: {e}")
                     # If serialization fails, convert to string representation
                     sanitized_context[key] = str(value)
 
             try:
                 return json.dumps(sanitized_context, indent=2)
-            except Exception as e:
+            except (TypeError, ValueError, OverflowError) as e:
                 log_error(f"Failed to convert sanitized context to JSON: {e}")
                 return str(context)
 
@@ -5009,7 +5007,7 @@ class Team:
                     if len(response_model_properties) > 0:
                         json_output_prompt += "\n<json_fields>"
                         json_output_prompt += (
-                            f"\n{json.dumps([key for key in response_model_properties.keys() if key != '$defs'])}"
+                            f"\n{json.dumps([key for key in response_model_properties if key != '$defs'])}"
                         )
                         json_output_prompt += "\n</json_fields>"
                         json_output_prompt += "\n\nHere are the properties for each field:"
@@ -5288,14 +5286,14 @@ class Team:
                         try:
                             yield f"Agent {member_agent.name}: {member_agent_run_response.content.model_dump_json(indent=2)}"  # type: ignore
                         except Exception as e:
-                            yield f"Agent {member_agent.name}: Error - {str(e)}"
+                            yield f"Agent {member_agent.name}: Error - {e!s}"
                     else:
                         try:
                             import json
 
                             yield f"Agent {member_agent.name}: {json.dumps(member_agent_run_response.content, indent=2)}"
                         except Exception as e:
-                            yield f"Agent {member_agent.name}: Error - {str(e)}"
+                            yield f"Agent {member_agent.name}: Error - {e!s}"
 
                 # Update the memory
                 member_name = member_agent.name if member_agent.name else f"agent_{member_agent_index}"
@@ -5440,14 +5438,14 @@ class Team:
                         try:
                             return f"Agent {member_name}: {response.content.model_dump_json(indent=2)}"  # type: ignore
                         except Exception as e:
-                            return f"Agent {member_name}: Error - {str(e)}"
+                            return f"Agent {member_name}: Error - {e!s}"
                     else:
                         try:
                             import json
 
                             return f"Agent {member_name}: {json.dumps(response.content, indent=2)}"
                         except Exception as e:
-                            return f"Agent {member_name}: Error - {str(e)}"
+                            return f"Agent {member_name}: Error - {e!s}"
 
                     return f"Agent {member_name}: No Response"
 
@@ -5634,14 +5632,14 @@ class Team:
                 elif issubclass(type(member_agent_run_response.content), BaseModel):
                     try:
                         yield member_agent_run_response.content.model_dump_json(indent=2)  # type: ignore
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
                 else:
                     try:
                         import json
 
                         yield json.dumps(member_agent_run_response.content, indent=2)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
 
             # Afterward, switch back to the team logger
@@ -5815,14 +5813,14 @@ class Team:
                 elif issubclass(type(member_agent_run_response.content), BaseModel):
                     try:
                         yield member_agent_run_response.content.model_dump_json(indent=2)  # type: ignore
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
                 else:
                     try:
                         import json
 
                         yield json.dumps(member_agent_run_response.content, indent=2)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
 
             # Afterward, switch back to the team logger
@@ -5865,7 +5863,7 @@ class Team:
 
         return transfer_func
 
-    def _get_member_id(self, member: Union[Agent, "Team"]) -> str:
+    def _get_member_id(self, member: Union[Agent, "Team"]) -> Optional[str]:
         """
         Get the ID of a member
         """
@@ -5893,10 +5891,8 @@ class Team:
         """
         # First check direct members
         for i, member in enumerate(self.members):
-            if member.name is not None:
-                url_safe_member_id = self._get_member_id(member)
-                if url_safe_member_id == member_id:
-                    return i, member
+            if member.name is not None and self._get_member_id(member) == member_id:
+                return i, member
 
             # If this member is a team, search its members recursively
             if isinstance(member, Team):
@@ -6022,14 +6018,14 @@ class Team:
                 elif issubclass(type(member_agent_run_response.content), BaseModel):
                     try:
                         yield member_agent_run_response.content.model_dump_json(indent=2)  # type: ignore
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
                 else:
                     try:
                         import json
 
                         yield json.dumps(member_agent_run_response.content, indent=2)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
 
             # Afterward, switch back to the team logger
@@ -6163,14 +6159,14 @@ class Team:
                 elif issubclass(type(member_agent_run_response.content), BaseModel):
                     try:
                         yield member_agent_run_response.content.model_dump_json(indent=2)  # type: ignore
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
                 else:
                     try:
                         import json
 
                         yield json.dumps(member_agent_run_response.content, indent=2)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         yield str(e)
 
             # Afterward, switch back to the team logger
@@ -6439,7 +6435,7 @@ class Team:
                                 }
                                 for user_id, user_memories in session.memory["memories"].items()
                             }
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             log_warning(f"Failed to load user memories: {e}")
                 if "summaries" in session.memory:
                     if self.memory.summaries is not None:
@@ -6455,7 +6451,7 @@ class Team:
                                 }
                                 for user_id, user_session_summaries in session.memory["summaries"].items()
                             }
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             log_warning(f"Failed to load session summaries: {e}")
         log_debug(f"-*- TeamSession loaded: {session.session_id}")
 
@@ -6719,7 +6715,7 @@ class Team:
             # Add the metrics message to the reasoning_messages
             run_response.extra_data.reasoning_messages.append(metrics_message)
         except Exception as e:
-            log_error(f"Failed to add reasoning metrics to extra_data: {str(e)}")
+            log_error(f"Failed to add reasoning metrics to extra_data: {e!s}")
 
     ###########################################################################
     # Knowledge
@@ -7143,7 +7139,7 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Could not create team event: {e}")
 
     async def _alog_team_run(self, session_id: str, user_id: Optional[str] = None) -> None:
@@ -7167,7 +7163,7 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Could not create team event: {e}")
 
     def _log_team_session(self, session_id: str, user_id: Optional[str] = None):
@@ -7187,7 +7183,7 @@ class Team:
                 ),
                 monitor=self.monitoring,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Could not create team monitor: {e}")
 
     def _get_agentic_or_user_search_filters(
@@ -7234,7 +7230,7 @@ class Team:
                 ),
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_debug(f"Could not create team on platform: {e}")
             print(f"Could not create team on platform: {e}")
 
@@ -7256,7 +7252,7 @@ class Team:
                     workflow_id=self.workflow_id,
                 ),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Could not create team on platform: {e}")
             log_debug(f"Could not create team on platform: {e}")
 

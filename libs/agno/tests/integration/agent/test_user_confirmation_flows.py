@@ -117,11 +117,11 @@ def test_tool_call_requires_confirmation_continue_with_run_id_stream(agent_stora
     )
 
     updated_tools = None
-    for response in agent.run("What is the weather in Tokyo?", session_id=session_id, stream=True):
-        if response.is_paused:
-            assert response.tools[0].requires_confirmation
-            assert response.tools[0].tool_name == "get_the_weather"
-            assert response.tools[0].tool_args == {"city": "Tokyo"}
+    for resp in agent.run("What is the weather in Tokyo?", session_id=session_id, stream=True):
+        if resp.is_paused:
+            assert resp.tools[0].requires_confirmation
+            assert resp.tools[0].tool_name == "get_the_weather"
+            assert resp.tools[0].tool_args == {"city": "Tokyo"}
 
             # Mark the tool as confirmed
             response.tools[0].confirmed = True
@@ -142,8 +142,8 @@ def test_tool_call_requires_confirmation_continue_with_run_id_stream(agent_stora
     response = agent.continue_run(
         run_id=response.run_id, updated_tools=updated_tools, session_id=session_id, stream=True
     )
-    for response in response:
-        if response.is_paused:
+    for resp in response:
+        if resp.is_paused:
             assert False, "The run should not be paused"
 
     assert agent.run_response.tools[0].result == "It is currently 70 degrees and cloudy in Tokyo"
@@ -241,11 +241,11 @@ def test_tool_call_requires_confirmation_stream():
     )
 
     found_confirmation = False
-    for response in agent.run("What is the weather in Tokyo?", stream=True):
-        if response.is_paused:
-            assert response.tools[0].requires_confirmation
-            assert response.tools[0].tool_name == "get_the_weather"
-            assert response.tools[0].tool_args == {"city": "Tokyo"}
+    for resp in agent.run("What is the weather in Tokyo?", stream=True):
+        if resp.is_paused:
+            assert resp.tools[0].requires_confirmation
+            assert resp.tools[0].tool_name == "get_the_weather"
+            assert resp.tools[0].tool_args == {"city": "Tokyo"}
 
             # Mark the tool as confirmed
             response.tools[0].confirmed = True

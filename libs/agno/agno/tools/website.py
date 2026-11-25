@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, List, Optional, Union, cast
+from typing import Any
 
 from agno.document import Document
 from agno.knowledge.combined import CombinedKnowledgeBase
@@ -9,10 +11,10 @@ from agno.utils.log import log_debug
 
 
 class WebsiteTools(Toolkit):
-    def __init__(self, knowledge_base: Optional[Union[WebsiteKnowledgeBase, CombinedKnowledgeBase]] = None, **kwargs):
-        self.knowledge_base: Optional[Union[WebsiteKnowledgeBase, CombinedKnowledgeBase]] = knowledge_base
+    def __init__(self, knowledge_base: WebsiteKnowledgeBase | CombinedKnowledgeBase | None = None, **kwargs):
+        self.knowledge_base: WebsiteKnowledgeBase | CombinedKnowledgeBase | None = knowledge_base
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if self.knowledge_base is not None:
             if isinstance(self.knowledge_base, WebsiteKnowledgeBase):
                 tools.append(self.add_website_to_knowledge_base)
@@ -32,7 +34,6 @@ class WebsiteTools(Toolkit):
         :param url: The url of the website to add.
         :return: 'Success' if the website was added to the knowledge base.
         """
-        self.knowledge_base = cast(WebsiteKnowledgeBase, self.knowledge_base)
         if self.knowledge_base is None:
             return "Knowledge base not provided"
 
@@ -51,7 +52,6 @@ class WebsiteTools(Toolkit):
         :param url: The url of the website to add.
         :return: 'Success' if the website was added to the knowledge base.
         """
-        self.knowledge_base = cast(CombinedKnowledgeBase, self.knowledge_base)
         if self.knowledge_base is None:
             return "Knowledge base not provided"
 
@@ -81,5 +81,5 @@ class WebsiteTools(Toolkit):
         website = WebsiteReader()
 
         log_debug(f"Reading website: {url}")
-        relevant_docs: List[Document] = website.read(url=url)
+        relevant_docs: list[Document] = website.read(url=url)
         return json.dumps([doc.to_dict() for doc in relevant_docs])

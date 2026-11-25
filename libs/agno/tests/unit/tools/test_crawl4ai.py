@@ -60,7 +60,7 @@ def custom_crawl4ai_tools():
 
 def create_mock_crawler_result(
     raw_markdown: str = "This is the extracted content from the webpage.",
-    fit_markdown: str = None,
+    fit_markdown: Optional[str] = None,
     html: str = "<html><body>Test content</body></html>",
     text: str = "Test text content",
     success: bool = True,

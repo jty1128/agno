@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 try:
     import lancedb
@@ -87,7 +89,7 @@ class LanceDb(VectorDb):
             self.table = self.connection.open_table(name=table_name)
             self.table_name = self.table.name
             self._vector_col = self.table.schema.names[0]
-            self._id = self.table.schema.names[1]  # type: ignore
+            self._id = self.table.schema.names[1]
 
         # LanceDB table details
         if self.table is None:
@@ -101,7 +103,7 @@ class LanceDb(VectorDb):
                 self.table = table
                 self.table_name = self.table.name
                 self._vector_col = self.table.schema.names[0]
-                self._id = self.tbl.schema.names[1]  # type: ignore
+                self._id = self.tbl.schema.names[1]
             else:
                 if not table_name:
                     raise ValueError("Either table or table_name should be provided.")
@@ -122,7 +124,7 @@ class LanceDb(VectorDb):
                 import tantivy  # noqa: F401
             except ImportError:
                 raise ImportError(
-                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."  # noqa: E501
+                    "Please install tantivy-py `pip install tantivy` to use the full text search feature."
                 )
 
         log_debug(f"Initialized LanceDb with table: '{self.table_name}'")
@@ -168,8 +170,8 @@ class LanceDb(VectorDb):
         schema = self._base_schema()
 
         log_info(f"Creating table: {self.table_name}")
-        tbl = self.connection.create_table(self.table_name, schema=schema, mode="overwrite", exist_ok=True)  # type: ignore
-        return tbl  # type: ignore
+        tbl = self.connection.create_table(self.table_name, schema=schema, mode="overwrite", exist_ok=True)
+        return tbl
 
     def doc_exists(self, document: Document) -> bool:
         """
@@ -184,7 +186,7 @@ class LanceDb(VectorDb):
                 doc_id = md5(cleaned_content.encode()).hexdigest()
                 result = self.table.search().where(f"{self._id}='{doc_id}'").to_arrow()
                 return len(result) > 0
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Search sometimes fails with stale cache data, it means the doc doesn't exist
             return False
 
@@ -314,9 +316,9 @@ class LanceDb(VectorDb):
             await self._get_async_connection()
 
             if self.on_bad_vectors is not None:
-                await self.async_table.add(data, on_bad_vectors=self.on_bad_vectors, fill_value=self.fill_value)  # type: ignore
+                await self.async_table.add(data, on_bad_vectors=self.on_bad_vectors, fill_value=self.fill_value)
             else:
-                await self.async_table.add(data)  # type: ignore
+                await self.async_table.add(data)
 
             log_debug(f"Asynchronously inserted {len(data)} documents")
         except Exception as e:
@@ -534,7 +536,7 @@ class LanceDb(VectorDb):
                     )
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building search results: {e}")
 
         return search_results
@@ -592,7 +594,7 @@ class LanceDb(VectorDb):
 
             # Check if the name exists in any of the payloads
             return any(payload.get("name") == name for payload in payloads)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error checking name existence: {e}")
             return False
 

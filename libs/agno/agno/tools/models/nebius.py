@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 from os import getenv
 from typing import Optional
@@ -103,6 +105,6 @@ class NebiusTools(Toolkit):
                 )
                 return "Image generated successfully."
             return "Failed to generate image: No content received from API."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate image using {self.image_model}: {e}")
             return f"Failed to generate image: {e}"

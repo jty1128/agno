@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
 from agno.tools.function import Function, FunctionCall
 from agno.utils.log import log_debug, log_error
@@ -30,11 +30,11 @@ def get_function_call(
         try:
             try:
                 _arguments = json.loads(arguments)
-            except Exception:
+            except json.JSONDecodeError:
                 import ast
 
                 _arguments = ast.literal_eval(arguments)
-        except Exception as e:
+        except (ValueError, SyntaxError) as e:
             log_error(f"Unable to decode function arguments:\n{arguments}\nError: {e}")
             function_call.error = (
                 f"Error while decoding function arguments: {e}\n\n"
@@ -64,7 +64,7 @@ def get_function_call(
                     clean_arguments[k] = v
 
             function_call.arguments = clean_arguments
-        except Exception as e:
+        except (TypeError, ValueError) as e:
             log_error(f"Unable to parsing function arguments:\n{arguments}\nError: {e}")
             function_call.error = f"Error while parsing function arguments: {e}\n\n Please fix and retry."
             return function_call
@@ -145,7 +145,7 @@ def cache_result(enable_cache: bool = True, cache_dir: Optional[str] = None, cac
 
                     # Remove expired entry
                     os.remove(cache_file)
-                except Exception as e:
+                except (OSError, json.JSONDecodeError) as e:
                     log_error(f"Error reading cache: {e}")
                     # Continue with function execution if cache read fails
 
@@ -155,7 +155,7 @@ def cache_result(enable_cache: bool = True, cache_dir: Optional[str] = None, cac
             try:
                 with open(cache_file, "w") as f:
                     json.dump({"timestamp": time.time(), "result": result}, f)
-            except Exception as e:
+            except (OSError, TypeError) as e:
                 log_error(f"Error writing cache: {e}")
                 # Continue even if cache write fails
 

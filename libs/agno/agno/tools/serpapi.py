@@ -1,6 +1,6 @@
 import json
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -40,11 +40,11 @@ class SerpApiTools(Toolkit):
         Returns:
             str: The search results from Google.
                 Keys:
-                    - 'search_results': List of organic search results.
-                    - 'recipes_results': List of recipes search results.
-                    - 'shopping_results': List of shopping search results.
+                    - 'search_results': list of organic search results.
+                    - 'recipes_results': list of recipes search results.
+                    - 'shopping_results': list of shopping search results.
                     - 'knowledge_graph': The knowledge graph.
-                    - 'related_questions': List of related questions.
+                    - 'related_questions': list of related questions.
         """
 
         try:
@@ -70,7 +70,7 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except serpapi.SerpApiException as e:
             return f"Error searching for the query {query}: {e}"
 
     def search_youtube(self, query: str) -> str:
@@ -83,9 +83,9 @@ class SerpApiTools(Toolkit):
         Returns:
             str: The video search results from Youtube.
                 Keys:
-                    - 'video_results': List of video results.
-                    - 'movie_results': List of movie results.
-                    - 'channel_results': List of channel results.
+                    - 'video_results': list of video results.
+                    - 'movie_results': list of movie results.
+                    - 'channel_results': list of channel results.
         """
 
         try:
@@ -109,5 +109,5 @@ class SerpApiTools(Toolkit):
 
             return json.dumps(filtered_results)
 
-        except Exception as e:
+        except serpapi.SerpApiException as e:
             return f"Error searching for the query {query}: {e}"

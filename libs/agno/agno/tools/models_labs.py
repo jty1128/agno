@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional, Union
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -165,7 +167,7 @@ class ModelsLabTools(Toolkit):
             error_msg = f"Network error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = f"Unexpected error while generating {self.file_type.value}: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"

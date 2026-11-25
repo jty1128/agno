@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from agno.document import Document
 from agno.embedder import Embedder

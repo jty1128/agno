@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 
@@ -390,7 +391,7 @@ def test_function_call_with_tool_hooks():
     """Test function call execution with tool hooks."""
     hook_calls = []
 
-    def tool_hook(function_name: str, function_call: Callable, arguments: Dict[str, Any]):
+    def tool_hook(function_name: str, function_call: Callable, arguments: dict[str, Any]):
         hook_calls.append(("before", function_name, arguments))
         result = function_call(**arguments)
         hook_calls.append(("after", function_name, result))
@@ -482,7 +483,7 @@ async def test_function_call_async_with_tool_hooks():
     """Test async function call execution with tool hooks."""
     hook_calls = []
 
-    async def tool_hook(function_name: str, function_call: Callable, arguments: Dict[str, Any]):
+    async def tool_hook(function_name: str, function_call: Callable, arguments: dict[str, Any]):
         hook_calls.append(("before", function_name, arguments))
         result = await function_call(**arguments)
         hook_calls.append(("after", function_name, result))
@@ -685,7 +686,7 @@ def test_tool_decorator_with_agent_team_params():
 
 def test_tool_decorator_with_complex_types():
     """Test @tool decorator with complex parameter types."""
-    from typing import Dict, List, Optional
+    from __future__ import annotations
 
     @tool
     def complex_types_func(param1: List[str], param2: Dict[str, int], param3: Optional[bool] = None) -> str:
