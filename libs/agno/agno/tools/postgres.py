@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any, Optional
 
 try:
     import psycopg2
@@ -37,7 +39,7 @@ class PostgresTools(Toolkit):
         self.port: Optional[int] = port
         self.table_schema: str = table_schema
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.show_tables)
         tools.append(self.describe_table)
         if inspect_queries:
@@ -59,7 +61,7 @@ class PostgresTools(Toolkit):
         :return psycopg2.extensions.connection: psycopg2 connection
         """
         if self._connection is None:
-            connection_kwargs: Dict[str, Any] = {}
+            connection_kwargs: dict[str, Any] = {}
             if self.db_name is not None:
                 connection_kwargs["database"] = self.db_name
             if self.user is not None:
@@ -243,5 +245,5 @@ class PostgresTools(Toolkit):
             log_debug(f"Query result: {result_output}")
 
             return result_output
-        except Exception as e:
+        except psycopg2.Error as e:
             return str(e)

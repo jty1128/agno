@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from agno.agent import Agent  # noqa
+from agno.agent import Agent
 from agno.models.anthropic import Claude
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.exa import ExaTools
@@ -45,7 +45,7 @@ def test_tool_use_stream():
 
         # Check for ToolCallStartedEvent or ToolCallCompletedEvent
         if chunk.event in ["ToolCallStarted", "ToolCallCompleted"] and hasattr(chunk, "tool") and chunk.tool:
-            if chunk.tool.tool_name:
+            if chunk.tool and chunk.tool.tool_name:
                 tool_call_seen = True
 
     assert len(responses) > 0
@@ -93,7 +93,7 @@ async def test_async_tool_use_stream():
 
         # Check for ToolCallStartedEvent or ToolCallCompletedEvent
         if chunk.event in ["ToolCallStarted", "ToolCallCompleted"] and hasattr(chunk, "tool") and chunk.tool:
-            if chunk.tool.tool_name:
+            if chunk.tool and chunk.tool.tool_name:
                 tool_call_seen = True
 
     assert len(responses) > 0

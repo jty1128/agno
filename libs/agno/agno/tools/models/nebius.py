@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import base64
 from os import getenv
-from typing import Optional
+from typing import Any
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -15,13 +17,13 @@ class NebiusTools(Toolkit):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         base_url: str = "https://api.studio.nebius.com/v1",
         image_model: str = "black-forest-labs/flux-schnell",
-        image_quality: Optional[str] = "standard",
-        image_size: Optional[str] = "1024x1024",
-        image_style: Optional[str] = None,
-        **kwargs,
+        image_quality: str | None = "standard",
+        image_size: str | None = "1024x1024",
+        image_style: str | None = None,
+        **kwargs: Any,
     ):
         """Initialize Nebius AI Studio text-to-image tools.
 
@@ -48,7 +50,7 @@ class NebiusTools(Toolkit):
         self.image_quality = image_quality
         self.image_size = image_size
         self.image_style = image_style
-        self._nebius_client: Optional[Nebius] = None
+        self._nebius_client: Nebius | None = None
 
     def _get_client(self):
         if self._nebius_client is None:
@@ -103,6 +105,6 @@ class NebiusTools(Toolkit):
                 )
                 return "Image generated successfully."
             return "Failed to generate image: No content received from API."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate image using {self.image_model}: {e}")
             return f"Failed to generate image: {e}"

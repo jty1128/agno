@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from agno.vectordb.clickhouse.index import HNSW
 
@@ -32,7 +34,7 @@ class Clickhouse(VectorDb):
         asyncclient: Optional[clickhouse_connect.driver.asyncclient.AsyncClient] = None,
         embedder: Optional[Embedder] = None,
         distance: Distance = Distance.cosine,
-        index: Optional[HNSW] = HNSW(),
+        index: Optional[HNSW] = None,
     ):
         # Store connection parameters as instance attributes
         self.host = host
@@ -73,7 +75,10 @@ class Clickhouse(VectorDb):
         self.distance: Distance = distance
 
         # Index for the collection
-        self.index: Optional[HNSW] = index
+        _index = index
+        if _index is None:
+            _index = HNSW()
+        self.index: Optional[HNSW] = _index
 
     async def _ensure_async_client(self):
         """Ensure we have an initialized async client."""
@@ -89,7 +94,7 @@ class Clickhouse(VectorDb):
             )
         return self.async_client
 
-    def _get_base_parameters(self) -> Dict[str, Any]:
+    def _get_base_parameters(self) -> dict[str, Any]:
         return {
             "table_name": self.table_name,
             "database_name": self.database_name,
@@ -105,8 +110,8 @@ class Clickhouse(VectorDb):
                     parameters=parameters,
                 )
             )
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.error("Error checking if table exists")
             return False
 
     async def async_table_exists(self) -> bool:
@@ -121,8 +126,8 @@ class Clickhouse(VectorDb):
                 parameters=parameters,
             )
             return bool(result)
-        except Exception as e:
-            logger.error(f"Async error checking if table exists: {e}")
+        except Exception:
+            logger.error("Async error checking if table exists")
             return False
 
     def create(self) -> None:
@@ -441,8 +446,8 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
-            logger.error(f"Error searching for documents: {e}")
+        except Exception:
+            logger.error("Error searching for documents")
             logger.error("Table might not exist, creating for future use")
             self.create()
             return []
@@ -505,8 +510,8 @@ class Clickhouse(VectorDb):
                 clickhouse_query,
                 parameters=parameters,
             )
-        except Exception as e:
-            logger.error(f"Async error searching for documents: {e}")
+        except Exception:
+            logger.error("Async error searching for documents")
             logger.error("Table might not exist, creating for future use")
             await self.async_create()
             return []

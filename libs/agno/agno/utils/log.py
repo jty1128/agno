@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from os import getenv
 from typing import Any, Optional
@@ -116,7 +118,7 @@ def center_header(message: str, symbol: str = "*") -> str:
         import shutil
 
         terminal_width = shutil.get_terminal_size().columns
-    except Exception:
+    except OSError:
         terminal_width = 80  # fallback width
 
     header = f" {message} "
@@ -136,27 +138,22 @@ def use_agent_logger():
 
 
 def log_debug(msg, center: bool = False, symbol: str = "*", *args, **kwargs):
-    global logger
     global debug_on
     if debug_on:
         logger.debug(msg, center, symbol, *args, **kwargs)
 
 
 def log_info(msg, center: bool = False, symbol: str = "*", *args, **kwargs):
-    global logger
     logger.info(msg, center, symbol, *args, **kwargs)
 
 
 def log_warning(msg, *args, **kwargs):
-    global logger
     logger.warning(msg, *args, **kwargs)
 
 
 def log_error(msg, *args, **kwargs):
-    global logger
     logger.error(msg, *args, **kwargs)
 
 
 def log_exception(msg, *args, **kwargs):
-    global logger
     logger.exception(msg, *args, **kwargs)

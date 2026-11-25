@@ -1,7 +1,7 @@
 import asyncio
+from collections.abc import List
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -128,6 +128,22 @@ def test_invalid_encoding(tmp_path):
             text_path.unlink()
 
 
+async def test_async_invalid_encoding(tmp_path):
+    # Test handling of invalid encoding
+    text_path = tmp_path / "invalid.txt"
+    try:
+        with open(text_path, "wb") as f:
+            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+
+        reader = TextReader()
+        documents = await reader.async_read(text_path)
+        assert len(documents) == 0
+    finally:
+        # Clean up the file
+        if text_path.exists():
+            text_path.unlink()
+
+
 def test_cp950_encoding(tmp_path):
     # Test handling of CP-950 (Traditional Chinese) encoded file
     test_data = "中文測試"  # Chinese test text
@@ -138,6 +154,25 @@ def test_cp950_encoding(tmp_path):
 
         reader = TextReader()
         documents = reader.read(text_path)
+
+        # Currently returns 0 as TextReader only supports UTF-8
+        assert len(documents) == 0
+    finally:
+        # Clean up the file
+        if text_path.exists():
+            text_path.unlink()
+
+
+async def test_async_cp950_encoding(tmp_path):
+    # Test handling of CP-950 (Traditional Chinese) encoded file
+    test_data = "中文測試"  # Chinese test text
+    text_path = tmp_path / "cp950.txt"
+    try:
+        with open(text_path, "w", encoding="cp950") as f:
+            f.write(test_data)
+
+        reader = TextReader()
+        documents = await reader.async_read(text_path)
 
         # Currently returns 0 as TextReader only supports UTF-8
         assert len(documents) == 0

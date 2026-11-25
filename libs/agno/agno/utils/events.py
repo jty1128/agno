@@ -1,4 +1,6 @@
-from typing import Any, List, Optional
+from __future__ import annotations
+
+from typing import Any, Optional
 
 from agno.media import AudioResponse, ImageArtifact
 from agno.models.message import Citations
@@ -92,7 +94,7 @@ def create_run_response_completed_event(from_run_response: RunResponse) -> RunRe
 
 
 def create_run_response_paused_event(
-    from_run_response: RunResponse, tools: Optional[List[ToolExecution]] = None
+    from_run_response: RunResponse, tools: Optional[list[ToolExecution]] = None
 ) -> RunResponsePausedEvent:
     return RunResponsePausedEvent(
         session_id=from_run_response.session_id,

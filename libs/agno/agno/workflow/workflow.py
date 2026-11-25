@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import AsyncGenerator, AsyncIterator
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, List, Optional, Union, cast, get_args
+from typing import Any, Callable, Dict, List, Optional, Union, cast, get_args
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -136,13 +137,12 @@ class Workflow:
         self.__post_init__()
 
     def __post_init__(self):
-        for field_name, value in self.__class__.__dict__.items():
+        for _, value in self.__class__.__dict__.items():
             if isinstance(value, Agent):
                 value.session_id = self.session_id
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -156,7 +156,7 @@ class Workflow:
         self.initialize_memory()
 
         # Update workflow_id for all agents before registration
-        for field_name, value in self.__class__.__dict__.items():
+        for _, value in self.__class__.__dict__.items():
             if isinstance(value, Agent):
                 value.initialize_agent()
                 value.workflow_id = self.workflow_id
@@ -187,7 +187,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -368,7 +368,6 @@ class Workflow:
     async def arun(self, **kwargs: Any):
         """Async version of run() that calls arun_workflow()"""
         logger.error(f"{self.__class__.__name__}.arun() method not implemented.")
-        return
 
     def set_storage_mode(self):
         if self.storage is not None:
@@ -844,14 +843,14 @@ class Workflow:
         except Exception as e:
             log_warning(f"Failed to register workflow: {e}")
 
-    def to_config_dict(self) -> Dict[str, Any]:
+    def to_config_dict(self) -> dict[str, Any]:
         """Convert the workflow to a config dictionary including all agents and teams.
 
         Returns:
-            Dict[str, Any]: Dictionary representation of the workflow config.
+            dict[str, Any]: Dictionary representation of the workflow config.
         """
         # Basic workflow information
-        config: Dict[str, Any] = {
+        config: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "type": "workflow",
@@ -861,16 +860,13 @@ class Workflow:
             },
         }
 
-        agents: List[Dict[str, Any]] = []
-        teams: List[Dict[str, Any]] = []
+        agents: list[dict[str, Any]] = []
+        teams: list[dict[str, Any]] = []
 
-        for attr_name in dir(self.__class__):
+        for attr_name, attr_value in vars(self.__class__).items():
             # Skip private/special attributes and methods
-            if attr_name.startswith("_") or callable(getattr(self.__class__, attr_name)):
+            if attr_name.startswith("_") or callable(attr_value):
                 continue
-
-            # Get the class attribute
-            attr_value = getattr(self.__class__, attr_name)
 
             if isinstance(attr_value, Agent):
                 # Skip agents already in the list

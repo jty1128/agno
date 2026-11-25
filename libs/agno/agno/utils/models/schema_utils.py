@@ -3,7 +3,7 @@ Utility functions for handling JSON schemas across different model providers.
 This module provides model-agnostic schema transformations and validations.
 """
 
-from typing import Any, Dict, Type
+from typing import Any
 
 from pydantic import BaseModel
 

@@ -1,5 +1,4 @@
 import enum
-from typing import Dict, List
 
 from pydantic import BaseModel, Field
 from rich.pretty import pprint  # noqa

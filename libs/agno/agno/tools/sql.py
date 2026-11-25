@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -50,9 +52,9 @@ class SQLTools(Toolkit):
         self.schema = schema
 
         # Tables this toolkit can access
-        self.tables: Optional[Dict[str, Any]] = tables
+        self.tables: Optional[dict[str, Any]] = tables
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if list_tables:
             tools.append(self.list_tables)
         if describe_table:
@@ -80,7 +82,7 @@ class SQLTools(Toolkit):
                 table_names = inspector.get_table_names()
             log_debug(f"table_names: {table_names}")
             return json.dumps(table_names)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error getting tables: {e}")
             return f"Error getting tables: {e}"
 
@@ -104,7 +106,7 @@ class SQLTools(Toolkit):
                     for column in table_schema
                 ]
             )
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error getting table schema: {e}")
             return f"Error getting table schema: {e}"
 
@@ -122,11 +124,11 @@ class SQLTools(Toolkit):
 
         try:
             return json.dumps(self.run_sql(sql=query, limit=limit), default=str)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(f"Error running query: {e}")
             return f"Error running query: {e}"
 
-    def run_sql(self, sql: str, limit: Optional[int] = None) -> List[dict]:
+    def run_sql(self, sql: str, limit: Optional[int] = None) -> list[dict]:
         """Internal function to run a sql query.
 
         Args:
@@ -148,6 +150,6 @@ class SQLTools(Toolkit):
                 else:
                     rows = result.fetchall()
                 return [row._asdict() for row in rows]
-            except Exception as e:
+            except SQLAlchemyError as e:
                 logger.error(f"Error while executing SQL: {e}")
                 return []

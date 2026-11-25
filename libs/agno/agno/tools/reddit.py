@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -65,7 +67,7 @@ class RedditTools(Toolkit):
             else:
                 logger.warning("Missing Reddit API credentials")
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if get_user_info:
             tools.append(self.get_user_info)
         if get_top_posts:
@@ -103,7 +105,7 @@ class RedditTools(Toolkit):
             # Verify authentication by checking if we can get the authenticated user
             self.reddit.user.me()
             return True
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             logger.error(f"Authentication error: {e}")
             return False
 
@@ -116,7 +118,7 @@ class RedditTools(Toolkit):
             log_info(f"Getting info for u/{username}")
 
             user = self.reddit.redditor(username)
-            info: Dict[str, Union[str, int, bool, float]] = {
+            info: dict[str, str | int | bool | float] = {
                 "name": user.name,
                 "comment_karma": user.comment_karma,
                 "link_karma": user.link_karma,
@@ -128,7 +130,7 @@ class RedditTools(Toolkit):
 
             return json.dumps(info)
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting user info: {e}"
 
     def get_top_posts(self, subreddit: str, time_filter: str = "week", limit: int = 10) -> str:
@@ -147,7 +149,7 @@ class RedditTools(Toolkit):
         try:
             log_debug(f"Getting top posts from r/{subreddit}")
             posts = self.reddit.subreddit(subreddit).top(time_filter=time_filter, limit=limit)
-            top_posts: List[Dict[str, Union[str, int, float]]] = [
+            top_posts: list[dict[str, str | int | float]] = [
                 {
                     "id": post.id,
                     "title": post.title,
@@ -163,7 +165,7 @@ class RedditTools(Toolkit):
                 for post in posts
             ]
             return json.dumps({"top_posts": top_posts})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting top posts: {e}"
 
     def get_subreddit_info(self, subreddit_name: str) -> str:
@@ -182,7 +184,7 @@ class RedditTools(Toolkit):
 
             subreddit = self.reddit.subreddit(subreddit_name)
             flairs = [flair["text"] for flair in subreddit.flair.link_templates]
-            info: Dict[str, Union[str, int, bool, float, List[str]]] = {
+            info: dict[str, str | int | bool | float | list[str]] = {
                 "display_name": subreddit.display_name,
                 "title": subreddit.title,
                 "description": subreddit.description,
@@ -196,7 +198,7 @@ class RedditTools(Toolkit):
 
             return json.dumps(info)
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting subreddit info: {e}"
 
     def get_trending_subreddits(self) -> str:
@@ -207,9 +209,9 @@ class RedditTools(Toolkit):
         try:
             log_debug("Getting trending subreddits")
             popular_subreddits = self.reddit.subreddits.popular(limit=5)
-            trending: List[str] = [subreddit.display_name for subreddit in popular_subreddits]
+            trending: list[str] = [subreddit.display_name for subreddit in popular_subreddits]
             return json.dumps({"trending_subreddits": trending})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting trending subreddits: {e}"
 
     def get_subreddit_stats(self, subreddit: str) -> str:
@@ -226,7 +228,7 @@ class RedditTools(Toolkit):
         try:
             log_debug(f"Getting stats for r/{subreddit}")
             sub = self.reddit.subreddit(subreddit)
-            stats: Dict[str, Union[str, int, bool, float]] = {
+            stats: dict[str, str | int | bool | float] = {
                 "display_name": sub.display_name,
                 "subscribers": sub.subscribers,
                 "active_users": sub.active_user_count,
@@ -236,7 +238,7 @@ class RedditTools(Toolkit):
                 "public_description": sub.public_description,
             }
             return json.dumps({"subreddit_stats": stats})
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error getting subreddit stats: {e}"
 
     def create_post(
@@ -244,7 +246,7 @@ class RedditTools(Toolkit):
         subreddit: str,
         title: str,
         content: str,
-        flair: Optional[str] = None,
+        flair: str | None = None,
         is_self: bool = True,
     ) -> str:
         """
@@ -287,9 +289,9 @@ class RedditTools(Toolkit):
                     url=content,
                     flair_id=flair,
                 )
-            log_info(f"Post created: {submission.permalink}")
+            log_info(f"Post created: {submission.permalink!s}")
 
-            post_info: Dict[str, Union[str, int, float]] = {
+            post_info: dict[str, str | int | float] = {
                 "id": submission.id,
                 "title": submission.title,
                 "url": submission.url,
@@ -301,10 +303,10 @@ class RedditTools(Toolkit):
 
             return json.dumps({"post": post_info})
 
-        except Exception as e:
+        except praw.exceptions.PRAWException as e:
             return f"Error creating post: {e}"
 
-    def reply_to_post(self, post_id: str, content: str, subreddit: Optional[str] = None) -> str:
+    def reply_to_post(self, post_id: str, content: str, subreddit: str | None = None) -> str:
         """
         Post a reply to an existing Reddit post or comment.
 
@@ -346,7 +348,7 @@ class RedditTools(Toolkit):
             submission = self.reddit.submission(id=post_id)
 
             log_debug(
-                f"Post details: Title: {submission.title}, Author: {submission.author}, Subreddit: {submission.subreddit.display_name}"
+                f"Post details: Title: {submission.title}, Author: {submission.author!s}, Subreddit: {submission.subreddit.display_name}"
             )
 
             # If subreddit was provided, verify we're in the right place
@@ -360,7 +362,7 @@ class RedditTools(Toolkit):
             reply = submission.reply(body=content)
 
             # Prepare the response information
-            reply_info: Dict[str, Union[str, int, float]] = {
+            reply_info: dict[str, str | int | float] = {
                 "id": reply.id,
                 "body": reply.body,
                 "score": reply.score,
@@ -372,7 +374,7 @@ class RedditTools(Toolkit):
                 "subreddit": str(reply.subreddit),
             }
 
-            log_debug(f"Reply created successfully: {reply.permalink}")
+            log_debug(f"Reply created successfully: {reply.permalink!s}")
             return json.dumps({"reply": reply_info})
 
         except praw.exceptions.RedditAPIException as api_error:
@@ -382,12 +384,12 @@ class RedditTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-        except Exception as e:
-            error_msg = f"Error creating reply: {str(e)}"
+        except praw.exceptions.PRAWException as e:
+            error_msg = f"Error creating reply: {e!s}"
             logger.error(error_msg)
             return error_msg
 
-    def reply_to_comment(self, comment_id: str, content: str, subreddit: Optional[str] = None) -> str:
+    def reply_to_comment(self, comment_id: str, content: str, subreddit: str | None = None) -> str:
         """
         Post a reply to an existing Reddit comment.
 
@@ -421,7 +423,7 @@ class RedditTools(Toolkit):
             # Get the comment object
             comment = self.reddit.comment(id=comment_id)
 
-            log_debug(f"Comment details: Author: {comment.author}, Subreddit: {comment.subreddit.display_name}")
+            log_debug(f"Comment details: Author: {comment.author!s}, Subreddit: {comment.subreddit.display_name}")
 
             # If subreddit was provided, verify we're in the right place
             if subreddit and comment.subreddit.display_name.lower() != subreddit.lower():
@@ -434,7 +436,7 @@ class RedditTools(Toolkit):
             reply = comment.reply(body=content)
 
             # Prepare the response information
-            reply_info: Dict[str, Union[str, int, float]] = {
+            reply_info: dict[str, str | int | float] = {
                 "id": reply.id,
                 "body": reply.body,
                 "score": reply.score,
@@ -446,7 +448,7 @@ class RedditTools(Toolkit):
                 "subreddit": str(reply.subreddit),
             }
 
-            log_debug(f"Reply created successfully: {reply.permalink}")
+            log_debug(f"Reply created successfully: {reply.permalink!s}")
             return json.dumps({"reply": reply_info})
 
         except praw.exceptions.RedditAPIException as api_error:
@@ -456,8 +458,8 @@ class RedditTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-        except Exception as e:
-            error_msg = f"Error creating reply: {str(e)}"
+        except praw.exceptions.PRAWException as e:
+            error_msg = f"Error creating reply: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -477,6 +479,6 @@ class RedditTools(Toolkit):
             _ = submission.title
             _ = submission.author
             return True
-        except Exception as e:
-            logger.error(f"Error checking post existence: {str(e)}")
+        except praw.exceptions.PRAWException as e:
+            logger.error(f"Error checking post existence: {e!s}")
             return False

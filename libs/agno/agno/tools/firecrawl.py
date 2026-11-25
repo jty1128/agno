@@ -1,20 +1,25 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from agno.tools import Toolkit
 from agno.utils.log import logger
 
+if TYPE_CHECKING:
+    from firecrawl import ScrapeOptions  # type: ignore[attr-defined]
+
 try:
-    from firecrawl import FirecrawlApp, ScrapeOptions  # type: ignore[attr-defined]
-except ImportError:
-    raise ImportError("`firecrawl-py` not installed. Please install using `pip install firecrawl-py`")
+    from firecrawl import FirecrawlApp  # type: ignore[attr-defined]
+except ImportError as e:
+    raise ImportError("`firecrawl-py` not installed. Please install using `pip install firecrawl-py`") from e
 
 
 class CustomJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles non-serializable types by converting them to strings."""
 
-    def default(self, obj):
+    def default(self, obj: Any) -> Any:
         try:
             return super().default(obj)
         except TypeError:
@@ -46,7 +51,7 @@ class FirecrawlTools(Toolkit):
         search: bool = False,
         search_params: Optional[Dict[str, Any]] = None,
         api_url: Optional[str] = "https://api.firecrawl.dev",
-        **kwargs,
+        **kwargs: Any,
     ):
         self.api_key: Optional[str] = api_key or getenv("FIRECRAWL_API_KEY")
         if not self.api_key:
@@ -121,7 +126,7 @@ class FirecrawlTools(Toolkit):
         map_result = self.app.map_url(url)
         return json.dumps(map_result.model_dump(), cls=CustomJSONEncoder)
 
-    def search(self, query: str, limit: Optional[int] = None):
+    def search(self, query: str, limit: Optional[int] = None) -> str:
         """Use this function to search for the web using Firecrawl.
 
         Args:

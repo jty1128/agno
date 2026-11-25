@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,11 +47,11 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise ValueError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
@@ -219,11 +219,7 @@ class WorkspaceConfig(BaseModel):
                 resource.set_workspace_settings(self._workspace_settings)
 
         # Create a list of InfraResources from the filtered resources
-        infra_resources_list: List[InfraResources] = []
-        for resource_name, resource in filtered_infra_objects_by_env.items():
-            # If the resource is an InfraResources object, add it to the list
-            if isinstance(resource, InfraResources):
-                infra_resources_list.append(resource)
+        infra_resources_list: list[InfraResources] = list(filtered_infra_objects_by_env.values())
 
         return infra_resources_list
 

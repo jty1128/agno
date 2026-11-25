@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from agno.models.response import ToolExecution
 from agno.tools.function import Function, FunctionCall

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import time
 from os import getenv
@@ -12,7 +14,7 @@ from agno.utils.log import log_debug, log_error, log_info
 try:
     from google.genai import Client
     from google.genai.types import GenerateImagesResponse, GenerateVideosOperation
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     raise ImportError("`google-genai` not installed. Please install using `pip install google-genai`")
 
 
@@ -108,7 +110,7 @@ class GeminiTools(Toolkit):
                 log_debug(f"Successfully generated image {media_id} with model {self.image_model}")
             return "Image generated successfully"
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_error(f"Failed to generate image: Client or method not available ({e})")
             return f"Failed to generate image: Client or method not available ({e})"
 

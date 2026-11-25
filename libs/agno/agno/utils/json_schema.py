@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional, Union, get_args, get_origin
+from __future__ import annotations
+
+from typing import Any, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -7,8 +9,9 @@ from agno.utils.log import logger
 
 def is_origin_union_type(origin: Any) -> bool:
     import sys
+    from typing import Union
 
-    if sys.version_info.minor >= 10:
+    if sys.version_info >= (3, 10):
         from types import UnionType  # type: ignore
 
         return origin in [Union, UnionType]
@@ -136,11 +139,11 @@ def get_json_schema_for_arg(type_hint: Any) -> Optional[Dict[str, Any]]:
                     schema = get_json_schema_for_arg(arg)
                     if schema:
                         types.append(schema)
-                except Exception:
+                except TypeError:
                     continue
             return {"anyOf": types} if types else None
 
-    elif issubclass(type_hint, BaseModel):
+    elif isinstance(type_hint, type) and issubclass(type_hint, BaseModel):
         # Get the schema and inline it
         schema = type_hint.model_json_schema()
         return inline_pydantic_schema(schema)  # type: ignore
@@ -156,10 +159,10 @@ def get_json_schema_for_arg(type_hint: Any) -> Optional[Dict[str, Any]]:
             if (
                 field_schema
                 and "anyOf" in field_schema
-                and any(schema["type"] == "null" for schema in field_schema["anyOf"])
+                and any(schema.get("type") == "null" for schema in field_schema["anyOf"])
             ):
                 field_schema["type"] = next(
-                    schema["type"] for schema in field_schema["anyOf"] if schema["type"] != "null"
+                    schema.get("type") for schema in field_schema["anyOf"] if schema.get("type") != "null"
                 )
                 field_schema.pop("anyOf")
             else:
@@ -222,7 +225,7 @@ def get_json_schema(
             else:
                 logger.warning(f"Could not parse argument {parameter_name} of type {type_hint}")
         except Exception as e:
-            logger.error(f"Error processing argument {parameter_name}: {str(e)}")
+            logger.error(f"Error processing argument {parameter_name}: {e!s}")
             continue
 
     return json_schema

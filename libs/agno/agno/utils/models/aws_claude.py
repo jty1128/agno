@@ -103,7 +103,7 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
             },
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_error(f"Error processing image: {e}")
         return None
 
