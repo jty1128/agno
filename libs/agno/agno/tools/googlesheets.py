@@ -48,7 +48,7 @@ import json
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 
@@ -79,7 +79,7 @@ def authenticate(func):
 
 class GoogleSheetsTools(Toolkit):
     # Default scopes for Google Sheets API access
-    DEFAULT_SCOPES = {
+    DEFAULT_SCOPES: dict[str, str] = {
         "read": "https://www.googleapis.com/auth/spreadsheets.readonly",
         "write": "https://www.googleapis.com/auth/spreadsheets",
     }
@@ -215,8 +215,8 @@ class GoogleSheetsTools(Toolkit):
             result = self.service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()  # type: ignore
             return json.dumps(result.get("values", []))
 
-        except Exception as e:
-            return f"Error reading Google Sheet: {e}"
+        except Exception:
+            return "Error reading Google Sheet"
 
     @authenticate
     def create_sheet(self, title: str) -> str:
@@ -240,8 +240,8 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Spreadsheet created: https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
 
-        except Exception as e:
-            return f"Error creating Google Sheet: {e}"
+        except Exception:
+            return "Error creating Google Sheet"
 
     @authenticate
     def update_sheet(
@@ -277,8 +277,8 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Sheet updated successfully: {spreadsheet_id}"
 
-        except Exception as e:
-            return f"Error updating Google Sheet: {e}"
+        except Exception:
+            return "Error updating Google Sheet"
 
     @authenticate
     def create_duplicate_sheet(
@@ -346,5 +346,5 @@ class GoogleSheetsTools(Toolkit):
                     ).execute()
 
             return f"Spreadsheet duplicated successfully: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
-        except Exception as e:
-            return f"Error duplicating spreadsheet via Drive API: {e}"
+        except Exception:
+            return "Error duplicating spreadsheet via Drive API"

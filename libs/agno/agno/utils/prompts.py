@@ -31,7 +31,7 @@ def get_json_output_prompt(response_model: Union[str, list, BaseModel]) -> str:
             if json_schema is not None:
                 response_model_properties = {}
                 json_schema_properties = json_schema.get("properties")
-                if json_schema_properties is not None:
+                if json_schema_properties is not None and "properties" in json_schema:
                     for field_name, field_properties in json_schema_properties.items():
                         formatted_field_properties = {
                             prop_name: prop_value
@@ -48,7 +48,7 @@ def get_json_output_prompt(response_model: Union[str, list, BaseModel]) -> str:
                         response_model_properties[field_name] = formatted_field_properties
 
                 json_schema_defs = json_schema.get("$defs")
-                if json_schema_defs is not None:
+                if json_schema_defs is not None and "$defs" in json_schema:
                     response_model_properties["$defs"] = {}
                     for def_name, def_properties in json_schema_defs.items():
                         # Handle both regular object definitions and enums
@@ -77,7 +77,7 @@ def get_json_output_prompt(response_model: Union[str, list, BaseModel]) -> str:
                 if len(response_model_properties) > 0:
                     json_output_prompt += "\n<json_fields>"
                     json_output_prompt += (
-                        f"\n{json.dumps([key for key in response_model_properties.keys() if key != '$defs'])}"
+                        f"\n{json.dumps([key for key in response_model_properties if key != '$defs'])}"
                     )
                     json_output_prompt += "\n</json_fields>"
                     json_output_prompt += "\n\nHere are the properties for each field:"

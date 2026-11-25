@@ -87,7 +87,7 @@ def validate_email(email: str) -> bool:
 
 class GmailTools(Toolkit):
     # Default scopes for Gmail API access
-    DEFAULT_SCOPES = [
+    DEFAULT_SCOPES: ClassVar[List[str]] = [
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/gmail.compose",
@@ -256,7 +256,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving latest emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving latest emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -278,7 +278,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails from {user}: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails from {user}: {type(error).__name__}: {error}"
 
     @authenticate
@@ -298,7 +298,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving unread emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving unread emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -319,7 +319,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails from thread {thread_id}: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails from thread {thread_id}: {type(error).__name__}: {error}"
 
     @authenticate
@@ -339,7 +339,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving starred emails: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving starred emails: {type(error).__name__}: {error}"
 
     @authenticate
@@ -360,7 +360,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails by context '{context}': {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails by context '{context}': {type(error).__name__}: {error}"
 
     @authenticate
@@ -379,7 +379,7 @@ class GmailTools(Toolkit):
             str: Formatted string containing email details
         """
         try:
-            start_date_dt = datetime.fromtimestamp(start_date)
+            start_date_dt = datetime.fromtimestamp(start_date, tz=datetime.timezone.utc)
             if range_in_days:
                 end_date = start_date_dt + timedelta(days=range_in_days)
                 query = f"after:{start_date_dt.strftime('%Y/%m/%d')} before:{end_date.strftime('%Y/%m/%d')}"
@@ -391,7 +391,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails by date: {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails by date: {type(error).__name__}: {error}"
 
     @authenticate
@@ -482,7 +482,7 @@ class GmailTools(Toolkit):
             return self._format_emails(emails)
         except HttpError as error:
             return f"Error retrieving emails with query '{query}': {error}"
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             return f"Unexpected error retrieving emails with query '{query}': {type(error).__name__}: {error}"
 
     def _validate_email_params(self, to: str, subject: str, body: str) -> None:
@@ -586,7 +586,7 @@ class GmailTools(Toolkit):
                         attachments.append(part["filename"])
             elif "body" in msg_data["payload"] and "data" in msg_data["payload"]["body"]:
                 body = base64.urlsafe_b64decode(msg_data["payload"]["body"]["data"]).decode()
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "Unable to decode message body"
 
         if attachments:

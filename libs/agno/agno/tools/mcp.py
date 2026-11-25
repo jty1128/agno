@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -53,17 +55,17 @@ class MCPTools(Toolkit):
 
     def __init__(
         self,
-        command: Optional[str] = None,
+        command: str | None = None,
         *,
-        url: Optional[str] = None,
-        env: Optional[dict[str, str]] = None,
+        url: str | None = None,
+        env: dict[str, str] | None = None,
         transport: Literal["stdio", "sse", "streamable-http"] = "stdio",
-        server_params: Optional[Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams]] = None,
-        session: Optional[ClientSession] = None,
+        server_params: StdioServerParameters | SSEClientParams | StreamableHTTPClientParams | None = None,
+        session: ClientSession | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -101,28 +103,23 @@ class MCPTools(Toolkit):
                 )
 
         # Ensure the received server_params are valid for the given transport
-        if server_params is not None:
-            if transport == "sse":
-                if not isinstance(server_params, SSEClientParams):
-                    raise ValueError(
-                        "If using the SSE transport, server_params must be an instance of SSEClientParams."
-                    )
-            elif transport == "stdio":
-                if not isinstance(server_params, StdioServerParameters):
-                    raise ValueError(
-                        "If using the stdio transport, server_params must be an instance of StdioServerParameters."
-                    )
-            elif transport == "streamable-http":
-                if not isinstance(server_params, StreamableHTTPClientParams):
-                    raise ValueError(
-                        "If using the streamable-http transport, server_params must be an instance of StreamableHTTPClientParams."
-                    )
+        if server_params is not None and transport == "sse":
+            if not isinstance(server_params, SSEClientParams):
+                raise ValueError("If using the SSE transport, server_params must be an instance of SSEClientParams.")
+        elif server_params is not None and transport == "stdio":
+            if not isinstance(server_params, StdioServerParameters):
+                raise ValueError(
+                    "If using the stdio transport, server_params must be an instance of StdioServerParameters."
+                )
+        elif server_params is not None and transport == "streamable-http":
+            if not isinstance(server_params, StreamableHTTPClientParams):
+                raise ValueError(
+                    "If using the streamable-http transport, server_params must be an instance of StreamableHTTPClientParams."
+                )
 
         self.timeout_seconds = timeout_seconds
-        self.session: Optional[ClientSession] = session
-        self.server_params: Optional[Union[StdioServerParameters, SSEClientParams, StreamableHTTPClientParams]] = (
-            server_params
-        )
+        self.session: ClientSession | None = session
+        self.server_params: StdioServerParameters | SSEClientParams | StreamableHTTPClientParams | None = server_params
         self.transport = transport
         self.url = url
 
@@ -150,7 +147,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> MCPTools:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -248,12 +245,12 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError) as e:
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error(f"Failed to get MCP tools: {e}")
             raise
 
@@ -271,18 +268,16 @@ class MultiMCPTools(Toolkit):
 
     def __init__(
         self,
-        commands: Optional[List[str]] = None,
-        urls: Optional[List[str]] = None,
-        urls_transports: Optional[List[Literal["sse", "streamable-http"]]] = None,
+        commands: list[str] | None = None,
+        urls: list[str] | None = None,
+        urls_transports: list[Literal["sse", "streamable-http"]] | None = None,
         *,
-        env: Optional[dict[str, str]] = None,
-        server_params_list: Optional[
-            List[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]]
-        ] = None,
+        env: dict[str, str] | None = None,
+        server_params_list: list[SSEClientParams | StdioServerParameters | StreamableHTTPClientParams] | None = None,
         timeout_seconds: int = 5,
         client=None,
-        include_tools: Optional[list[str]] = None,
-        exclude_tools: Optional[list[str]] = None,
+        include_tools: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -301,14 +296,12 @@ class MultiMCPTools(Toolkit):
         """
         super().__init__(name="MultiMCPTools", **kwargs)
 
-        if urls is not None:
-            if urls_transports is None:
-                log_warning(
-                    "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
-                )
-            else:
-                if len(urls) != len(urls_transports):
-                    raise ValueError("urls and urls_transports must be of the same length")
+        if urls is not None and urls_transports is None:
+            log_warning(
+                "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
+            )
+        elif urls is not None and len(urls) != len(urls_transports):
+            raise ValueError("urls and urls_transports must be of the same length")
 
         # Set these after `__init__` to bypass the `_check_tools_filters`
         # beacuse tools are not available until `initialize()` is called.
@@ -318,12 +311,12 @@ class MultiMCPTools(Toolkit):
         if server_params_list is None and commands is None and urls is None:
             raise ValueError("Either server_params_list or commands or urls must be provided")
 
-        self.server_params_list: List[Union[SSEClientParams, StdioServerParameters, StreamableHTTPClientParams]] = (
+        self.server_params_list: list[SSEClientParams | StdioServerParameters | StreamableHTTPClientParams] = (
             server_params_list or []
         )
         self.timeout_seconds = timeout_seconds
-        self.commands: Optional[List[str]] = commands
-        self.urls: Optional[List[str]] = urls
+        self.commands: list[str] | None = commands
+        self.urls: list[str] | None = urls
         # Merge provided env with system env
         if env is not None:
             env = {
@@ -359,7 +352,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> MultiMCPTools:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -393,9 +386,9 @@ class MultiMCPTools(Toolkit):
 
     async def __aexit__(
         self,
-        exc_type: Union[type[BaseException], None],
-        exc_val: Union[BaseException, None],
-        exc_tb: Union[TracebackType, None],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ):
         """Exit the async context manager."""
         await self._async_exit_stack.aclose()
@@ -437,11 +430,11 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError) as e:
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
             self._initialized = True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error(f"Failed to get MCP tools: {e}")
             raise

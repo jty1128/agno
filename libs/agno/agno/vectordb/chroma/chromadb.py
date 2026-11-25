@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -109,8 +111,8 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
-            logger.error(f"Document does not exist: {e}")
+        except Exception:
+            logger.error("Document does not exist")
         return False
 
     async def async_doc_exists(self, document: Document) -> bool:
@@ -125,12 +127,14 @@ class ChromaDb(VectorDb):
             bool: True if document exists, False otherwise."""
         if self.client:
             try:
-                collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                collection_obj: Collection = self.client.get_collection(name=self.collection_name)
+                collection_data: GetResult = collection_obj.get(include=["metadatas"])  # type: ignore
+                existing_metadatas = collection_data.get("metadatas", [])
+                for metadata in existing_metadatas:  # type: ignore
+                    if metadata and metadata.get("name") == name:
                         return True
-            except Exception as e:
-                logger.error(f"Document with given name does not exist: {e}")
+            except Exception:
+                logger.error("Document with given name does not exist")
         return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -277,8 +281,8 @@ class ChromaDb(VectorDb):
                         embedding=embeddings[idx],
                     )
                 )
-        except Exception as e:
-            logger.error(f"Error building search results: {e}")
+        except Exception:
+            logger.error("Error building search results")
 
         if self.reranker:
             search_results = self.reranker.rerank(query=query, documents=search_results)
@@ -296,7 +300,7 @@ class ChromaDb(VectorDb):
             return {}
 
         # If filters already use ChromaDB operators ($eq, $ne, etc.), return as is
-        if any(key.startswith("$") for key in filters.keys()):
+        if any(key.startswith("$") for key in filters):
             return filters
 
         # Convert simple key-value pairs to ChromaDB's format
@@ -332,8 +336,8 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
-            log_debug(f"Collection does not exist: {e}")
+        except Exception:
+            log_debug("Collection does not exist")
         return False
 
     async def async_exists(self) -> bool:
@@ -346,8 +350,8 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
-                logger.error(f"Error getting count: {e}")
+            except Exception:
+                logger.error("Error getting count")
         return 0
 
     def optimize(self) -> None:
