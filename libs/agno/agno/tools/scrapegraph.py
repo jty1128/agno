@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools import Toolkit
 
@@ -26,7 +28,7 @@ class ScrapeGraphTools(Toolkit):
         if not smartscraper:
             markdownify = True
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if smartscraper:
             tools.append(self.smartscraper)
         if markdownify:
@@ -46,8 +48,8 @@ class ScrapeGraphTools(Toolkit):
         try:
             response = self.client.smartscraper(website_url=url, user_prompt=prompt)
             return json.dumps(response["result"])
-        except Exception as e:
-            return json.dumps({"error": str(e)})
+        except (KeyError, ValueError) as e:
+            return json.dumps({"error": f"{e}"})
 
     def markdownify(self, url: str) -> str:
         """Use this function to convert a webpage to markdown format.
@@ -60,5 +62,5 @@ class ScrapeGraphTools(Toolkit):
         try:
             response = self.client.markdownify(website_url=url)
             return response["result"]
-        except Exception as e:
-            return f"Error converting to markdown: {str(e)}"
+        except (KeyError, ValueError) as e:
+            return f"Error converting to markdown: {e}"

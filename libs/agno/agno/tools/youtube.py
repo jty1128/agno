@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -20,14 +21,14 @@ class YouTubeTools(Toolkit):
         get_video_captions: bool = True,
         get_video_data: bool = True,
         get_video_timestamps: bool = True,
-        languages: Optional[List[str]] = None,
-        proxies: Optional[Dict[str, Any]] = None,
+        languages: Optional[list[str]] = None,
+        proxies: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
-        self.languages: Optional[List[str]] = languages
-        self.proxies: Optional[Dict[str, Any]] = proxies
+        self.languages: Optional[list[str]] = languages
+        self.proxies: Optional[dict[str, Any]] = proxies
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if get_video_captions:
             tools.append(self.get_youtube_video_captions)
         if get_video_data:
@@ -78,7 +79,7 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
@@ -103,7 +104,7 @@ class YouTubeTools(Toolkit):
                     "thumbnail_url": video_data.get("thumbnail_url"),
                 }
                 return json.dumps(clean_data, indent=4)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error getting video data: {e}"
 
     def get_youtube_video_captions(self, url: str) -> str:
@@ -122,12 +123,12 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -137,7 +138,7 @@ class YouTubeTools(Toolkit):
             if captions:
                 return " ".join(line["text"] for line in captions)
             return "No captions found for video"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Error getting captions for video: {e}"
 
     def get_video_timestamps(self, url: str) -> str:
@@ -156,11 +157,11 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Optional
@@ -70,10 +72,10 @@ class LocalFileSystemTools(Toolkit):
 
             file_path.write_text(content)
 
-            return f"Successfully wrote file to: {file_path}"
+            return f"Successfully wrote file to: {file_path!s}"
 
-        except Exception as e:
-            error_msg = f"Failed to write file: {str(e)}"
+        except OSError as e:
+            error_msg = f"Failed to write file: {e!s}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
 

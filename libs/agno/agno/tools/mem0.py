@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from agno.agent import Agent
 from agno.tools.toolkit import Toolkit
@@ -15,7 +17,7 @@ except ImportError:
 class Mem0Tools(Toolkit):
     def __init__(
         self,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
         api_key: Optional[str] = None,
         user_id: Optional[str] = None,
         **kwargs,
@@ -44,7 +46,7 @@ class Mem0Tools(Toolkit):
             else:
                 log_debug("Initializing Mem0 with default settings.")
                 self.client = Memory()
-        except Exception as e:
+        except ImportError as e:
             log_error(f"Failed to initialize Mem0 client: {e}")
             raise ConnectionError("Failed to initialize Mem0 client. Ensure API keys/config are set.") from e
 
@@ -60,8 +62,8 @@ class Mem0Tools(Toolkit):
                 session_state = getattr(agent, "session_state", None)
                 if isinstance(session_state, dict):
                     resolved_user_id = session_state.get("current_user_id")
-            except Exception:
-                pass
+            except AttributeError as e:
+                log_warning(f"AttributeError encountered while resolving user_id: {e}")
         if not resolved_user_id:
             error_msg = f"Error in {method_name}: A user_id must be provided in the method call."
             log_error(error_msg)
@@ -71,11 +73,11 @@ class Mem0Tools(Toolkit):
     def add_memory(
         self,
         agent: Agent,
-        content: Union[str, Dict[str, str]],
+        content: Union[str, dict[str, str]],
     ) -> str:
         """Add facts to the user's memory.
         Args:
-            content(Union[str, Dict[str, str]]): The facts that should be stored.
+            content(Union[str, dict[str, str]]): The facts that should be stored.
             Example:
                 content = "I live in NYC"
                 content = {"Name": "John", "Age": 30, "Location": "New York"}
@@ -99,7 +101,10 @@ class Mem0Tools(Toolkit):
                 user_id=resolved_user_id,
             )
             return json.dumps(result)
-        except Exception as e:
+        except ValueError as e:
+            log_error(f"Error adding memory: {e}")
+            return f"Error adding memory: {e}"
+        except TypeError as e:
             log_error(f"Error adding memory: {e}")
             return f"Error adding memory: {e}"
 
@@ -131,7 +136,7 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
+        except TypeError as e:
             log_error(f"Error searching memory: {e}")
             return f"Error searching memory: {e}"
 
@@ -157,7 +162,7 @@ class Mem0Tools(Toolkit):
         except ValueError as ve:
             log_error(str(ve))
             return str(ve)
-        except Exception as e:
+        except TypeError as e:
             log_error(f"Error getting all memories: {e}")
             return f"Error getting all memories: {e}"
 
@@ -172,6 +177,9 @@ class Mem0Tools(Toolkit):
         try:
             self.client.delete_all(user_id=resolved_user_id)
             return f"Successfully deleted all memories for user_id: {resolved_user_id}."
-        except Exception as e:
+        except ValueError as e:
+            log_error(f"Error deleting all memories: {e}")
+            return f"Error deleting all memories: {e}"
+        except TypeError as e:
             log_error(f"Error deleting all memories: {e}")
             return f"Error deleting all memories: {e}"

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Any, List, Optional, cast
+from typing import Any, cast
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -41,7 +43,7 @@ class JiraTools(Toolkit):
         else:
             self.jira = JIRA(server=self.server_url)
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.get_issue)
         tools.append(self.create_issue)
         tools.append(self.search_issues)

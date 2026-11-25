@@ -94,8 +94,8 @@ def test_tool_call_requires_user_input_stream():
     assert found_user_input, "No tools were found to require user input"
 
     found_user_input = False
-    for response in agent.continue_run(response, stream=True):
-        if response.is_paused:
+    for stream_response in agent.continue_run(response, stream=True):
+        if stream_response.is_paused:
             found_user_input = True
     assert found_user_input is False, "Some tools still require user input"
 
@@ -158,8 +158,8 @@ async def test_tool_call_requires_user_input_stream_async():
     assert found_user_input, "No tools were found to require user input"
 
     found_user_input = False
-    async for response in await agent.acontinue_run(response, stream=True):
-        if response.is_paused:
+    async for stream_response in await agent.acontinue_run(response, stream=True):
+        if stream_response.is_paused:
             found_user_input = True
     assert found_user_input is False, "Some tools still require user input"
 

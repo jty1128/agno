@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -290,10 +289,12 @@ async def test_async_without_aiofiles(tmp_path):
 
 @pytest.mark.asyncio
 async def test_async_invalid_encoding(tmp_path):
+    import aiofiles
+
     text_path = tmp_path / "invalid.txt"
     try:
-        with open(text_path, "wb") as f:
-            f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+        async with aiofiles.open(text_path, "wb") as f:
+            await f.write(b"\xff\xfe\x00\x00")  # Invalid UTF-8
 
         reader = TextReader()
         documents = await reader.async_read(text_path)
@@ -319,7 +320,7 @@ async def test_async_parallel_chunking():
     ]
 
     # Create a mock async chunk processor
-    async def mock_async_chunk_processor(document: Document) -> List[Document]:
+    async def mock_async_chunk_processor(document: Document) -> list[Document]:
         await asyncio.sleep(0.1)  # Simulate async work
         return reader.chunk_document(document)
 

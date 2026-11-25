@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from os import getenv
-from typing import Any, Optional
+from typing import Any
 
 from rich.logging import RichHandler
 from rich.text import Text
@@ -22,7 +24,7 @@ LOG_STYLES = {
 
 
 class ColoredRichHandler(RichHandler):
-    def __init__(self, *args, source_type: Optional[str] = None, **kwargs):
+    def __init__(self, *args, source_type: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.source_type = source_type
 
@@ -54,7 +56,7 @@ class AgnoLogger(logging.Logger):
         super().info(msg, *args, **kwargs)
 
 
-def build_logger(logger_name: str, source_type: Optional[str] = None) -> Any:
+def build_logger(logger_name: str, source_type: str | None = None) -> Any:
     # Set the custom logger class as the default for this logger
     logging.setLoggerClass(AgnoLogger)
 
@@ -69,7 +71,7 @@ def build_logger(logger_name: str, source_type: Optional[str] = None) -> Any:
     rich_handler = ColoredRichHandler(
         show_time=False,
         rich_tracebacks=False,
-        show_path=True if getenv("AGNO_API_RUNTIME") == "dev" else False,
+        show_path=getenv("AGNO_API_RUNTIME") == "dev",
         tracebacks_show_locals=False,
         source_type=source_type or "agent",
     )
@@ -95,19 +97,21 @@ logger: AgnoLogger = agent_logger
 debug_on: bool = False
 
 
-def set_log_level_to_debug(source_type: Optional[str] = None):
+def set_log_level_to_debug(source_type: str | None = None):
+    global debug_on
+
     _logger = logging.getLogger(LOGGER_NAME if source_type is None else f"{LOGGER_NAME}-{source_type}")
     _logger.setLevel(logging.DEBUG)
 
-    global debug_on
     debug_on = True
 
 
-def set_log_level_to_info(source_type: Optional[str] = None):
+def set_log_level_to_info(source_type: str | None = None):
+    global debug_on
+
     _logger = logging.getLogger(LOGGER_NAME if source_type is None else f"{LOGGER_NAME}-{source_type}")
     _logger.setLevel(logging.INFO)
 
-    global debug_on
     debug_on = False
 
 
@@ -116,7 +120,7 @@ def center_header(message: str, symbol: str = "*") -> str:
         import shutil
 
         terminal_width = shutil.get_terminal_size().columns
-    except Exception:
+    except OSError:
         terminal_width = 80  # fallback width
 
     header = f" {message} "

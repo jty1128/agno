@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import hashlib
 import json
 import re
-from typing import Optional, Type
+from typing import Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -62,14 +64,13 @@ def hash_string_sha256(input_string):
     return hex_digest
 
 
-def parse_response_model_str(content: str, response_model: Type[BaseModel]) -> Optional[BaseModel]:
+def parse_response_model_str(content: str, response_model: type[BaseModel]) -> Optional[BaseModel]:
     structured_output = None
     try:
         # First attempt: direct JSON validation
         structured_output = response_model.model_validate_json(content)
     except (ValidationError, json.JSONDecodeError):
         # Second attempt: Extract JSON from markdown code blocks and clean
-        content = content
 
         # Handle code blocks
         if "```json" in content:

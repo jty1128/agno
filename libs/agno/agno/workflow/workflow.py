@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import collections.abc
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -140,7 +141,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -158,8 +158,7 @@ class Workflow:
             if isinstance(value, Agent):
                 value.initialize_agent()
                 value.workflow_id = self.workflow_id
-
-            if isinstance(value, Team):
+            elif isinstance(value, Team):
                 value.initialize_team()
                 value.workflow_id = self.workflow_id
 
@@ -185,7 +184,7 @@ class Workflow:
             result = self._subclass_run(**kwargs)
         except Exception as e:
             logger.error(f"Workflow.run() failed: {e}")
-            raise e
+            raise
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]

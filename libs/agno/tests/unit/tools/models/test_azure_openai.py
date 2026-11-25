@@ -97,7 +97,7 @@ def test_generate_image_success(mock_post, azure_openai_tools, mock_agent):
 
     # Verify the API call
     mock_post.assert_called_once()
-    args, kwargs = mock_post.call_args
+    kwargs = mock_post.call_args.kwargs
     # Check URL with more flexible assertion to accommodate potential double slashes
     assert "test-endpoint.openai.azure.com" in args[0]
     assert "openai/deployments/test-deployment/images/generations" in args[0]

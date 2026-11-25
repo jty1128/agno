@@ -116,11 +116,11 @@ def format_messages(messages: List[Message]) -> Tuple[List[Dict[str, str]], str]
         messages (List[Message]): The list of messages to process.
 
     Returns:
-        Tuple[List[Dict[str, str]], str]: A tuple containing the list of API messages and the concatenated system messages.
+        Tuple[list[dict[str, str]], str]: A tuple containing the list of API messages and the concatenated system messages.
     """
 
-    chat_messages: List[Dict[str, str]] = []
-    system_messages: List[str] = []
+    chat_messages: list[dict[str, str]] = []
+    system_messages: list[str] = []
 
     for message in messages:
         content = message.content or ""
