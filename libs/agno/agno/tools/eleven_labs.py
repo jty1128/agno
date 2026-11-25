@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from base64 import b64encode
+from collections.abc import Iterator
 from io import BytesIO
 from os import getenv, path
 from pathlib import Path
-from typing import Iterator, Literal, Optional, Union
+from typing import Literal
 from uuid import uuid4
 
 from agno.agent import Agent
@@ -119,9 +122,7 @@ class ElevenLabsTools(Toolkit):
 
         return base64_audio
 
-    def generate_sound_effect(
-        self, agent: Union[Agent, Team], prompt: str, duration_seconds: Optional[float] = None
-    ) -> str:
+    def generate_sound_effect(self, agent: Agent | Team, prompt: str, duration_seconds: float | None = None) -> str:
         """
         Use this function to generate sound effect audio from a text prompt.
 
@@ -153,7 +154,7 @@ class ElevenLabsTools(Toolkit):
             logger.error(f"Failed to generate audio: {e}")
             return f"Error: {e}"
 
-    def text_to_speech(self, agent: Union[Agent, Team], prompt: str) -> str:
+    def text_to_speech(self, agent: Agent | Team, prompt: str) -> str:
         """
         Use this function to convert text to speech audio.
 

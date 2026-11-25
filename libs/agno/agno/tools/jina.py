@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Dict, Optional
 
 import httpx
 from pydantic import BaseModel, Field, HttpUrl
@@ -45,33 +46,33 @@ class JinaReaderTools(Toolkit):
 
     def read_url(self, url: str) -> str:
         """Reads a URL and returns the truncated content using Jina Reader API."""
-        full_url = f"{self.config.base_url}{url}"
+        full_url = f"{self.config.base_url!s}{url}"
         log_info(f"Reading URL: {full_url}")
         try:
             response = httpx.get(full_url, headers=self._get_headers())
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error reading URL: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error reading URL: {e!s}"
             logger.error(error_msg)
             return error_msg
 
     def search_query(self, query: str) -> str:
         """Performs a web search using Jina Reader API and returns the truncated results."""
-        full_url = f"{self.config.search_url}{query}"
+        full_url = f"{self.config.search_url!s}{query}"
         log_info(f"Performing search: {full_url}")
         try:
             response = httpx.get(full_url, headers=self._get_headers())
             response.raise_for_status()
             content = response.json()
             return self._truncate_content(str(content))
-        except Exception as e:
-            error_msg = f"Error performing search: {str(e)}"
+        except httpx.HTTPError as e:
+            error_msg = f"Error performing search: {e!s}"
             logger.error(error_msg)
             return error_msg
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         headers = {
             "Accept": "application/json",
             "X-With-Links-Summary": "true",

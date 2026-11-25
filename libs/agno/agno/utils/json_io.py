@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import json
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from agno.utils.log import log_debug
 
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, datetime) or isinstance(o, date):
+        if isinstance(o, (datetime, date)):
             return o.isoformat()
 
         if isinstance(o, Path):

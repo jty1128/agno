@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Optional, Union
 
 from agno.agent import Agent
 from agno.reasoning.step import NextAction, ReasoningStep

@@ -1,7 +1,6 @@
 import hashlib
 import json
 import re
-from typing import Optional, Type
 
 from pydantic import BaseModel, ValidationError
 
@@ -69,8 +68,6 @@ def parse_response_model_str(content: str, response_model: Type[BaseModel]) -> O
         structured_output = response_model.model_validate_json(content)
     except (ValidationError, json.JSONDecodeError):
         # Second attempt: Extract JSON from markdown code blocks and clean
-        content = content
-
         # Handle code blocks
         if "```json" in content:
             content = content.split("```json")[-1].strip()

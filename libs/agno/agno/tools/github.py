@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from os import getenv
-from typing import List, Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -586,7 +587,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error reopening issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def assign_issue(self, repo_name: str, issue_number: int, assignees: List[str]) -> str:
+    def assign_issue(self, repo_name: str, issue_number: int, assignees: list[str]) -> str:
         """Assign users to an issue.
 
         Args:
@@ -607,7 +608,7 @@ class GithubTools(Toolkit):
             logger.error(f"Error assigning issue: {e}")
             return json.dumps({"error": str(e)})
 
-    def label_issue(self, repo_name: str, issue_number: int, labels: List[str]) -> str:
+    def label_issue(self, repo_name: str, issue_number: int, labels: list[str]) -> str:
         """Add labels to an issue.
 
         Args:
@@ -665,8 +666,8 @@ class GithubTools(Toolkit):
         self,
         repo_name: str,
         issue_number: int,
-        title: Optional[str] = None,
-        body: Optional[str] = None,
+        title: str | None = None,
+        body: str | None = None,
     ) -> str:
         """Edit the title or body of an issue.
 
@@ -902,11 +903,13 @@ class GithubTools(Toolkit):
             repo = self.g.get_repo(repo_name)
             comments = repo.get_pulls_comments()
             comment = None
-            for comment in comments:
-                if comment.id == comment_id:
-                    comment.edit(body)
+            for c in comments:
+                if c.id == comment_id:
+                    c.edit(body)
+                    comment = c
+                    break
 
-            if not comment:
+            if comment is None:
                 return f"Could not find comment #{comment_id} in repository: {repo_name}"
 
             comment_info = {
@@ -1090,7 +1093,7 @@ class GithubTools(Toolkit):
                     if not issue.pull_request:
                         open_issues_count += 1
                 repo_info["actual_open_issues"] = open_issues_count
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting actual open issues: {e}")
                 repo_info["actual_open_issues"] = None
 
@@ -1098,7 +1101,7 @@ class GithubTools(Toolkit):
             try:
                 open_prs = repo.get_pulls(state="open")
                 repo_info["open_pr_count"] = int(open_prs.totalCount)
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting open PRs count: {e}")
                 repo_info["open_pr_count"] = None
 
@@ -1127,11 +1130,11 @@ class GithubTools(Toolkit):
                         }
                         open_prs_list.append(pr_data)
                         count += 1
-                    except Exception as e:
+                    except GithubException as e:
                         log_debug(f"Error processing individual PR: {e}")
 
                 repo_info["recent_open_prs"] = open_prs_list
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting recent open PRs: {e}")
                 repo_info["recent_open_prs"] = []
 
@@ -1169,13 +1172,13 @@ class GithubTools(Toolkit):
                     "avg_time_to_merge": (sum(merge_times) / len(merge_times) if merge_times else None),
                 }
                 repo_info["pr_metrics"] = pr_metrics
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error calculating PR metrics: {e}")
                 repo_info["pr_metrics"] = None
 
             # Get contributors
             try:
-                contributors: list[dict] = []
+                contributors: list[dict[str, object]] = []
                 for contributor in repo.get_contributors():
                     if len(contributors) >= 20:  # Limit to top 20
                         break
@@ -1187,7 +1190,7 @@ class GithubTools(Toolkit):
                         }
                     )
                 repo_info["contributors"] = contributors
-            except Exception as e:
+            except GithubException as e:
                 log_debug(f"Error getting contributors: {e}")
                 repo_info["contributors"] = []
 

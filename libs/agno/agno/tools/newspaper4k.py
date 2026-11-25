@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Any, Dict, Optional
 
@@ -54,8 +56,8 @@ class Newspaper4kTools(Toolkit):
             try:
                 if article.publish_date:
                     article_data["publish_date"] = article.publish_date.isoformat() if article.publish_date else None
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse publish date for {url}: {e}")
 
             return article_data
         except Exception as e:

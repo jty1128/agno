@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any
 
 from agno.media import Image
 from agno.models.message import Message
@@ -35,12 +36,12 @@ def _format_images_for_message(message: Message, images: Sequence[Image]) -> Lis
                 import base64
 
                 base64_image = base64.b64encode(image_content).decode("utf-8")
-                image_url = f"data:image/jpeg;base64,{base64_image}"
+                image_url = "data:image/jpeg;base64," + str(base64_image)
                 image_payload = {"type": "image_url", "image_url": {"url": image_url}}
                 message_content_with_image.append(image_payload)
 
         except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+            log_error(f"Failed to process image: {e!s}")
 
     # Update the message content with the images
     return message_content_with_image

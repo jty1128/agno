@@ -1,5 +1,3 @@
-from typing import List
-
 from cassio.table.mixins.base_table import BaseTableMixin
 from cassio.table.table_types import ColumnSpecType
 

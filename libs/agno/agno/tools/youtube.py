@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
@@ -76,7 +79,7 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
@@ -101,7 +104,7 @@ class YouTubeTools(Toolkit):
                     "thumbnail_url": video_data.get("thumbnail_url"),
                 }
                 return json.dumps(clean_data, indent=4)
-        except Exception as e:
+        except (URLError, HTTPError, json.JSONDecodeError) as e:
             return f"Error getting video data: {e}"
 
     def get_youtube_video_captions(self, url: str) -> str:
@@ -120,12 +123,12 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
             captions = None
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -135,7 +138,7 @@ class YouTubeTools(Toolkit):
             if captions:
                 return " ".join(line["text"] for line in captions)
             return "No captions found for video"
-        except Exception as e:
+        except (URLError, HTTPError, KeyError, ValueError, TypeError) as e:
             return f"Error getting captions for video: {e}"
 
     def get_video_timestamps(self, url: str) -> str:
@@ -154,11 +157,11 @@ class YouTubeTools(Toolkit):
 
         try:
             video_id = self.get_youtube_video_id(url)
-        except Exception:
+        except (ValueError, KeyError):
             return "Error getting video ID from URL, please provide a valid YouTube url"
 
         try:
-            kwargs: Dict = {}
+            kwargs: dict = {}
             if self.languages:
                 kwargs["languages"] = self.languages or ["en"]
             if self.proxies:
@@ -171,5 +174,5 @@ class YouTubeTools(Toolkit):
                 minutes, seconds = divmod(start, 60)
                 timestamps.append(f"{minutes}:{seconds:02d} - {line['text']}")
             return "\n".join(timestamps)
-        except Exception as e:
+        except (URLError, HTTPError, KeyError, ValueError, TypeError) as e:
             return f"Error generating timestamps: {e}"

@@ -1,4 +1,3 @@
-from typing import List
 from unittest.mock import Mock, patch
 
 import pytest
@@ -62,7 +61,7 @@ def milvus_db(mock_milvus_client, mock_embedder):
 
 
 @pytest.fixture
-def sample_documents() -> List[Document]:
+def sample_documents() -> list[Document]:
     """Fixture to create sample documents"""
     return [
         Document(
@@ -124,7 +123,7 @@ def test_insert_documents(milvus_db, sample_documents, mock_milvus_client):
         assert mock_milvus_client.insert.call_count == 3
 
         # Check the first call's parameters
-        args, kwargs = mock_milvus_client.insert.call_args_list[0]
+        _, kwargs = mock_milvus_client.insert.call_args_list[0]
         assert kwargs["collection_name"] == "test_collection"
         assert "vector" in kwargs["data"]
         assert "name" in kwargs["data"]
@@ -173,7 +172,7 @@ def test_upsert_documents(milvus_db, sample_documents, mock_milvus_client):
         assert mock_milvus_client.upsert.call_count == 3
 
         # Check the first call's parameters
-        args, kwargs = mock_milvus_client.upsert.call_args_list[0]
+        _, kwargs = mock_milvus_client.upsert.call_args_list[0]
         assert kwargs["collection_name"] == "test_collection"
         assert "vector" in kwargs["data"]
         assert "name" in kwargs["data"]

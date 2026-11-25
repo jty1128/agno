@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -126,7 +126,7 @@ class SQLTools(Toolkit):
             logger.error(f"Error running query: {e}")
             return f"Error running query: {e}"
 
-    def run_sql(self, sql: str, limit: Optional[int] = None) -> List[dict]:
+    def run_sql(self, sql: str, limit: Optional[int] = None) -> list[dict]:
         """Internal function to run a sql query.
 
         Args:
@@ -134,7 +134,7 @@ class SQLTools(Toolkit):
             limit (int, optional): The number of rows to return. Defaults to None.
 
         Returns:
-            List[dict]: The result of the query.
+            list[dict]: The result of the query.
         """
         log_debug(f"Running sql |\n{sql}")
 

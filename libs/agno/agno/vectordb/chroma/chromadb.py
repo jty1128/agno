@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from chromadb import Client as ChromaDbClient
@@ -125,8 +127,8 @@ class ChromaDb(VectorDb):
             bool: True if document exists, False otherwise."""
         if self.client:
             try:
-                collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
+                collection_obj: Collection = self.client.get_collection(name=self.collection_name)
+                for collection in collection_obj:  # type: ignore
                     if name in collection:
                         return True
             except Exception as e:
@@ -268,11 +270,11 @@ class ChromaDb(VectorDb):
             metadata[idx]["distances"] = distance
 
         try:
-            for idx, (id_, metadata, document) in enumerate(zip(ids, metadata, documents)):
+            for idx, (id_, meta, document) in enumerate(zip(ids, metadata, documents)):
                 search_results.append(
                     Document(
                         id=id_,
-                        meta_data=metadata,
+                        meta_data=meta,
                         content=document,
                         embedding=embeddings[idx],
                     )
@@ -286,7 +288,7 @@ class ChromaDb(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    def _convert_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+    def _convert_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Convert simple filters to ChromaDB's filter format.
 
         Handles conversion of simple key-value filters to ChromaDB's operator format
@@ -296,7 +298,7 @@ class ChromaDb(VectorDb):
             return {}
 
         # If filters already use ChromaDB operators ($eq, $ne, etc.), return as is
-        if any(key.startswith("$") for key in filters.keys()):
+        if any(key.startswith("$") for key in filters):
             return filters
 
         # Convert simple key-value pairs to ChromaDB's format
@@ -312,8 +314,8 @@ class ChromaDb(VectorDb):
         return converted
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         """Search asynchronously by running in a thread."""
         return await asyncio.to_thread(self.search, query, limit, filters)
 

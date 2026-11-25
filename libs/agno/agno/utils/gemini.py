@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agno.media import Image
 from agno.utils.log import log_error, log_warning
@@ -29,8 +31,8 @@ def format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
                     "data": base64.b64encode(content_bytes).decode("utf-8"),
                 }
                 return image_data
-            except Exception as e:
-                log_warning(f"Failed to download image from {image}: {e}")
+            except Exception:
+                log_warning(f"Failed to download image from {image}")
                 return None
         else:
             log_warning(f"Unsupported image format: {image}")
@@ -50,8 +52,8 @@ def format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
                 "mime_type": "image/jpeg",
                 "data": content_bytes,
             }
-        except Exception as e:
-            log_warning(f"Failed to load image from {image.filepath}: {e}")
+        except Exception:
+            log_warning(f"Failed to load image from {image.filepath}")
             return None
 
     # Case 3: Image is a bytes object
@@ -145,7 +147,7 @@ def convert_schema(schema_dict: Dict[str, Any]) -> Optional[Schema]:
             )
     else:
         schema_type = schema_type.upper()
-        return Schema(type=schema_type, description=description, default=default)
+        return Schema(type=Type[schema_type], description=description, default=default)
 
 
 def format_function_definitions(tools_list: List[Dict[str, Any]]) -> Optional[Tool]:

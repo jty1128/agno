@@ -3,7 +3,7 @@ from typing import Optional
 import pytest
 from pydantic import BaseModel, Field
 
-from agno.agent import Agent, RunResponse  # noqa
+from agno.agent import Agent, RunResponse
 from agno.models.groq import Groq
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.exa import ExaTools
@@ -46,9 +46,8 @@ def test_tool_use_stream():
     for chunk in response_stream:
         assert isinstance(chunk, RunResponse)
         responses.append(chunk)
-        if chunk.tools:
-            if any(tc.get("tool_name") for tc in chunk.tools):
-                tool_call_seen = True
+        if chunk.tools and any(tc.get("tool_name") for tc in chunk.tools):
+            tool_call_seen = True
 
     assert len(responses) > 0
     assert tool_call_seen, "No tool calls observed in stream"
@@ -93,9 +92,8 @@ async def test_async_tool_use_stream():
     async for chunk in response_stream:
         assert isinstance(chunk, RunResponse)
         responses.append(chunk)
-        if chunk.tools:
-            if any(tc.get("tool_name") for tc in chunk.tools):
-                tool_call_seen = True
+        if chunk.tools and any(tc.get("tool_name") for tc in chunk.tools):
+            tool_call_seen = True
 
     assert len(responses) > 0
     assert tool_call_seen, "No tool calls observed in stream"
@@ -115,10 +113,7 @@ def test_parallel_tool_calls():
     response = agent.run("What is the current price of TSLA and AAPL?")
 
     # Verify tool usage
-    tool_calls = []
-    for msg in response.messages:
-        if msg.tool_calls:
-            tool_calls.extend(msg.tool_calls)
+    tool_calls = [tool_call for msg in response.messages if msg.tool_calls for tool_call in msg.tool_calls]
     assert len([call for call in tool_calls if call.get("type", "") == "function"]) == 2  # Total of 2 tool calls made
     assert response.content is not None
     assert "TSLA" in response.content and "AAPL" in response.content
@@ -159,10 +154,7 @@ def test_multiple_tool_calls():
     response = agent.run("What is the current price of TSLA and what is the latest news about it?")
 
     # Verify tool usage
-    tool_calls = []
-    for msg in response.messages:
-        if msg.tool_calls:
-            tool_calls.extend(msg.tool_calls)
+    tool_calls = [tool_call for msg in response.messages if msg.tool_calls for tool_call in msg.tool_calls]
     assert len([call for call in tool_calls if call.get("type", "") == "function"]) == 2  # Total of 2 tool calls made
     assert response.content is not None
     assert "TSLA" in response.content and "latest news" in response.content.lower()
@@ -239,10 +231,7 @@ def test_tool_call_list_parameters():
 
     # Verify tool usage
     assert any(msg.tool_calls for msg in response.messages)
-    tool_calls = []
-    for msg in response.messages:
-        if msg.tool_calls:
-            tool_calls.extend(msg.tool_calls)
+    tool_calls = [tool_call for msg in response.messages if msg.tool_calls for tool_call in msg.tool_calls]
     for call in tool_calls:
         if call.get("type", "") == "function":
             assert call["function"]["name"] in ["get_contents", "exa_answer"]

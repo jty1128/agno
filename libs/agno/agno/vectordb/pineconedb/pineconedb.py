@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     from packaging import version
@@ -225,7 +227,8 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except Exception as e:
+            log_debug(f"Index {name} does not exist or is not accessible: {e}")
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -273,10 +276,10 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-        batch_size: Optional[int] = None,
+        documents: list[Document],
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+        batch_size: int | None = None,
         show_progress: bool = False,
     ) -> None:
         """Upsert documents into the index asynchronously with batching."""
@@ -383,10 +386,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
@@ -449,10 +452,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
-        namespace: Optional[str] = None,
-        include_values: Optional[bool] = None,
-    ) -> List[Document]:
+        filters: dict[str, str | float | int | bool | list | dict] | None = None,
+        namespace: str | None = None,
+        include_values: bool | None = None,
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,7 +465,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.
