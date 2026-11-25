@@ -34,23 +34,24 @@ def firecrawl_tools(mock_firecrawl):
 
 def test_init_with_env_vars():
     """Test initialization with environment variables."""
-    with patch("agno.tools.firecrawl.FirecrawlApp"):
-        with patch.dict("os.environ", {"FIRECRAWL_API_KEY": TEST_API_KEY}, clear=True):
-            tools = FirecrawlTools()
-            assert tools.api_key == TEST_API_KEY
-            assert tools.formats is None
-            assert tools.limit == 10
-            assert tools.app is not None
+    with patch("agno.tools.firecrawl.FirecrawlApp"), patch.dict(
+        "os.environ", {"FIRECRAWL_API_KEY": TEST_API_KEY}, clear=True
+    ):
+        tools = FirecrawlTools()
+        assert tools.api_key == TEST_API_KEY
+        assert tools.formats is None
+        assert tools.limit == 10
+        assert tools.app is not None
 
 
 def test_init_with_params():
     """Test initialization with parameters."""
     with patch("agno.tools.firecrawl.FirecrawlApp"):
         tools = FirecrawlTools(api_key="param_api_key", formats=["html", "text"], limit=5, api_url=TEST_API_URL)
-        assert tools.api_key == "param_api_key"
-        assert tools.formats == ["html", "text"]
-        assert tools.limit == 5
-        assert tools.app is not None
+    assert tools.api_key == "param_api_key"
+    assert tools.formats == ["html", "text"]
+    assert tools.limit == 5
+    assert tools.app is not None
 
 
 def test_scrape_website(firecrawl_tools, mock_firecrawl):
