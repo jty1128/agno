@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any
 
 from agno.media import Image
 from agno.models.message import Message
@@ -39,22 +40,22 @@ def _format_images_for_message(message: Message, images: Sequence[Image]) -> Lis
                 image_payload = {"type": "image_url", "image_url": {"url": image_url}}
                 message_content_with_image.append(image_payload)
 
-        except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            log_error(f"Failed to process image: {e!s}")
 
     # Update the message content with the images
     return message_content_with_image
 
 
-def format_messages(messages: List[Message]) -> List[Dict[str, Any]]:
+def format_messages(messages: list[Message]) -> list[dict[str, Any]]:
     """
     Format messages for the Cohere API.
 
     Args:
-        messages (List[Message]): The list of messages.
+        messages (list[Message]): The list of messages.
 
     Returns:
-        List[Dict[str, Any]]: The formatted messages.
+        list[dict[str, Any]]: The formatted messages.
     """
     formatted_messages = []
     for message in messages:
@@ -66,12 +67,11 @@ def format_messages(messages: List[Message]) -> List[Dict[str, Any]]:
             "tool_calls": message.tool_calls,
         }
 
-        if message.images is not None and len(message.images) > 0:
+        if message.images is not None and len(message.images) > 0 and isinstance(message.content, str):
             # Ignore non-string message content
-            if isinstance(message.content, str):
-                message_content_with_image = _format_images_for_message(message=message, images=message.images)
-                if len(message_content_with_image) > 1:
-                    message_dict["content"] = message_content_with_image
+            message_content_with_image = _format_images_for_message(message=message, images=message.images)
+            if len(message_content_with_image) > 1:
+                message_dict["content"] = message_content_with_image
 
         if message.videos is not None and len(message.videos) > 0:
             log_warning("Video input is currently unsupported.")

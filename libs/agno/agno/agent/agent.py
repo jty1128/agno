@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 from collections import ChainMap, defaultdict, deque
+from collections.abc import AsyncIterator, Iterator, Sequence
 from dataclasses import asdict, dataclass
 from os import getenv
 from textwrap import dedent
 from typing import (
     Any,
-    AsyncIterator,
     Callable,
     Dict,
-    Iterator,
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Type,
     Union,
@@ -248,8 +246,8 @@ class Agent:
 
     # --- Agent Team ---
     # The team of agents that this agent can transfer tasks to.
-    team: Optional[List[Agent]] = None
-    team_data: Optional[Dict[str, Any]] = None
+    team: Optional[list[Agent]] = None
+    team_data: Optional[dict[str, Any]] = None
     # --- If this Agent is part of a team ---
     # If this Agent is part of a team, this is the role of the agent in the team
     role: Optional[str] = None
@@ -267,7 +265,7 @@ class Agent:
     # Optional team ID. Indicates this agent is part of a team.
     team_id: Optional[str] = None
     # Optional team session state. Set by the team leader agent.
-    team_session_state: Optional[Dict[str, Any]] = None
+    team_session_state: Optional[dict[str, Any]] = None
 
     # --- Debug & Monitoring ---
     # Enable debug logs
@@ -288,11 +286,11 @@ class Agent:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         session_name: Optional[str] = None,
-        session_state: Optional[Dict[str, Any]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        session_state: Optional[dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
         add_context: bool = False,
         resolve_context: bool = True,
-        memory: Optional[Union[AgentMemory, Memory]] = None,
+        memory: Optional[AgentMemory | Memory] = None,
         enable_agentic_memory: bool = False,
         enable_user_memories: bool = False,
         add_memory_references: Optional[bool] = None,
@@ -302,18 +300,18 @@ class Agent:
         num_history_responses: Optional[int] = None,
         num_history_runs: int = 3,
         knowledge: Optional[AgentKnowledge] = None,
-        knowledge_filters: Optional[Dict[str, Any]] = None,
+        knowledge_filters: Optional[dict[str, Any]] = None,
         enable_agentic_knowledge_filters: Optional[bool] = None,
         add_references: bool = False,
-        retriever: Optional[Callable[..., Optional[List[Dict]]]] = None,
+        retriever: Optional[Callable[..., Optional[list[dict]]]] = None,
         references_format: Literal["json", "yaml"] = "json",
         storage: Optional[Storage] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
-        tools: Optional[List[Union[Toolkit, Callable, Function, Dict]]] = None,
+        extra_data: Optional[dict[str, Any]] = None,
+        tools: Optional[list[Toolkit | Callable | Function | dict]] = None,
         show_tool_calls: bool = True,
         tool_call_limit: Optional[int] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-        tool_hooks: Optional[List[Callable]] = None,
+        tool_choice: Optional[str | dict[str, Any]] = None,
+        tool_hooks: Optional[list[Callable]] = None,
         reasoning: bool = False,
         reasoning_model: Optional[Model] = None,
         reasoning_agent: Optional[Agent] = None,
@@ -323,12 +321,12 @@ class Agent:
         search_knowledge: bool = True,
         update_knowledge: bool = False,
         read_tool_call_history: bool = False,
-        system_message: Optional[Union[str, Callable, Message]] = None,
+        system_message: Optional[str | Callable | Message] = None,
         system_message_role: str = "system",
         create_default_system_message: bool = True,
         description: Optional[str] = None,
         goal: Optional[str] = None,
-        instructions: Optional[Union[str, List[str], Callable]] = None,
+        instructions: Optional[str | list[str] | Callable] = None,
         expected_output: Optional[str] = None,
         additional_context: Optional[str] = None,
         markdown: bool = False,
@@ -336,22 +334,22 @@ class Agent:
         add_datetime_to_instructions: bool = False,
         timezone_identifier: Optional[str] = None,
         add_state_in_messages: bool = False,
-        add_messages: Optional[List[Union[Dict, Message]]] = None,
-        user_message: Optional[Union[List, Dict, str, Callable, Message]] = None,
+        add_messages: Optional[list[dict | Message]] = None,
+        user_message: Optional[list | dict | str | Callable | Message] = None,
         user_message_role: str = "user",
         create_default_user_message: bool = True,
         retries: int = 0,
         delay_between_retries: int = 1,
         exponential_backoff: bool = False,
-        response_model: Optional[Type[BaseModel]] = None,
+        response_model: Optional[type[BaseModel]] = None,
         parse_response: bool = True,
         structured_outputs: Optional[bool] = None,
         use_json_mode: bool = False,
         save_response_to_file: Optional[str] = None,
         stream: Optional[bool] = None,
         stream_intermediate_steps: bool = False,
-        team: Optional[List[Agent]] = None,
-        team_data: Optional[Dict[str, Any]] = None,
+        team: Optional[list[Agent]] = None,
+        team_data: Optional[dict[str, Any]] = None,
         role: Optional[str] = None,
         respond_directly: bool = False,
         add_transfer_instructions: bool = True,
@@ -463,22 +461,22 @@ class Agent:
         self.session_metrics: Optional[SessionMetrics] = None
 
         self.run_id: Optional[str] = None
-        self.run_input: Optional[Union[str, List, Dict, Message]] = None
+        self.run_input: Optional[str | list | dict | Message] = None
         self.run_messages: Optional[RunMessages] = None
         self.run_response: Optional[RunResponse] = None
 
         # Images generated during this session
-        self.images: Optional[List[ImageArtifact]] = None
+        self.images: Optional[list[ImageArtifact]] = None
         # Audio generated during this session
-        self.audio: Optional[List[AudioArtifact]] = None
+        self.audio: Optional[list[AudioArtifact]] = None
         # Videos generated during this session
-        self.videos: Optional[List[VideoArtifact]] = None
+        self.videos: Optional[list[VideoArtifact]] = None
         # Agent session
         self.agent_session: Optional[AgentSession] = None
 
-        self._tool_instructions: Optional[List[str]] = None
-        self._tools_for_model: Optional[List[Dict[str, Any]]] = None
-        self._functions_for_model: Optional[Dict[str, Function]] = None
+        self._tool_instructions: Optional[list[str]] = None
+        self._tools_for_model: Optional[list[dict[str, Any]]] = None
+        self._functions_for_model: Optional[dict[str, Function]] = None
 
         self._formatter: Optional[SafeFormatter] = None
 
@@ -573,9 +571,9 @@ class Agent:
         run_messages: RunMessages,
         session_id: str,
         user_id: Optional[str] = None,
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        message: Optional[Union[str, List, Dict, Message]] = None,
-        messages: Optional[Sequence[Union[Dict, Message]]] = None,
+        response_format: Optional[dict | type[BaseModel]] = None,
+        message: Optional[str | list | dict | Message] = None,
+        messages: Optional[Sequence[dict | Message]] = None,
     ) -> RunResponse:
         """Run the Agent and yield the RunResponse.
 
@@ -688,7 +686,7 @@ class Agent:
                 )
 
             # Build a list of messages that should be added to the AgentMemory
-            messages_for_memory: List[Message] = (
+            messages_for_memory: list[Message] = (
                 [run_messages.user_message] if run_messages.user_message is not None else []
             )
             # Add messages from messages_for_run after the last user message
@@ -719,7 +717,7 @@ class Agent:
                     elif isinstance(_im, dict):
                         try:
                             mp = Message(**_im)
-                        except Exception as e:
+                        except (TypeError, ValueError) as e:
                             log_warning(f"Failed to validate message: {e}")
                     else:
                         log_warning(f"Unsupported message type: {type(_im)}")
@@ -777,7 +775,7 @@ class Agent:
                         run_response.content_type = self.response_model.__name__
                     else:
                         log_warning("Failed to convert response to response_model")
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     log_warning(f"Failed to convert response to output model: {e}")
             else:
                 log_warning("Something went wrong. Run response content is not a string")
@@ -1331,7 +1329,7 @@ class Agent:
                     )
                     return resp
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -2098,7 +2096,7 @@ class Agent:
                         messages=messages,
                     )
             except ModelProviderError as e:
-                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
+                log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {e!s}")
                 if isinstance(e, StopAgentRun):
                     raise e
                 last_exception = e
@@ -2225,7 +2223,7 @@ class Agent:
                     elif isinstance(_im, dict):
                         try:
                             parsed_messages.append(Message(**_im))
-                        except Exception as e:
+                        except (TypeError, ValueError) as e:
                             log_warning(f"Failed to validate message: {e}")
                     else:
                         log_warning(f"Unsupported message type: {type(_im)}")
@@ -2541,7 +2539,7 @@ class Agent:
         if self.team_session_state is not None and len(self.team_session_state) > 0:
             session_data["team_session_state"] = self.team_session_state
         if self.session_metrics is not None:
-            session_data["session_metrics"] = asdict(self.session_metrics) if self.session_metrics is not None else None
+            session_data["session_metrics"] = asdict(self.session_metrics)
         if self.team_data is not None:
             session_data["team_data"] = self.team_data
         if self.images is not None:
@@ -2889,9 +2887,7 @@ class Agent:
         if self.model is not None:
             self.model.clear()
         if self.memory is not None:
-            if isinstance(self.memory, AgentMemory):
-                self.memory.clear()
-            elif isinstance(self.memory, Memory):
+            if isinstance(self.memory, AgentMemory) or isinstance(self.memory, Memory):
                 self.memory.clear()
         self.session_id = str(uuid4())
         self.load_session(force=True)
@@ -2989,10 +2985,10 @@ class Agent:
                     from zoneinfo import ZoneInfo
 
                     tz = ZoneInfo(self.timezone_identifier)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     log_warning("Invalid timezone identifier")
 
-            time = datetime.now(tz) if tz else datetime.now()
+            time = datetime.now(tz) if tz else datetime.now(timezone.utc)
 
             additional_information.append(f"The current time is {time}.")
         # 3.2.3 Add agent name if provided
@@ -3521,18 +3517,7 @@ class Agent:
             return field_value.deep_copy()
 
         # For storage, model and reasoning_model, use a deep copy
-        elif field_name in ("storage", "model", "reasoning_model"):
-            try:
-                return deepcopy(field_value)
-            except Exception:
-                try:
-                    return copy(field_value)
-                except Exception as e:
-                    log_warning(f"Failed to copy field: {field_name} - {e}")
-                    return field_value
-
-        # For compound types, attempt a deep copy
-        elif isinstance(field_value, (list, dict, set)):
+        elif field_name in ("storage", "model", "reasoning_model") or isinstance(field_value, (list, dict, set)):
             try:
                 return deepcopy(field_value)
             except Exception:
@@ -3546,7 +3531,7 @@ class Agent:
         elif isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 try:
                     return field_value.model_copy(deep=False)
                 except Exception as e:
@@ -3558,7 +3543,7 @@ class Agent:
             from copy import copy
 
             return copy(field_value)
-        except Exception:
+        except Exception:  # noqa: BLE001
             # If copy fails, return as is
             return field_value
 
@@ -3697,13 +3682,12 @@ class Agent:
 
         # Validate the filters against known valid filter keys
         if self.knowledge is not None:
-            valid_filters, invalid_keys = self.knowledge.validate_filters(filters)  # type: ignore
+            valid_filters, invalid_keys = self.knowledge.validate_filters(filters)
 
             # Warn about invalid filter keys
             if invalid_keys:
-                # type: ignore
                 log_warning(f"Invalid filter keys provided: {invalid_keys}. These filters will be ignored.")
-                log_info(f"Valid filter keys are: {self.knowledge.valid_metadata_filters}")  # type: ignore
+                log_info(f"Valid filter keys are: {self.knowledge.valid_metadata_filters}")
 
                 # Only use valid filters
                 filters = valid_filters
@@ -3749,7 +3733,7 @@ class Agent:
             return None
 
     async def aget_relevant_docs_from_knowledge(
-        self, query: str, num_documents: Optional[int] = None, filters: Optional[Dict[str, Any]] = None, **kwargs
+        self, query: str, num_documents: Optional[int] = None, filters: Optional[dict[str, Any]] = None, **kwargs
     ) -> Optional[List[Dict[str, Any]]]:
         """Get relevant documents from knowledge base asynchronously."""
         from agno.document import Document
@@ -3811,7 +3795,7 @@ class Agent:
             log_warning(f"Error searching knowledge base: {e}")
             return None
 
-    def convert_documents_to_string(self, docs: List[Dict[str, Any]]) -> str:
+    def convert_documents_to_string(self, docs: list[dict[str, Any]]) -> str:
         if docs is None or len(docs) == 0:
             return ""
 
@@ -3849,7 +3833,7 @@ class Agent:
                     # Try to serialize each value individually
                     json.dumps({key: value}, default=str)
                     sanitized_context[key] = value
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # If serialization fails, convert to string representation
                     sanitized_context[key] = str(value)
 
@@ -3860,7 +3844,7 @@ class Agent:
                 return str(context)
 
     def save_run_response_to_file(
-        self, message: Optional[Union[str, List, Dict, Message]] = None, session_id: Optional[str] = None
+        self, message: Optional[str | list | dict | Message] = None, session_id: Optional[str] = None
     ) -> None:
         if self.save_response_to_file is not None and self.run_response is not None:
             message_str = None
@@ -3892,7 +3876,7 @@ class Agent:
                 log_warning(f"Failed to save output to file: {e}")
 
     def update_run_response_with_reasoning(
-        self, reasoning_steps: List[ReasoningStep], reasoning_agent_messages: List[Message]
+        self, reasoning_steps: list[ReasoningStep], reasoning_agent_messages: list[Message]
     ) -> None:
         self.run_response = cast(RunResponse, self.run_response)
         if self.run_response.extra_data is None:
@@ -4023,10 +4007,12 @@ class Agent:
         if content is None:
             log_error("Generated name is None. Trying again.")
             return self.generate_session_name(session_id=session_id)
-        if len(content.split()) > 15:
+        if isinstance(content, str) and len(content.split()) > 15:
             log_error("Generated name is too long. Trying again.")
             return self.generate_session_name(session_id=session_id)
-        return content.replace('"', "").strip()
+        if isinstance(content, str):
+            return content.replace('"', "").strip()
+        return str(content)
 
     def auto_rename_session(self) -> None:
         """Automatically rename the session and save to storage"""
@@ -4625,7 +4611,7 @@ class Agent:
             """
             import json
 
-            history: List[Dict[str, Any]] = []
+            history: list[dict[str, Any]] = []
             if isinstance(self.memory, AgentMemory):
                 agent_chats = self.memory.get_message_pairs()
 
@@ -5117,7 +5103,7 @@ class Agent:
                         if resp.extra_data is not None and resp.extra_data.reasoning_steps is not None:
                             reasoning_steps = resp.extra_data.reasoning_steps
 
-                    response_content_stream: Union[str, Markdown] = _response_content
+                    response_content_stream: str | Markdown = _response_content
 
                     # Escape special tags before markdown conversion
                     if self.markdown:
@@ -5826,7 +5812,7 @@ class Agent:
                 live_log.update(Group(*panels))
 
     def update_reasoning_content_from_tool_call(
-        self, tool_name: str, tool_args: Dict[str, Any]
+        self, tool_name: str, tool_args: dict[str, Any]
     ) -> Optional[ReasoningStep]:
         """Update reasoning_content based on tool calls that look like thinking or reasoning tools."""
 
@@ -5959,9 +5945,9 @@ class Agent:
             # Log the error but don't crash
             from agno.utils.log import log_error
 
-            log_error(f"Failed to add reasoning metrics to extra_data: {str(e)}")
+            log_error(f"Failed to add reasoning metrics to extra_data: {e!s}")
 
-    def _get_effective_filters(self, knowledge_filters: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _get_effective_filters(self, knowledge_filters: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
         """
         Determine which knowledge filters to use, with priority to run-level filters.
 

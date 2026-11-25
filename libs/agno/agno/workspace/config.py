@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,11 +49,11 @@ class WorkspaceConfig(BaseModel):
 
     def validate_workspace_settings(self, obj: Any) -> bool:
         if not isinstance(obj, WorkspaceSettings):
-            raise Exception("WorkspaceSettings must be of type WorkspaceSettings")
+            raise ValueError("WorkspaceSettings must be of type WorkspaceSettings")
 
         if self.ws_root_path is not None and obj.ws_root is not None:
             if obj.ws_root != self.ws_root_path:
-                raise Exception(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
+                raise ValueError(f"WorkspaceSettings.ws_root ({obj.ws_root}) must match {self.ws_root_path}")
         return True
 
     @property
@@ -77,11 +79,11 @@ class WorkspaceConfig(BaseModel):
                 if isinstance(obj, WorkspaceSettings):
                     if self.validate_workspace_settings(obj):
                         self._workspace_settings = obj
-                        if self.ws_schema is not None and self._workspace_settings is not None:
+                        if self.ws_schema is not None:
                             self._workspace_settings.ws_schema = self.ws_schema
                             logger.debug("Added WorkspaceSchema to WorkspaceSettings")
-        except Exception:
-            logger.warning(f"Error in {ws_settings_file}")
+        except Exception as e:
+            logger.warning(f"Error in {ws_settings_file}: {e}")
             raise
         return self._workspace_settings
 
@@ -168,7 +170,7 @@ class WorkspaceConfig(BaseModel):
                             logger.debug(f"Found: {obj.__class__.__module__}: {obj_name}")
                             if self.validate_workspace_settings(obj):
                                 self._workspace_settings = obj
-                                if self.ws_schema is not None and self._workspace_settings is not None:
+                                if self.ws_schema is not None:
                                     self._workspace_settings.ws_schema = self.ws_schema
                                     logger.debug("Added WorkspaceSchema to WorkspaceSettings")
                         elif isinstance(obj, InfraResources):
@@ -177,8 +179,8 @@ class WorkspaceConfig(BaseModel):
                                 logger.debug(f"Skipping {obj_name}: disabled")
                                 continue
                             workspace_objects[obj_name] = obj
-                except Exception:
-                    logger.warning(f"Error in {resource_file}")
+                except Exception as e:
+                    logger.warning(f"Error in {resource_file}: {e}")
                     raise
             logger.debug(f"workspace_objects: {workspace_objects}")
         logger.debug("**--> WorkspaceConfig loaded")

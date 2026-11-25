@@ -1,4 +1,6 @@
-from typing import Any, List, Optional, Union
+from __future__ import annotations
+
+from typing import Any
 
 from agno.media import Image
 from agno.models.message import Message

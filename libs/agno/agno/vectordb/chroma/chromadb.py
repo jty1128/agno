@@ -109,7 +109,7 @@ class ChromaDb(VectorDb):
             cleaned_content = document.content.replace("\x00", "\ufffd")
             if cleaned_content in existing_documents:  # type: ignore
                 return True
-        except Exception as e:
+        except (ValueError, KeyError) as e:
             logger.error(f"Document does not exist: {e}")
         return False
 
@@ -126,10 +126,10 @@ class ChromaDb(VectorDb):
         if self.client:
             try:
                 collections: Collection = self.client.get_collection(name=self.collection_name)
-                for collection in collections:  # type: ignore
-                    if name in collection:
+                for col in collections:  # type: ignore
+                    if name in col:
                         return True
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Document with given name does not exist: {e}")
         return False
 
@@ -254,16 +254,16 @@ class ChromaDb(VectorDb):
 
         try:
             # Use zip to iterate over multiple lists simultaneously
-            for idx, (id_, metadata, document) in enumerate(zip(ids, metadata, documents)):
+            for idx, (id_, meta, document) in enumerate(zip(ids, metadata, documents)):
                 search_results.append(
                     Document(
                         id=id_,
-                        meta_data=metadata,
+                        meta_data=meta,
                         content=document,
                         embedding=embeddings[idx],  # type: ignore
                     )
                 )
-        except Exception as e:
+        except (ValueError, KeyError) as e:
             logger.error(f"Error building search results: {e}")
 
         if self.reranker:
@@ -292,7 +292,7 @@ class ChromaDb(VectorDb):
         try:
             self.client.get_collection(name=self.collection_name)
             return True
-        except Exception as e:
+        except ValueError as e:
             log_debug(f"Collection does not exist: {e}")
         return False
 
@@ -306,7 +306,7 @@ class ChromaDb(VectorDb):
             try:
                 collection: Collection = self.client.get_collection(name=self.collection_name)
                 return collection.count()
-            except Exception as e:
+            except ValueError as e:
                 logger.error(f"Error getting count: {e}")
         return 0
 

@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import os
 from os import getenv
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from agno.agent import Agent
+    from agno.team import Team
 from urllib.parse import urlparse
 from uuid import uuid4
 

@@ -1,4 +1,4 @@
-from typing import List
+from __future__ import annotations
 
 from cassio.table.mixins.base_table import BaseTableMixin
 from cassio.table.table_types import ColumnSpecType

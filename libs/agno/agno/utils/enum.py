@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 
 class ExtendedEnum(Enum):
     @classmethod
-    def values_list(cls: Any) -> List[Any]:
-        return list(map(lambda c: c.value, cls))
+    def values_list(cls: Any) -> list[Any]:
+        return [c.value for c in cls]
 
     @classmethod
     def from_str(cls: Any, str_to_convert_to_enum: Optional[str]) -> Optional[Any]:
@@ -18,5 +20,5 @@ class ExtendedEnum(Enum):
             return cls._value2member_map_.get(str_to_convert_to_enum)
         else:
             raise NotImplementedError(
-                "{} is not a member of {}: {}".format(str_to_convert_to_enum, cls, cls._value2member_map_.keys())
+                f"{str_to_convert_to_enum} is not a member of {cls}: {cls._value2member_map_.keys()}"
             )

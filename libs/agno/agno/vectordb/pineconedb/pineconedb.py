@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from packaging import version
@@ -17,6 +19,7 @@ try:
 
     from pinecone import Pinecone, PodSpec, ServerlessSpec
     from pinecone.config import Config
+    from pinecone.core.client.exceptions import PineconeException
 
 except ImportError:
     raise ImportError("The `pinecone` package is not installed, please install using `pip install pinecone`.")
@@ -225,7 +228,7 @@ class PineconeDb(VectorDb):
         try:
             self.client.describe_index(name)
             return True
-        except Exception:
+        except PineconeException:
             return False
 
     async def async_name_exists(self, name: str) -> bool:
@@ -273,8 +276,8 @@ class PineconeDb(VectorDb):
 
     async def async_upsert(
         self,
-        documents: List[Document],
-        filters: Optional[Dict[str, Any]] = None,
+        documents: list[Document],
+        filters: Optional[dict[str, Any]] = None,
         namespace: Optional[str] = None,
         batch_size: Optional[int] = None,
         show_progress: bool = False,
@@ -383,22 +386,22 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index.
 
         Args:
             query (str): The query to search for.
             limit (int, optional): The maximum number of results to return. Defaults to 5.
-            filters (Optional[Dict[str, Union[str, float, int, bool, List, dict]]], optional): The filter for the search. Defaults to None.
+            filters (Optional[dict[str, Union[str, float, int, bool, list, dict]]], optional): The filter for the search. Defaults to None.
             namespace (Optional[str], optional): The namespace to search in. Defaults to None.
             include_values (Optional[bool], optional): Whether to include values in the search results. Defaults to None.
             include_metadata (Optional[bool], optional): Whether to include metadata in the search results. Defaults to None.
 
         Returns:
-            List[Document]: The list of matching documents.
+            list[Document]: The list of matching documents.
 
         """
         dense_embedding = self.embedder.get_embedding(query)
@@ -449,10 +452,10 @@ class PineconeDb(VectorDb):
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Union[str, float, int, bool, List, dict]]] = None,
+        filters: Optional[dict[str, Union[str, float, int, bool, list, dict]]] = None,
         namespace: Optional[str] = None,
         include_values: Optional[bool] = None,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Search for similar documents in the index asynchronously."""
         return await asyncio.to_thread(self.search, query, limit, filters, namespace, include_values)
 
@@ -462,7 +465,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.
@@ -474,7 +476,7 @@ class PineconeDb(VectorDb):
         try:
             self.index.delete(delete_all=True, namespace=namespace)
             return True
-        except Exception:
+        except PineconeException:
             return False
 
     async def async_drop(self) -> None:

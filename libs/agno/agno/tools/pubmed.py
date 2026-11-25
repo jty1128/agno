@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from xml.etree import ElementTree
 
 import httpx
@@ -179,5 +181,5 @@ class PubmedTools(Toolkit):
                 results.append(article_text)
 
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Could not fetch articles. Error: {e}"

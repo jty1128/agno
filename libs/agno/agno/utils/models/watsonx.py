@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from agno.media import Image
 from agno.models.message import Message
@@ -32,8 +33,8 @@ def format_images_for_message(message: Message, images: Sequence[Image]) -> Mess
                 image_payload = {"type": "image_url", "image_url": {"url": image_url}}
                 message_content_with_image.append(image_payload)
 
-        except Exception as e:
-            log_error(f"Failed to process image: {str(e)}")
+        except OSError as e:
+            log_error(f"Failed to process image: {e!s}")
 
     # Update the message content with the images
     if len(message_content_with_image) > 1:

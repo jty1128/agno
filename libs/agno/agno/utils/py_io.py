@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 
-def get_python_objects_from_module(module_path: Path) -> Dict:
+def get_python_objects_from_module(module_path: Path) -> dict:
     """Returns a dictionary of python objects from a module"""
     import importlib.util
     from importlib.machinery import ModuleSpec

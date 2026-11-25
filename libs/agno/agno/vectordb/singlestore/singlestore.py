@@ -1,6 +1,6 @@
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from sqlalchemy.dialects import mysql
@@ -119,7 +119,7 @@ class SingleStore(VectorDb):
         log_debug(f"Checking if table exists: {self.table.name}")
         try:
             return inspect(self.db_engine).has_table(self.table.name, schema=self.schema)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(e)
             return False
 
@@ -253,7 +253,7 @@ class SingleStore(VectorDb):
             sess.commit()
             log_debug(f"Committed {counter} documents")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None) -> list[Document]:
         """
         Search for documents based on a query and optional filters.
 
@@ -315,7 +315,7 @@ class SingleStore(VectorDb):
             #                 sess.execute(text(f"SET SESSION ef_search = {self.index.ef_search}"))
 
         # Build search results
-        search_results: List[Document] = []
+        search_results: list[Document] = []
         for neighbor in neighbors:
             meta_data_dict = json.loads(neighbor.meta_data) if neighbor.meta_data else {}
             usage_dict = json.loads(neighbor.usage) if neighbor.usage else {}
@@ -325,7 +325,7 @@ class SingleStore(VectorDb):
             if neighbor.embedding:
                 try:
                     embedding_list = json.loads(neighbor.embedding)
-                except Exception as e:
+                except (ValueError, TypeError) as e:
                     logger.error(f"Error extracting vector: {e}")
                     embedding_list = []
 
@@ -399,15 +399,15 @@ class SingleStore(VectorDb):
     async def async_doc_exists(self, document: Document) -> bool:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: Optional[dict[str, Any]] = None) -> None:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+        self, query: str, limit: int = 5, filters: Optional[dict[str, Any]] = None
+    ) -> list[Document]:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")
 
     async def async_drop(self) -> None:
