@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 from agno.agent import Agent
 from agno.reasoning.step import NextAction, ReasoningStep
@@ -97,9 +99,9 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
-            log_error(f"Error recording thought: {e}")
-            return f"Error recording thought: {e}"
+        except Exception:
+            log_error("Error recording thought")
+            return "Error recording thought"
 
     def analyze(
         self,
@@ -165,9 +167,9 @@ Confidence: {step_parsed.confidence}
                     formatted_reasoning_steps += step_str + "\n"
                 return formatted_reasoning_steps.strip()
             return reasoning_step.model_dump_json()
-        except Exception as e:
-            log_error(f"Error recording analysis: {e}")
-            return f"Error recording analysis: {e}"
+        except Exception:
+            log_error("Error recording analysis")
+            return "Error recording analysis"
 
     # --------------------------------------------------------------------------------
     # Default instructions and few-shot examples

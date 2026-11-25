@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import time
 import uuid
 from os import getenv
-from typing import Any, Dict, List, Literal, Optional, TypedDict
+from typing import Any, Literal, TypedDict
 
 from agno.agent import Agent
 from agno.media import VideoArtifact
@@ -114,11 +116,11 @@ class LumaLabTools(Toolkit):
 
             return f"Video generation timed out after {self.max_wait_time} seconds"
 
-        except Exception as e:
+        except Exception as e:  # type: ignore
             logger.error(f"Failed to generate video: {e}")
             return f"Error: {e}"
 
-    def generate_video(
+    def generate_video(  # type: ignore
         self,
         agent: Agent,
         prompt: str,

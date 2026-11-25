@@ -1,4 +1,6 @@
-from typing import Any, List, Optional, Union
+from __future__ import annotations
+
+from typing import Any, Optional
 
 from agno.media import Image
 from agno.models.message import Message
@@ -47,8 +49,8 @@ def _format_image_for_message(image: Image) -> Optional[ImageURLChunk]:
     return None
 
 
-def format_messages(messages: List[Message]) -> List[MistralMessage]:
-    mistral_messages: List[MistralMessage] = []
+def format_messages(messages: list[Message]) -> list[MistralMessage]:
+    mistral_messages: list[MistralMessage] = []
 
     for message in messages:
         mistral_message: MistralMessage
@@ -63,7 +65,7 @@ def format_messages(messages: List[Message]) -> List[MistralMessage]:
                 log_warning("Video input is currently unsupported.")
 
             if message.images is not None:
-                content: List[Any] = [TextChunk(type="text", text=message.content)]
+                content: list[Any] = [TextChunk(type="text", text=message.content)]
                 for image in message.images:
                     image_content = _format_image_for_message(image)
                     if image_content:

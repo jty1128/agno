@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os
-from typing import Optional
 
 import httpx
 import requests
@@ -116,8 +117,8 @@ def upload_media(media_data: bytes, mime_type: str, filename: str = "file"):
         return media_id
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        return {"error": "An unexpected error occurred"}
 
 
 async def upload_media_async(media_data: bytes, mime_type: str, filename: str = "file"):
@@ -154,14 +155,14 @@ async def upload_media_async(media_data: bytes, mime_type: str, filename: str = 
             return media_id
     except httpx.HTTPStatusError as e:
         return {"error": str(e)}
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        return {"error": "An unexpected error occurred"}
 
 
 async def send_image_message_async(
     media_id: str,
     recipient: str,
-    text: Optional[str] = None,
+    text: str | None = None,
 ):
     """Send an image message to a WhatsApp user (asynchronous version).
 
@@ -173,7 +174,7 @@ async def send_image_message_async(
     Returns:
         Success message with message ID
     """
-    log_debug(f"Sending WhatsApp image to {recipient}: {text}")
+    log_debug(f"Sending WhatsApp image to {recipient!r}: {text!r}")
     phone_number_id = get_phone_number_id()
 
     url = f"https://graph.facebook.com/v22.0/{phone_number_id}/messages"
@@ -201,17 +202,17 @@ async def send_image_message_async(
 
     except httpx.HTTPStatusError as e:
         log_error(f"Failed to send WhatsApp image message: {e}")
-        log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
+        log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'!r}")
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {str(e)!r}")
         raise
 
 
 def send_image_message(
     media_id: str,
     recipient: str,
-    text: Optional[str] = None,
+    text: str | None = None,
 ):
     """Send an image message to a WhatsApp user (synchronous version).
 
@@ -223,7 +224,7 @@ def send_image_message(
     Returns:
         Success message with message ID
     """
-    log_debug(f"Sending WhatsApp image to {recipient}: {text}")
+    log_debug(f"Sending WhatsApp image to {recipient!r}: {text!r}")
     phone_number_id = get_phone_number_id()
 
     url = f"https://graph.facebook.com/v22.0/{phone_number_id}/messages"
@@ -249,8 +250,8 @@ def send_image_message(
         log_debug(f"Response: {response.text}")
     except requests.exceptions.RequestException as e:
         log_error(f"Failed to send WhatsApp image message: {e}")
-        log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
+        log_error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'!r}")
         raise
     except Exception as e:
-        log_error(f"Unexpected error sending WhatsApp image message: {str(e)}")
+        log_error(f"Unexpected error sending WhatsApp image message: {str(e)!r}")
         raise

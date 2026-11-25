@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Optional, Union
 
 from agno.media import Image
 from agno.utils.log import logger
@@ -31,16 +32,15 @@ def _process_image_path(image_path: Union[Path, str]) -> Dict[str, Any]:
         return {"type": "input_image", "image_url": image_url}
 
 
-def _process_image_url(image_url: str) -> Dict[str, Any]:
+def _process_image_url(image_url: str) -> dict[str, Any]:
     """Process image (base64 or URL)."""
 
     if image_url.startswith("data:image") or image_url.startswith(("http://", "https://")):
         return {"type": "input_image", "image_url": image_url}
-    else:
-        raise ValueError("Image URL must start with 'data:image' or 'http(s)://'.")
+    raise ValueError("Image URL must start with 'data:image' or 'http(s)://'.")
 
 
-def _process_image(image: Image) -> Optional[Dict[str, Any]]:
+def _process_image(image: Image) -> Optional[dict[str, Any]]:
     """Process an image based on the format."""
 
     if image.url is not None:
@@ -53,7 +53,7 @@ def _process_image(image: Image) -> Optional[Dict[str, Any]]:
         image_payload = _process_bytes_image(image.content)
 
     else:
-        logger.warning(f"Unsupported image format: {image}")
+        logger.warning(f"Unsupported image format: {image!r}")
         return None
 
     if image.detail:
@@ -62,7 +62,7 @@ def _process_image(image: Image) -> Optional[Dict[str, Any]]:
     return image_payload
 
 
-def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
+def images_to_message(images: Sequence[Image]) -> list[dict[str, Any]]:
     """
     Add images to a message for the model. By default, we use the OpenAI image format but other Models
     can override this method to use a different image format.
@@ -78,7 +78,7 @@ def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
     """
 
     # Create a default message content with text
-    image_messages: List[Dict[str, Any]] = []
+    image_messages: list[dict[str, Any]] = []
 
     # Add images to the message content
     for image in images:
@@ -86,8 +86,8 @@ def images_to_message(images: Sequence[Image]) -> List[Dict[str, Any]]:
             image_data = _process_image(image)
             if image_data:
                 image_messages.append(image_data)
-        except Exception as e:
-            logger.error(f"Failed to process image: {str(e)}")
+        except Exception:
+            logger.error("Failed to process image")
             continue
 
     return image_messages

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 try:
@@ -5,7 +7,7 @@ try:
 except ImportError:
     raise ImportError("`spider-client` not installed. Please install using `pip install spider-client`")
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_info, logger
@@ -23,7 +25,7 @@ class SpiderTools(Toolkit):
         self.url = url
         self.optional_params = optional_params or {}
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.search)
         tools.append(self.scrape)
         tools.append(self.crawl)

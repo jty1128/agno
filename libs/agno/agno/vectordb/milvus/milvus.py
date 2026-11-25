@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     import asyncio
 
     from pymilvus import AsyncMilvusClient, MilvusClient  # type: ignore
-except ImportError:
-    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
+except ImportError as e:
+    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.") from e
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -105,7 +107,7 @@ class Milvus(VectorDb):
             )
         return self._async_client
 
-    def _get_sparse_vector(self, text: str) -> Dict[int, float]:
+    def _get_sparse_vector(self, text: str) -> dict[int, float]:
         """
         Convert text into a sparse vector representation using a simple TF-IDF-like scoring.
 
@@ -130,7 +132,7 @@ class Milvus(VectorDb):
         word_counts = Counter(words)
 
         # Create sparse vector (word_id: tf-idf_score)
-        sparse_vector = {}
+        sparse_vector: dict[int, float] = {}
         for word, count in word_counts.items():
             word_id = hash(word) % self.sparse_vector_dimensions
             # Simple tf-idf-like score
@@ -193,7 +195,7 @@ class Milvus(VectorDb):
 
     def _prepare_document_data(
         self, document: Document, include_vectors: bool = True
-    ) -> Dict[str, Union[str, List[float], Dict[int, float], None]]:
+    ) -> dict[str, str | list[float] | dict[int, float] | None]:
         """
         Prepare document data for insertion.
 
@@ -202,8 +204,8 @@ class Milvus(VectorDb):
             include_vectors: Whether to include vector data
 
         Returns:
-            Dictionary with document data where values can be strings, vectors (List[float]),
-            sparse vectors (Dict[int, float]), or None
+            Dictionary with document data where values can be strings, vectors (list[float]),
+            sparse vectors (dict[int, float]), or None
         """
         # Ensure document is embedded if vectors are needed
         if include_vectors and document.embedding is None:
@@ -218,7 +220,7 @@ class Milvus(VectorDb):
         meta_data_str = json.dumps(document.meta_data) if document.meta_data else "{}"
         usage_str = json.dumps(document.usage) if document.usage else "{}"
 
-        data: Dict[str, Union[str, List[float], Dict[int, float], None]] = {
+        data: dict[str, str | list[float] | dict[int, float] | None] = {
             "id": doc_id,
             "text": cleaned_content,
             "name": document.name,
@@ -231,19 +233,19 @@ class Milvus(VectorDb):
             if self.search_type == SearchType.hybrid:
                 data.update(
                     {
-                        "dense_vector": document.embedding,  # List[float] or None # Dict[int, float]
+                        "dense_vector": document.embedding,  # list[float] or None # dict[int, float]
                         "sparse_vector": self._get_sparse_vector(cleaned_content),
                     }
                 )
             else:
-                vector_data: Optional[List[float]] = document.embedding
+                vector_data: list[float] | None = document.embedding
                 data["vector"] = vector_data
 
         return data
 
     def _create_hybrid_collection(self) -> None:
         """Create a collection specifically for hybrid search."""
-        log_debug(f"Creating hybrid collection: {self.collection}")
+        log_debug(f"Creating hybrid collection: {self.collection!s}")
 
         schema = self._create_hybrid_schema()
         index_params = self._prepare_hybrid_index_params()
@@ -377,7 +379,7 @@ class Milvus(VectorDb):
         )
         log_debug(f"Inserted hybrid document asynchronously: {document.name} ({document.meta_data})")
 
-    def insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents based on search type."""
         log_info(f"Inserting {len(documents)} documents")
 
@@ -410,7 +412,7 @@ class Milvus(VectorDb):
 
         log_info(f"Inserted {len(documents)} documents")
 
-    async def async_insert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_insert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """Insert documents asynchronously based on search type."""
         log_info(f"Inserting {len(documents)} documents asynchronously")
 
@@ -455,7 +457,7 @@ class Milvus(VectorDb):
         """
         return True
 
-    def upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    def upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         """
         Upsert documents into the database.
 
@@ -482,7 +484,7 @@ class Milvus(VectorDb):
             )
             log_debug(f"Upserted document: {document.name} ({document.meta_data})")
 
-    async def async_upsert(self, documents: List[Document], filters: Optional[Dict[str, Any]] = None) -> None:
+    async def async_upsert(self, documents: list[Document], filters: dict[str, Any] | None = None) -> None:
         log_debug(f"Upserting {len(documents)} documents asynchronously")
 
         async def process_document(document):
@@ -518,7 +520,7 @@ class Milvus(VectorDb):
         """
         return MILVUS_DISTANCE_MAP.get(self.distance, "COSINE")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Search for documents matching the query.
 
@@ -564,9 +566,7 @@ class Milvus(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    async def async_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         if self.search_type == SearchType.hybrid:
             return self.hybrid_search(query, limit, filters)
 
@@ -601,7 +601,7 @@ class Milvus(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    def hybrid_search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def hybrid_search(self, query: str, limit: int = 5, filters: dict[str, Any] | None = None) -> list[Document]:
         """
         Perform a hybrid search combining dense and sparse vector similarity.
 
@@ -688,7 +688,7 @@ class Milvus(VectorDb):
             return search_results
 
         except Exception as e:
-            logger.error(f"Error during hybrid search: {e}")
+            logger.error(f"Error during hybrid search: {e!s}")
             return []
 
     def drop(self) -> None:
@@ -730,7 +730,7 @@ class Milvus(VectorDb):
             return True
         return False
 
-    def _build_expr(self, filters: Optional[Dict[str, Any]]) -> Optional[str]:
+    def _build_expr(self, filters: dict[str, Any] | None) -> str | None:
         """Build Milvus expression from filters."""
         if not filters:
             return None
@@ -755,7 +755,7 @@ class Milvus(VectorDb):
                 expr = f'meta_data["{k}"] is null'
             else:
                 # For other types, convert to string
-                expr = f'meta_data["{k}"] == "{str(v)}"'
+                expr = f'meta_data["{k}"] == "{v!s}"'
 
             expressions.append(expr)
 

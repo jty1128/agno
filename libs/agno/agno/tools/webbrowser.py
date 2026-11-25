@@ -1,5 +1,5 @@
 import webbrowser
-from typing import Any, List
+from typing import Any
 
 from agno.tools import Toolkit
 

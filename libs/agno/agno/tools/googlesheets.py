@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Google Sheets Toolset for interacting with Sheets API
 
@@ -48,7 +50,7 @@ import json
 from functools import wraps
 from os import getenv
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 
@@ -79,7 +81,7 @@ def authenticate(func):
 
 class GoogleSheetsTools(Toolkit):
     # Default scopes for Google Sheets API access
-    DEFAULT_SCOPES = {
+    DEFAULT_SCOPES: ClassVar[dict[str, str]] = {
         "read": "https://www.googleapis.com/auth/spreadsheets.readonly",
         "write": "https://www.googleapis.com/auth/spreadsheets",
     }
@@ -88,7 +90,7 @@ class GoogleSheetsTools(Toolkit):
 
     def __init__(
         self,
-        scopes: Optional[List[str]] = None,
+        scopes: Optional[list[str]] = None,
         spreadsheet_id: Optional[str] = None,
         spreadsheet_range: Optional[str] = None,
         creds: Optional[Credentials] = None,
@@ -145,7 +147,7 @@ class GoogleSheetsTools(Toolkit):
                     f"Either {self.DEFAULT_SCOPES['read']} or {self.DEFAULT_SCOPES['write']} is required for read operations"
                 )
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         if read:
             tools.append(self.read_sheet)
         if create:
@@ -218,8 +220,10 @@ class GoogleSheetsTools(Toolkit):
             result = self.service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()  # type: ignore
             return json.dumps(result.get("values", []))
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error reading Google Sheet: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
 
     @authenticate
     def create_sheet(self, title: str) -> str:
@@ -243,12 +247,14 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Spreadsheet created: https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error creating Google Sheet: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
 
     @authenticate
     def update_sheet(
-        self, data: List[List[Any]], spreadsheet_id: Optional[str] = None, range_name: Optional[str] = None
+        self, data: list[list[Any]], spreadsheet_id: Optional[str] = None, range_name: Optional[str] = None
     ) -> str:
         """Updates a Google Sheet with the provided data.
 
@@ -280,8 +286,10 @@ class GoogleSheetsTools(Toolkit):
 
             return f"Sheet updated successfully: {spreadsheet_id}"
 
-        except Exception as e:
+        except HttpError as e:
             return f"Error updating Google Sheet: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
 
     @authenticate
     def create_duplicate_sheet(
@@ -349,5 +357,7 @@ class GoogleSheetsTools(Toolkit):
                     ).execute()
 
             return f"Spreadsheet duplicated successfully: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
-        except Exception as e:
+        except HttpError as e:
             return f"Error duplicating spreadsheet via Drive API: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"

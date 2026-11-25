@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from os import environ
 from types import TracebackType
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from agno.tools import Toolkit
 from agno.tools.function import Function
@@ -150,7 +152,7 @@ class MCPTools(Toolkit):
         self._session_context = None
         self._initialized = False
 
-    async def __aenter__(self) -> "MCPTools":
+    async def __aenter__(self) -> MCPTools:
         """Enter the async context manager."""
 
         if self.session is not None:
@@ -248,7 +250,7 @@ class MCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")
@@ -301,14 +303,12 @@ class MultiMCPTools(Toolkit):
         """
         super().__init__(name="MultiMCPTools", **kwargs)
 
-        if urls is not None:
-            if urls_transports is None:
-                log_warning(
-                    "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
-                )
-            else:
-                if len(urls) != len(urls_transports):
-                    raise ValueError("urls and urls_transports must be of the same length")
+        if urls is not None and urls_transports is not None and len(urls) != len(urls_transports):
+            raise ValueError("urls and urls_transports must be of the same length")
+        if urls is not None and urls_transports is None:
+            log_warning(
+                "The default transport 'sse' will be used. You can explicitly set the transports by providing the urls_transports parameter."
+            )
 
         # Set these after `__init__` to bypass the `_check_tools_filters`
         # beacuse tools are not available until `initialize()` is called.
@@ -359,7 +359,7 @@ class MultiMCPTools(Toolkit):
 
         self._client = client
 
-    async def __aenter__(self) -> "MultiMCPTools":
+    async def __aenter__(self) -> MultiMCPTools:
         """Enter the async context manager."""
 
         for server_params in self.server_params_list:
@@ -437,7 +437,7 @@ class MultiMCPTools(Toolkit):
                     # Register the Function with the toolkit
                     self.functions[f.name] = f
                     log_debug(f"Function: {f.name} registered with {self.name}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Failed to register tool {tool.name}: {e}")
 
             log_debug(f"{self.name} initialized with {len(filtered_tools)} tools")

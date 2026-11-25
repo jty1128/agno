@@ -1,4 +1,6 @@
-from typing import Any, Dict, List
+from __future__ import annotations
+
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -11,16 +13,16 @@ except ImportError:
 
 class PandasTools(Toolkit):
     def __init__(self, **kwargs):
-        self.dataframes: Dict[str, pd.DataFrame] = {}
+        self.dataframes: dict[str, pd.DataFrame] = {}
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.create_pandas_dataframe)
         tools.append(self.run_dataframe_operation)
 
         super().__init__(name="pandas_tools", tools=tools, **kwargs)
 
     def create_pandas_dataframe(
-        self, dataframe_name: str, create_using_function: str, function_parameters: Dict[str, Any]
+        self, dataframe_name: str, create_using_function: str, function_parameters: dict[str, Any]
     ) -> str:
         """Creates a pandas dataframe named `dataframe_name` by running a function `create_using_function` with the parameters `function_parameters`.
         Returns the created dataframe name as a string if successful, otherwise returns an error message.
@@ -53,11 +55,11 @@ class PandasTools(Toolkit):
             self.dataframes[dataframe_name] = dataframe
             log_debug(f"Created dataframe: {dataframe_name}")
             return dataframe_name
-        except Exception as e:
-            logger.error(f"Error creating dataframe: {e}")
-            return f"Error creating dataframe: {e}"
+        except Exception:
+            logger.error("Error creating dataframe")
+            return "Error creating dataframe"
 
-    def run_dataframe_operation(self, dataframe_name: str, operation: str, operation_parameters: Dict[str, Any]) -> str:
+    def run_dataframe_operation(self, dataframe_name: str, operation: str, operation_parameters: dict[str, Any]) -> str:
         """Runs an operation `operation` on a dataframe `dataframe_name` with the parameters `operation_parameters`.
         Returns the result of the operation as a string if successful, otherwise returns an error message.
 
@@ -89,6 +91,6 @@ class PandasTools(Toolkit):
                     return str(result)
             except Exception:
                 return "Operation ran successfully"
-        except Exception as e:
-            logger.error(f"Error running operation: {e}")
-            return f"Error running operation: {e}"
+        except Exception:
+            logger.error("Error running operation")
+            return "Error running operation"

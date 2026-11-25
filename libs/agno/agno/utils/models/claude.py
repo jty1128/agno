@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from agno.media import File, Image
 from agno.models.message import Message
@@ -106,7 +108,7 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
             },
         }
 
-    except Exception as e:
+    except (OSError, ValueError, TypeError) as e:
         log_error(f"Error processing image: {e}")
         return None
 
