@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from xml.etree import ElementTree
 
 import httpx
@@ -12,12 +14,12 @@ class PubmedTools(Toolkit):
     def __init__(
         self,
         email: str = "your_email@example.com",
-        max_results: Optional[int] = None,
+        max_results: int | None = None,
         results_expanded: bool = False,
         **kwargs,
     ):
         super().__init__(name="pubmed", **kwargs)
-        self.max_results: Optional[int] = max_results
+        self.max_results: int | None = max_results
         self.email: str = email
         self.results_expanded: bool = results_expanded
 
@@ -131,7 +133,7 @@ class PubmedTools(Toolkit):
 
         return articles
 
-    def search_pubmed(self, query: str, max_results: Optional[int] = 10) -> str:
+    def search_pubmed(self, query: str, max_results: int | None = 10) -> str:
         """Use this function to search PubMed for articles.
 
         Args:
@@ -180,4 +182,5 @@ class PubmedTools(Toolkit):
 
             return json.dumps(results)
         except Exception as e:
+            log_debug(f"Could not fetch articles. Error: {e}")
             return f"Could not fetch articles. Error: {e}"

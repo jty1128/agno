@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -64,7 +65,7 @@ class XTools(Toolkit):
             A JSON-formatted string containing the response from X API (Twitter API) with the created post details,
             or an error message if the post creation fails.
         """
-        log_debug(f"Attempting to create post with text: {text}")
+        log_debug("Attempting to create post with text: %s", text)
         try:
             response = self.client.create_tweet(text=text)
             post_id = response.data["id"]
@@ -89,7 +90,7 @@ class XTools(Toolkit):
             A JSON-formatted string containing the response from Twitter API with the reply post details,
             or an error message if the reply fails.
         """
-        log_debug(f"Attempting to reply to {post_id} with text {text}")
+        log_debug("Attempting to reply to %s with text %s", post_id, text)
         try:
             response = self.client.create_tweet(text=text, in_reply_to_tweet_id=post_id)
             reply_id = response.data["id"]
@@ -113,18 +114,18 @@ class XTools(Toolkit):
             A JSON-formatted string containing the response from Twitter API with the sent message details,
             or an error message if sending the DM fails.
         """
-        log_debug(f"Attempting to send DM to user {recipient}")
+        log_debug("Attempting to send DM to user %s", recipient)
         try:
             # Check if recipient is a user ID (numeric) or username
             if not recipient.isdigit():
                 # If it's not numeric, assume it's a username and get the user ID
                 user = self.client.get_user(username=recipient)
-                log_debug(f"Attempting to send DM to user's id {user}")
+                log_debug("Attempting to send DM to user's id %s", user)
                 recipient_id = user.data.id
             else:
                 recipient_id = recipient
 
-            log_debug(f"Attempting to send DM to user's id {recipient_id}")
+            log_debug("Attempting to send DM to user's id %s", recipient_id)
             response = self.client.create_direct_message(participant_id=recipient_id, text=text)
             result = {
                 "message": "Direct message sent successfully!",
@@ -145,7 +146,7 @@ class XTools(Toolkit):
             return json.dumps({"error": error_message}, indent=2)
         except Exception as e:
             logger.error(f"Unexpected error sending DM: {e}")
-            return json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, indent=2)
+            return json.dumps({"error": f"An unexpected error occurred: {e!s}"}, indent=2)
 
     def get_my_info(self) -> str:
         """
@@ -186,7 +187,7 @@ class XTools(Toolkit):
             including id, name, username, description, and follower/following counts,
             or an error message if fetching the information fails.
         """
-        log_debug(f"Fetching information about user {username}")
+        log_debug("Fetching information about user %s", username)
         try:
             user = self.client.get_user(username=username, user_fields=["description", "public_metrics"])
             user_info = user.data.data
@@ -216,7 +217,7 @@ class XTools(Toolkit):
             including tweet id, text, creation time, and author id,
             or an error message if fetching the timeline fails.
         """
-        log_debug(f"Fetching home timeline, max results: {max_results}")
+        log_debug("Fetching home timeline, max results: %s", max_results)
         try:
             tweets = self.client.get_home_timeline(
                 max_results=max_results, tweet_fields=["created_at", "public_metrics"]

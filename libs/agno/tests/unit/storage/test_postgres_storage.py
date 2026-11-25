@@ -50,13 +50,15 @@ def workflow_storage(mock_engine, mock_session):
 def test_agent_storage_initialization():
     """Test PostgresStorage initialization with different parameters."""
     # Test with db_url
-    with patch("agno.storage.postgres.create_engine") as mock_create_engine:
-        with patch("agno.storage.postgres.scoped_session"):
-            with patch("agno.storage.postgres.inspect"):
-                mock_engine = MagicMock()
-                mock_create_engine.return_value = mock_engine
+    with (
+        patch("agno.storage.postgres.create_engine") as mock_create_engine,
+        patch("agno.storage.postgres.scoped_session"),
+        patch("agno.storage.postgres.inspect"),
+    ):
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+        storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
 
                 mock_create_engine.assert_called_once_with("postgresql://user:pass@localhost/db")
                 assert storage.table_name == "test_table"
@@ -85,11 +87,9 @@ def test_agent_storage_crud(agent_storage):
 
     # Instead of mocking side_effect, directly mock the return value for upsert
     # This simulates the behavior we want without relying on the internal implementation
-    original_read = storage.read
     storage.read = MagicMock(return_value=None)  # For initial read check
 
     # Mock upsert to return the session directly
-    original_upsert = storage.upsert
     storage.upsert = MagicMock(return_value=session)
 
     # Test upsert
@@ -126,11 +126,9 @@ def test_workflow_storage_crud(workflow_storage):
     )
 
     # Instead of mocking side_effect, directly mock the return value for upsert
-    original_read = storage.read
     storage.read = MagicMock(return_value=None)  # For initial read check
 
     # Mock upsert to return the session directly
-    original_upsert = storage.upsert
     storage.upsert = MagicMock(return_value=session)
 
     # Test upsert
@@ -260,15 +258,14 @@ def test_drop_table(agent_storage):
 
 def test_mode_switching():
     """Test switching between agent and workflow modes."""
-    with patch("agno.storage.postgres.scoped_session"):
-        with patch("agno.storage.postgres.inspect"):
-            with patch("agno.storage.postgres.create_engine"):
-                # Create storage in agent mode
-                storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
-                assert storage.mode == "agent"
+    with patch("agno.storage.postgres.scoped_session"), patch("agno.storage.postgres.inspect"):
+        with patch("agno.storage.postgres.create_engine"):
+            # Create storage in agent mode
+            storage = PostgresStorage(table_name="test_table", db_url="postgresql://user:pass@localhost/db")
+            assert storage.mode == "agent"
 
-                # Switch to workflow mode
-                with patch.object(storage, "get_table") as mock_get_table:
-                    storage.mode = "workflow"
-                    assert storage.mode == "workflow"
-                    mock_get_table.assert_called_once()
+            # Switch to workflow mode
+            with patch.object(storage, "get_table") as mock_get_table:
+                storage.mode = "workflow"
+                assert storage.mode == "workflow"
+                mock_get_table.assert_called_once()

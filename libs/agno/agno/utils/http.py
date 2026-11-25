@@ -18,6 +18,7 @@ def fetch_with_retry(
     proxy: Optional[str] = None,
 ) -> httpx.Response:
     """Synchronous HTTP GET with retry logic."""
+    """Synchronous HTTP GET with retry logic."""
 
     for attempt in range(max_retries):
         try:
@@ -45,6 +46,7 @@ async def async_fetch_with_retry(
     backoff_factor: int = DEFAULT_BACKOFF_FACTOR,
     proxy: Optional[str] = None,
 ) -> httpx.Response:
+    """Asynchronous HTTP GET with retry logic."""
     """Asynchronous HTTP GET with retry logic."""
 
     async def _fetch():

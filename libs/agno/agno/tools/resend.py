@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from os import getenv
-from typing import Optional
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -13,8 +14,8 @@ except ImportError:
 class ResendTools(Toolkit):
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        from_email: Optional[str] = None,
+        api_key: str | None = None,
+        from_email: str | None = None,
         **kwargs,
     ):
         super().__init__(name="resend_tools", **kwargs)
@@ -53,6 +54,6 @@ class ResendTools(Toolkit):
 
             resend.Emails.send(params)
             return f"Email sent to {to_email} successfully."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send email {e}")
             return f"Error: {e}"

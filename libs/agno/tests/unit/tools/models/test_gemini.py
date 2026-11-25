@@ -30,8 +30,8 @@ def mock_client():
 def mock_gemini_tools(mock_client):
     def mock_getenv_side_effect(var_name):
         if var_name == "GOOGLE_GENAI_USE_VERTEXAI":
-            return None
-        return None
+            return
+        return
 
     with patch("agno.tools.models.gemini.Client", return_value=mock_client) as _, patch(
         "agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect
@@ -66,8 +66,8 @@ def test_gemini_tools_init_with_api_key_arg():
 
     def mock_getenv_side_effect(var_name):
         if var_name == "GOOGLE_GENAI_USE_VERTEXAI":
-            return None
-        return None
+            return
+        return
 
     with patch("agno.tools.models.gemini.Client") as mock_client_cls, patch(
         "agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect
@@ -93,14 +93,15 @@ def test_gemini_tools_init_with_env_var():
             return None
         return None
 
-    with patch("agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect) as mock_getenv:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_instance = MagicMock()
-            mock_client_cls.return_value = mock_client_instance
+    with patch("agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect) as mock_getenv, patch(
+        "agno.tools.models.gemini.Client"
+    ) as mock_client_cls:
+        mock_client_instance = MagicMock()
+        mock_client_cls.return_value = mock_client_instance
 
-            gemini_tools = GeminiTools()
+        gemini_tools = GeminiTools()
 
-            assert gemini_tools.api_key == env_api_key
+        assert gemini_tools.api_key == env_api_key
             mock_client_cls.assert_called_once_with(api_key=env_api_key)
             assert gemini_tools.client == mock_client_instance
             assert mock_getenv.call_count == 2
@@ -112,23 +113,23 @@ def test_gemini_tools_init_no_api_key():
     def mock_getenv_side_effect(var_name):
         return None
 
-    with patch("agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect) as mock_getenv:
-        with pytest.raises(ValueError, match="GOOGLE_API_KEY not set"):
-            GeminiTools()
+    with patch("agno.tools.models.gemini.getenv", side_effect=mock_getenv_side_effect) as mock_getenv, pytest.raises(
+        ValueError, match="GOOGLE_API_KEY not set"
+    ):
+        GeminiTools()
 
-        assert mock_getenv.call_count == 2
+    assert mock_getenv.call_count == 2
 
 
 def test_gemini_tools_init_client_creation_fails():
     """Test initialization raises ValueError if Client creation fails."""
-    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _:
-        with patch("agno.tools.models.gemini.Client") as mock_client_cls:
-            mock_client_cls.side_effect = Exception("Client creation failed")
+    with patch("agno.tools.models.gemini.getenv", return_value="fake_key") as _, patch(
+        "agno.tools.models.gemini.Client"
+    ) as mock_client_cls, pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
+        mock_client_cls.side_effect = Exception("Client creation failed")
+        GeminiTools()
 
-            with pytest.raises(ValueError, match="Failed to create Google GenAI Client"):
-                GeminiTools()
-
-            mock_client_cls.assert_called_once_with(api_key="fake_key")
+    mock_client_cls.assert_called_once_with(api_key="fake_key")
 
 
 # Test generate_image method
@@ -149,8 +150,7 @@ def test_generate_image_success(mock_gemini_tools, mock_agent, mock_successful_r
 
         # Verify agent.add_image was called with the correct ImageArtifact
         mock_agent.add_image.assert_called_once()
-        call_args, _ = mock_agent.add_image.call_args
-        added_artifact = call_args[0]
+        added_artifact = mock_agent.add_image.call_args.args[0]
 
         assert isinstance(added_artifact, ImageArtifact)
         assert added_artifact.id == expected_media_id

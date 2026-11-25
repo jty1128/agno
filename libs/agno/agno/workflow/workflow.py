@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field, fields
 from os import getenv
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -135,7 +135,6 @@ class Workflow:
 
     def run(self, **kwargs: Any):
         logger.error(f"{self.__class__.__name__}.run() method not implemented.")
-        return
 
     def run_workflow(self, **kwargs: Any):
         """Run the Workflow"""
@@ -161,12 +160,8 @@ class Workflow:
         self.update_agent_session_ids()
 
         log_debug(f"Workflow Run Start: {self.run_id}", center=True)
-        try:
-            self._subclass_run = cast(Callable, self._subclass_run)
-            result = self._subclass_run(**kwargs)
-        except Exception as e:
-            logger.error(f"Workflow.run() failed: {e}")
-            raise e
+        self._subclass_run = cast(Callable, self._subclass_run)
+        result = self._subclass_run(**kwargs)
 
         # The run_workflow() method handles both Iterator[RunResponse] and RunResponse
         # Case 1: The run method returns an Iterator[RunResponse]
@@ -465,21 +460,21 @@ class Workflow:
                     for run in session.memory["runs"]:
                         run_session_id = run["session_id"]
                         self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                except Exception as e:
-                    log_warning(f"Failed to load runs from memory: {e}")
+                except Exception:
+                    log_warning("Failed to load runs from memory")
             else:
                 try:
                     if "runs" in session.memory:
                         try:
                             self.memory.runs = [WorkflowRun(**m) for m in session.memory["runs"]]
-                        except Exception as e:
-                            logger.warning(f"Failed to load runs from memory: {e}")
-                except Exception as e:
-                    logger.warning(f"Failed to load WorkflowMemory: {e}")
+                        except Exception:
+                            logger.warning("Failed to load runs from memory")
+                except Exception:
+                    logger.warning("Failed to load WorkflowMemory")
 
         log_debug(f"-*- WorkflowSession loaded: {session.session_id}")
 
-    def read_from_storage(self) -> Optional[WorkflowSession]:
+    def read_from_storage(self) -> WorkflowSession | None:
         """Load the WorkflowSession from storage.
 
         Returns:
@@ -577,11 +572,11 @@ class Workflow:
         # -*- Delete session
         self.storage.delete_session(session_id=session_id)
 
-    def deep_copy(self, *, update: Optional[Dict[str, Any]] = None) -> Workflow:
+    def deep_copy(self, *, update: dict[str, Any] | None = None) -> Workflow:
         """Create and return a deep copy of this Workflow, optionally updating fields.
 
         Args:
-            update (Optional[Dict[str, Any]]): Optional dictionary of fields for the new Workflow.
+            update (dict[str, Any] | None): Optional dictionary of fields for the new Workflow.
 
         Returns:
             Workflow: A new Workflow instance.
@@ -618,24 +613,24 @@ class Workflow:
         if isinstance(field_value, (list, dict, set, Storage)):
             try:
                 return deepcopy(field_value)
-            except Exception as e:
-                logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
+            except Exception:
+                logger.warning(f"Failed to deepcopy field: {field_name}")
                 try:
                     return copy(field_value)
-                except Exception as e:
-                    logger.warning(f"Failed to copy field: {field_name} - {e}")
+                except Exception:
+                    logger.warning(f"Failed to copy field: {field_name}")
                     return field_value
 
         # For pydantic models, attempt a model_copy
         if isinstance(field_value, BaseModel):
             try:
                 return field_value.model_copy(deep=True)
-            except Exception as e:
-                logger.warning(f"Failed to deepcopy field: {field_name} - {e}")
+            except Exception:
+                logger.warning(f"Failed to deepcopy field: {field_name}")
                 try:
                     return field_value.model_copy(deep=False)
-                except Exception as e:
-                    logger.warning(f"Failed to copy field: {field_name} - {e}")
+                except Exception:
+                    logger.warning(f"Failed to copy field: {field_name}")
                     return field_value
 
         # For other types, return as is

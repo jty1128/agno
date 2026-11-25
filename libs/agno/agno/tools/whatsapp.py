@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -14,10 +16,10 @@ class WhatsAppTools(Toolkit):
 
     def __init__(
         self,
-        access_token: Optional[str] = None,
-        phone_number_id: Optional[str] = None,
+        access_token: str | None = None,
+        phone_number_id: str | None = None,
         version: str = "v22.0",
-        recipient_waid: Optional[str] = None,
+        recipient_waid: str | None = None,
         async_mode: bool = False,
     ):
         """Initialize WhatsApp toolkit.
@@ -61,7 +63,7 @@ class WhatsAppTools(Toolkit):
             self.register(self.send_text_message_sync)
             self.register(self.send_template_message_sync)
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get headers for API requests."""
         return {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
 
@@ -69,7 +71,7 @@ class WhatsAppTools(Toolkit):
         """Get the messages endpoint URL."""
         return f"{self.base_url}/{self.version}/{self.phone_number_id}/messages"
 
-    async def _send_message_async(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _send_message_async(self, data: dict[str, Any]) -> dict[str, Any]:
         """Send a message asynchronously using the WhatsApp API.
 
         Args:
@@ -81,7 +83,7 @@ class WhatsAppTools(Toolkit):
         url = self._get_messages_url()
         headers = self._get_headers()
 
-        logger.debug(f"Sending WhatsApp request to URL: {url}")
+        logger.debug("Sending WhatsApp request to URL: %s", url)
 
         async with httpx.AsyncClient() as client:
             response = await client.post(url, headers=headers, json=data)
@@ -89,7 +91,7 @@ class WhatsAppTools(Toolkit):
             response.raise_for_status()
             return response.json()
 
-    def _send_message_sync(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _send_message_sync(self, data: dict[str, Any]) -> dict[str, Any]:
         """Send a message synchronously using the WhatsApp API.
 
         Args:
@@ -101,7 +103,7 @@ class WhatsAppTools(Toolkit):
         url = self._get_messages_url()
         headers = self._get_headers()
 
-        logger.debug(f"Sending WhatsApp request to URL: {url}")
+        logger.debug("Sending WhatsApp request to URL: %s", url)
         response = httpx.post(url, headers=headers, json=data)
 
         response.raise_for_status()
@@ -110,7 +112,7 @@ class WhatsAppTools(Toolkit):
     def send_text_message_sync(
         self,
         text: str = "",
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         preview_url: bool = False,
         recipient_type: str = "individual",
     ) -> str:
@@ -129,10 +131,10 @@ class WhatsAppTools(Toolkit):
             if not self.default_recipient:
                 raise ValueError("No recipient provided and no default recipient set")
             recipient = self.default_recipient
-            logger.debug(f"Using default recipient: {recipient}")
+            logger.debug("Using default recipient: %s", recipient)
 
-        logger.debug(f"Sending WhatsApp message to {recipient}: {text}")
-        logger.debug(f"Current config - Phone Number ID: {self.phone_number_id}, Version: {self.version}")
+        logger.debug("Sending WhatsApp message to %s: %s", recipient, text)
+        logger.debug("Current config - Phone Number ID: %s, Version: %s", self.phone_number_id, self.version)
 
         data = {
             "messaging_product": "whatsapp",
@@ -151,15 +153,15 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     def send_template_message_sync(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         template_name: str = "",
         language_code: str = "en_US",
-        components: Optional[List[Dict[str, Any]]] = None,
+        components: list[dict[str, Any]] | None = None,
     ) -> str:
         """Send a template message to a WhatsApp user (synchronous version).
 
@@ -178,7 +180,7 @@ class WhatsAppTools(Toolkit):
                 raise ValueError("No recipient provided and no default recipient set")
             recipient = self.default_recipient
 
-        logger.debug(f"Sending WhatsApp template message to {recipient}: {template_name}")
+        logger.debug("Sending WhatsApp template message to %s: %s", recipient, template_name)
 
         data = {
             "messaging_product": "whatsapp",
@@ -195,13 +197,13 @@ class WhatsAppTools(Toolkit):
             message_id = response.get("messages", [{}])[0].get("id", "unknown")
             return f"Template message sent successfully! Message ID: {message_id}"
         except httpx.HTTPStatusError as e:
-            logger.error(f"Failed to send WhatsApp template message: {e}")
+            logger.error("Failed to send WhatsApp template message: %s", e)
             raise
 
     async def send_text_message_async(
         self,
         text: str = "",
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         preview_url: bool = False,
         recipient_type: str = "individual",
     ) -> str:
@@ -220,10 +222,10 @@ class WhatsAppTools(Toolkit):
             if not self.default_recipient:
                 raise ValueError("No recipient provided and no default recipient set")
             recipient = self.default_recipient
-            logger.debug(f"Using default recipient: {recipient}")
+            logger.debug("Using default recipient: %s", recipient)
 
-        logger.debug(f"Sending WhatsApp message to {recipient}: {text}")
-        logger.debug(f"Current config - Phone Number ID: {self.phone_number_id}, Version: {self.version}")
+        logger.debug("Sending WhatsApp message to %s: %s", recipient, text)
+        logger.debug("Current config - Phone Number ID: %s, Version: %s", self.phone_number_id, self.version)
 
         data = {
             "messaging_product": "whatsapp",
@@ -242,15 +244,15 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     async def send_template_message_async(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         template_name: str = "",
         language_code: str = "en_US",
-        components: Optional[List[Dict[str, Any]]] = None,
+        components: list[dict[str, Any]] | None = None,
     ) -> str:
         """Send a template message to a WhatsApp user (asynchronous version).
 
@@ -269,7 +271,7 @@ class WhatsAppTools(Toolkit):
                 raise ValueError("No recipient provided and no default recipient set")
             recipient = self.default_recipient
 
-        logger.debug(f"Sending WhatsApp template message to {recipient}: {template_name}")
+        logger.debug("Sending WhatsApp template message to %s: %s", recipient, template_name)
 
         data = {
             "messaging_product": "whatsapp",
@@ -286,5 +288,5 @@ class WhatsAppTools(Toolkit):
             message_id = response.get("messages", [{}])[0].get("id", "unknown")
             return f"Template message sent successfully! Message ID: {message_id}"
         except httpx.HTTPStatusError as e:
-            logger.error(f"Failed to send WhatsApp template message: {e}")
+            logger.error("Failed to send WhatsApp template message: %s", e)
             raise
