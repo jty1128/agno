@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import Any, List, Optional, cast
+from typing import Any, cast
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
@@ -14,10 +16,10 @@ except ImportError:
 class JiraTools(Toolkit):
     def __init__(
         self,
-        server_url: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        token: Optional[str] = None,
+        server_url: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
         **kwargs,
     ):
         self.server_url = server_url or os.getenv("JIRA_SERVER_URL")
@@ -41,7 +43,7 @@ class JiraTools(Toolkit):
         else:
             self.jira = JIRA(server=self.server_url)
 
-        tools: List[Any] = []
+        tools: list[Any] = []
         tools.append(self.get_issue)
         tools.append(self.create_issue)
         tools.append(self.search_issues)
@@ -69,7 +71,7 @@ class JiraTools(Toolkit):
             }
             log_debug(f"Issue details retrieved for {issue_key}: {issue_details}")
             return json.dumps(issue_details)
-        except Exception as e:
+        except JIRAError as e:
             logger.error(f"Error retrieving issue {issue_key}: {e}")
             return json.dumps({"error": str(e)})
 
@@ -94,7 +96,7 @@ class JiraTools(Toolkit):
             issue_url = f"{self.server_url}/browse/{new_issue.key}"
             log_debug(f"Issue created with key: {new_issue.key}")
             return json.dumps({"key": new_issue.key, "url": issue_url})
-        except Exception as e:
+        except JIRAError as e:
             logger.error(f"Error creating issue in project {project_key}: {e}")
             return json.dumps({"error": str(e)})
 
@@ -120,7 +122,7 @@ class JiraTools(Toolkit):
                 results.append(issue_details)
             log_debug(f"Found {len(results)} issues for JQL '{jql_str}'")
             return json.dumps(results)
-        except Exception as e:
+        except JIRAError as e:
             logger.error(f"Error searching issues with JQL '{jql_str}': {e}")
             return json.dumps([{"error": str(e)}])
 
@@ -136,6 +138,6 @@ class JiraTools(Toolkit):
             self.jira.add_comment(issue_key, comment)
             log_debug(f"Comment added to issue {issue_key}")
             return json.dumps({"status": "success", "issue_key": issue_key})
-        except Exception as e:
+        except JIRAError as e:
             logger.error(f"Error adding comment to issue {issue_key}: {e}")
             return json.dumps({"error": str(e)})

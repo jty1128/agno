@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any
 
 import httpx
 
@@ -16,7 +16,7 @@ class HackerNewsTools(Toolkit):
     """
 
     def __init__(self, get_top_stories: bool = True, get_user_details: bool = True, **kwargs):
-        tools: List[Any] = []
+        tools: list[Any] = []
         if get_top_stories:
             tools.append(self.get_top_hackernews_stories)
         if get_user_details:
@@ -68,6 +68,6 @@ class HackerNewsTools(Toolkit):
                 "total_items_submitted": len(user.get("submitted", [])),
             }
             return json.dumps(user_details)
-        except Exception as e:
+        except httpx.HTTPError as e:
             logger.exception(e)
             return f"Error getting user details: {e}"

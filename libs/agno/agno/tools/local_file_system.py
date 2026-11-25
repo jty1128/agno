@@ -72,8 +72,8 @@ class LocalFileSystemTools(Toolkit):
 
             return f"Successfully wrote file to: {file_path}"
 
-        except Exception as e:
-            error_msg = f"Failed to write file: {str(e)}"
+        except Exception:
+            error_msg = "Failed to write file"
             logger.error(error_msg)
             return f"Error: {error_msg}"
 

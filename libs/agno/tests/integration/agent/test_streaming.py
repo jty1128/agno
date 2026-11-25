@@ -1,5 +1,3 @@
-from typing import List
-
 from agno.agent import Agent, RunEvent, RunResponse
 from agno.models.openai import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools
@@ -16,9 +14,7 @@ def test_streaming():
 
     response = agent.run("Hi, my name is John", stream=True)
 
-    chunks: List[RunResponse] = []
-    for chunk in response:
-        chunks.append(chunk)
+    chunks: list[RunResponse] = list(response)
 
     assert len(chunks) > 0
     assert chunks[0].content is not None

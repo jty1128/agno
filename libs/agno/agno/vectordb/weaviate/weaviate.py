@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import uuid
 from hashlib import md5
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from warnings import filterwarnings
@@ -14,7 +16,7 @@ try:
     from weaviate.classes.query import Filter
 
     filterwarnings("ignore", category=ResourceWarning)
-except ImportError:
+except ModuleNotFoundError:
     raise ImportError("Weaviate is not installed. Install using 'pip install weaviate-client'.")
 
 from agno.document import Document
@@ -116,7 +118,7 @@ class Weaviate(VectorDb):
             await self.async_client.connect()  # type: ignore
 
         if not await self.async_client.is_ready():  # type: ignore
-            raise Exception("Weaviate async client is not ready")
+            raise RuntimeError("Weaviate async client is not ready")
 
         return self.async_client  # type: ignore
 
@@ -323,7 +325,7 @@ class Weaviate(VectorDb):
                     log_debug(f"Inserted document asynchronously: {document.name}")
 
                 except Exception as e:
-                    logger.error(f"Error inserting document {document.name}: {str(e)}")
+                    logger.error(f"Error inserting document {document.name}: {e!s}")
         finally:
             await client.close()
 
@@ -456,7 +458,7 @@ class Weaviate(VectorDb):
             self.get_client().close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -502,7 +504,7 @@ class Weaviate(VectorDb):
             await client.close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -530,7 +532,7 @@ class Weaviate(VectorDb):
             self.get_client().close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -572,7 +574,7 @@ class Weaviate(VectorDb):
             await client.close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -607,7 +609,7 @@ class Weaviate(VectorDb):
             self.get_client().close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -656,7 +658,7 @@ class Weaviate(VectorDb):
             await client.close()
             return search_results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error searching for documents: {e}")
             return []
 
@@ -690,7 +692,6 @@ class Weaviate(VectorDb):
 
     def optimize(self) -> None:
         """Optimize the vector database (e.g., rebuild indexes)."""
-        pass
 
     def delete(self) -> bool:
         """Delete all records from the database."""
@@ -773,10 +774,10 @@ class Weaviate(VectorDb):
                 # Create a pattern to match in the JSON string
                 if isinstance(value, (list, tuple)):
                     # For list values
-                    pattern = f'"{key}": {json.dumps(value)}'
+                    pattern = f'"{key!s}": {json.dumps(value)!s}'
                 else:
                     # For single values
-                    pattern = f'"{key}": "{value}"'
+                    pattern = f'"{key!s}": "{value!s}"'
 
                 # Add the filter condition using like operator
                 filter_conditions.append(Filter.by_property("meta_data").like(f"*{pattern}*"))
@@ -791,7 +792,7 @@ class Weaviate(VectorDb):
             elif filter_conditions:
                 return filter_conditions[0]
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error building filter expression: {e}")
             return None
 

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from packaging import version
@@ -18,8 +20,8 @@ try:
     from pinecone import Pinecone, PodSpec, ServerlessSpec
     from pinecone.config import Config
 
-except ImportError:
-    raise ImportError("The `pinecone` package is not installed, please install using `pip install pinecone`.")
+except ImportError as e:
+    raise ImportError("The `pinecone` package is not installed, please install using `pip install pinecone`.") from e
 
 
 from agno.document import Document
@@ -462,7 +464,6 @@ class PineconeDb(VectorDb):
         This method can be left empty as Pinecone automatically optimizes indexes.
 
         """
-        pass
 
     def delete(self, namespace: Optional[str] = None) -> bool:
         """Clear the index.

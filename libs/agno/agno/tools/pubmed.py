@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from xml.etree import ElementTree
 
 import httpx
@@ -133,7 +133,7 @@ class PubmedTools(Toolkit):
 
         return articles
 
-    def search_pubmed(self, query: str, max_results: Optional[int] = 10) -> str:
+    def search_pubmed(self, query: str, max_results: int | None = 10) -> str:
         """Use this function to search PubMed for articles.
 
         Args:
@@ -181,5 +181,5 @@ class PubmedTools(Toolkit):
                 results.append(article_text)
 
             return json.dumps(results)
-        except Exception as e:
+        except httpx.HTTPError as e:
             return f"Could not fetch articles. Error: {e}"

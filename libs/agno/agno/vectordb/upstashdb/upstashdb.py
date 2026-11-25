@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 try:
     from upstash_vector import Index, Vector
@@ -104,7 +106,7 @@ class UpstashVectorDb(VectorDb):
             self.index.info()
             return True
         except Exception as e:
-            logger.error(f"Error checking index existence: {str(e)}")
+            logger.error(f"Error checking index existence: {e!s}")
             return False
 
     def create(self) -> None:
@@ -112,14 +114,12 @@ class UpstashVectorDb(VectorDb):
         logger.warning(
             "Indexes can only be created through the Upstash Console or the developer API. Please create an index before using this vector database."
         )
-        pass
 
     def drop(self) -> None:
         """You can drop indexes via Upstash Console."""
         logger.warning(
             "Indexes can only be dropped through the Upstash Console. Make sure you have an existing index before performing operations."
         )
-        pass
 
     def drop_namespace(self, namespace: Optional[str] = None) -> None:
         """Delete a namespace from the index.
@@ -151,7 +151,7 @@ class UpstashVectorDb(VectorDb):
             return False
         documents_to_fetch = [document.id]
         response = self.index.fetch(ids=documents_to_fetch)
-        return len(response) > 0
+        return bool(response)
 
     def name_exists(self, name: str) -> bool:
         """You can check if an index exists in Upstash Console.
@@ -315,7 +315,7 @@ class UpstashVectorDb(VectorDb):
         """
         _namespace = self.namespace if namespace is None else namespace
         response = self.index.reset(namespace=_namespace, all=delete_all)
-        return True if response.lower().strip() == "success" else False
+        return response.lower().strip() == "success"
 
     def get_index_info(self) -> InfoResult:
         """Get information about the index.
@@ -328,7 +328,6 @@ class UpstashVectorDb(VectorDb):
         """Optimize the index.
         This method is empty as Upstash automatically optimizes indexes.
         """
-        pass
 
     async def async_name_exists(self, name: str) -> bool:
         raise NotImplementedError(f"Async not supported on {self.__class__.__name__}.")

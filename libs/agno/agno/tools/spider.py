@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 try:
@@ -5,7 +7,7 @@ try:
 except ImportError:
     raise ImportError("`spider-client` not installed. Please install using `pip install spider-client`")
 
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_info, logger
@@ -67,7 +69,7 @@ class SpiderTools(Toolkit):
             options = {"fetch_page_content": False, "num": max_results, **self.optional_params}
             results = app.search(query, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching results from spider: {e}")
             return f"Error fetching results from spider: {e}"
 
@@ -78,11 +80,11 @@ class SpiderTools(Toolkit):
             options = {"return_format": "markdown", **self.optional_params}
             results = app.scrape_url(url, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching content from spider: {e}")
             return f"Error fetching content from spider: {e}"
 
-    def _crawl(self, url: str, limit: Optional[int] = None) -> str:
+    def _crawl(self, url: str, limit: int | None = None) -> str:
         app = ExternalSpider()
         log_info(f"Fetching content from spider for url: {url}")
         try:
@@ -91,6 +93,6 @@ class SpiderTools(Toolkit):
             options = {"return_format": "markdown", "limit": limit, **self.optional_params}
             results = app.crawl_url(url, options)
             return json.dumps(results)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching content from spider: {e}")
             return f"Error fetching content from spider: {e}"

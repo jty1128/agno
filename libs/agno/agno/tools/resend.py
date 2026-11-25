@@ -1,5 +1,5 @@
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_info, logger
@@ -54,6 +54,6 @@ class ResendTools(Toolkit):
 
             resend.Emails.send(params)
             return f"Email sent to {to_email} successfully."
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send email {e}")
             return f"Error: {e}"

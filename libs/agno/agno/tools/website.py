@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, List, Optional, Union, cast
+from typing import Any, cast
 
 from agno.document import Document
 from agno.knowledge.combined import CombinedKnowledgeBase

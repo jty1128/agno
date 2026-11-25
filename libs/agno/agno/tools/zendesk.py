@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import re
 from os import getenv
-from typing import Any, List, Optional
+from typing import Any
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger

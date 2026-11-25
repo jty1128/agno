@@ -1,4 +1,6 @@
-from typing import List, Set, Union
+from __future__ import annotations
+
+from typing import Union
 
 from agno.exceptions import RunCancelledException
 from agno.models.message import Message

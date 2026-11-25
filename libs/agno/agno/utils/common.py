@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import asdict
-from typing import Any, List, Optional, Type
+from typing import Any, Optional
 
 
 def isinstanceany(obj: Any, class_list: List[Type]) -> bool:
@@ -24,13 +26,13 @@ def str_to_int(inp: Optional[str]) -> Optional[int]:
     try:
         val = int(inp)
         return val
-    except Exception:
+    except (ValueError, TypeError):
         return None
 
 
 def is_empty(val: Any) -> bool:
     """Returns True if val is None or empty"""
-    if val is None or len(val) == 0 or val == "":
+    if not val:
         return True
     return False
 

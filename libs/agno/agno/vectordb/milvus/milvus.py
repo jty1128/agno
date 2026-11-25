@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     import asyncio
 
     from pymilvus import AsyncMilvusClient, MilvusClient  # type: ignore
-except ImportError:
-    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
+except ImportError as e:
+    raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.") from e
 
 from agno.document import Document
 from agno.embedder import Embedder
@@ -722,7 +724,7 @@ class Milvus(VectorDb):
         return self.client.has_collection(self.collection)
 
     def get_count(self) -> int:
-        return self.client.get_collection_stats(collection_name="test_collection")["row_count"]
+        return self.client.get_collection_stats(collection_name=self.collection)["row_count"]
 
     def delete(self) -> bool:
         if self.client:
@@ -755,7 +757,7 @@ class Milvus(VectorDb):
                 expr = f'meta_data["{k}"] is null'
             else:
                 # For other types, convert to string
-                expr = f'meta_data["{k}"] == "{str(v)}"'
+                expr = f'meta_data["{k}"] == "{v!s}"'
 
             expressions.append(expr)
 

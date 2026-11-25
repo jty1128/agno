@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -69,7 +71,7 @@ class WhatsAppTools(Toolkit):
         """Get the messages endpoint URL."""
         return f"{self.base_url}/{self.version}/{self.phone_number_id}/messages"
 
-    async def _send_message_async(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _send_message_async(self, data: dict[str, Any]) -> dict[str, Any]:
         """Send a message asynchronously using the WhatsApp API.
 
         Args:
@@ -151,7 +153,7 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     def send_template_message_sync(
@@ -242,7 +244,7 @@ class WhatsAppTools(Toolkit):
             logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response text'}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error sending WhatsApp message: {str(e)}")
+            logger.error(f"Unexpected error sending WhatsApp message: {e!s}")
             raise
 
     async def send_template_message_async(

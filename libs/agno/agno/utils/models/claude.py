@@ -1,5 +1,6 @@
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any
 
 from agno.media import File, Image
 from agno.models.message import Message
@@ -21,7 +22,7 @@ ROLE_MAP = {
 }
 
 
-def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
+def _format_image_for_message(image: Image) -> dict[str, Any] | None:
     """
     Add an image to a message by converting it to base64 encoded format.
     """
@@ -60,8 +61,6 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
 
         # Case 2: Image is a local file path
         elif image.filepath is not None:
-            from pathlib import Path
-
             path = Path(image.filepath) if isinstance(image.filepath, str) else image.filepath
             if path.exists() and path.is_file():
                 with open(image.filepath, "rb") as f:
@@ -106,8 +105,8 @@ def _format_image_for_message(image: Image) -> Optional[Dict[str, Any]]:
             },
         }
 
-    except Exception as e:
-        log_error(f"Error processing image: {e}")
+    except Exception:
+        log_error("Error processing image")
         return None
 
 

@@ -1,15 +1,16 @@
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 from agno.tools.function import Function
-from agno.utils.log import log_debug, log_warning, logger
+from agno.utils.log import log_debug, log_warning
 
 
 class Toolkit:
     def __init__(
         self,
         name: str = "toolkit",
-        tools: List[Callable] = [],
+        tools: Optional[List[Callable]] = None,
         instructions: Optional[str] = None,
         add_instructions: bool = False,
         include_tools: Optional[list[str]] = None,
@@ -42,7 +43,7 @@ class Toolkit:
             show_result_tools (Optional[List[str]]): List of function names whose results should be shown.
         """
         self.name: str = name
-        self.tools: List[Callable] = tools
+        self.tools: List[Callable] = tools or []
         self.functions: Dict[str, Function] = OrderedDict()
         self.instructions: Optional[str] = instructions
         self.add_instructions: bool = add_instructions
@@ -54,7 +55,9 @@ class Toolkit:
         self.show_result_tools: list[str] = show_result_tools or []
 
         self._check_tools_filters(
-            available_tools=[tool.__name__ for tool in tools], include_tools=include_tools, exclude_tools=exclude_tools
+            available_tools=[tool.__name__ for tool in self.tools],
+            include_tools=include_tools,
+            exclude_tools=exclude_tools,
         )
 
         self.include_tools = include_tools
@@ -116,30 +119,26 @@ class Toolkit:
         Returns:
             The registered function
         """
-        try:
-            tool_name = name or function.__name__
-            if self.include_tools is not None and tool_name not in self.include_tools:
-                return
-            if self.exclude_tools is not None and tool_name in self.exclude_tools:
-                return
+        tool_name = name or function.__name__
+        if self.include_tools is not None and tool_name not in self.include_tools:
+            return
+        if self.exclude_tools is not None and tool_name in self.exclude_tools:
+            return
 
-            f = Function(
-                name=tool_name,
-                entrypoint=function,
-                sanitize_arguments=sanitize_arguments,
-                cache_results=self.cache_results,
-                cache_dir=self.cache_dir,
-                cache_ttl=self.cache_ttl,
-                requires_confirmation=tool_name in self.requires_confirmation_tools,
-                external_execution=tool_name in self.external_execution_required_tools,
-                stop_after_tool_call=tool_name in self.stop_after_tool_call_tools,
-                show_result=tool_name in self.show_result_tools,
-            )
-            self.functions[f.name] = f
-            log_debug(f"Function: {f.name} registered with {self.name}")
-        except Exception as e:
-            logger.warning(f"Failed to create Function for: {function.__name__}")
-            raise e
+        f = Function(
+            name=tool_name,
+            entrypoint=function,
+            sanitize_arguments=sanitize_arguments,
+            cache_results=self.cache_results,
+            cache_dir=self.cache_dir,
+            cache_ttl=self.cache_ttl,
+            requires_confirmation=tool_name in self.requires_confirmation_tools,
+            external_execution=tool_name in self.external_execution_required_tools,
+            stop_after_tool_call=tool_name in self.stop_after_tool_call_tools,
+            show_result=tool_name in self.show_result_tools,
+        )
+        self.functions[f.name] = f
+        log_debug(f"Function: {f.name} registered with {self.name}")
 
     def __repr__(self):
         return f"<{self.__class__.__name__} name={self.name} functions={list(self.functions.keys())}>"

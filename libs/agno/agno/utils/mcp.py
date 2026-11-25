@@ -59,7 +59,7 @@ def get_entrypoint_for_tool(tool: MCPTool, session: ClientSession):
                     response_str += f"[Unsupported content type: {content_item.type}]\n"
 
             return response_str.strip()
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             log_exception(f"Failed to call MCP tool '{tool_name}': {e}")
             return f"Error: {e}"
 
