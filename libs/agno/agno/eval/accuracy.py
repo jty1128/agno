@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field
 from os import getenv
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Callable, cast
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -50,14 +50,14 @@ class AccuracyEvaluation:
         results_table.add_row("Input", self.input)
         results_table.add_row("Output", self.output)
         results_table.add_row("Expected Output", self.expected_output)
-        results_table.add_row("Accuracy Score", f"{str(self.score)}/10")
+        results_table.add_row("Accuracy Score", f"{self.score!s}/10")
         results_table.add_row("Accuracy Reason", Markdown(self.reason))
         console.print(results_table)
 
 
 @dataclass
 class AccuracyResult:
-    results: List[AccuracyEvaluation] = field(default_factory=list)
+    results: list[AccuracyEvaluation] = field(default_factory=list)
     avg_score: float = field(init=False)
     mean_score: float = field(init=False)
     min_score: float = field(init=False)
@@ -122,7 +122,7 @@ class AccuracyResult:
             results_table.add_row("Input", result.input)
             results_table.add_row("Output", result.output)
             results_table.add_row("Expected Output", result.expected_output)
-            results_table.add_row("Accuracy Score", f"{str(result.score)}/10")
+            results_table.add_row("Accuracy Score", f"{result.score!s}/10")
             results_table.add_row("Accuracy Reason", result.reason)
         console.print(results_table)
 
@@ -308,7 +308,7 @@ Remember: You must only compare the agent_output to the expected_output. The exp
                 score=response.accuracy_score,
                 reason=response.accuracy_reason,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Failed to evaluate accuracy: {e}")
             return None
 
